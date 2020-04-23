@@ -534,7 +534,7 @@ def parse_main_info(page, document, document_info, document_parse, service_items
             date_created = get_date_from_string(value)
             document_parse['date_created'] = f"'{date_created}'" if date_created else 'NULL'
 
-        # (310) Номер заявки
+        # (310) Номер первой заявки
         elif number == '310':
             document_parse['first_order_number'] = f"'{value}'"
 
