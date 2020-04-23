@@ -165,9 +165,9 @@ class Parser:
     # Получение ссылок непосредственно на заявки
     def get_orders_from_page(self, page, leaf_obj):
         # Формируем список документов, которые были найдены ранее и находятся в базе
-        with self.get_workers().lock:
-            existing_documents = DB().fetchall(
-                f"SELECT number FROM {self.dbdocument} WHERE leaf_id = '{leaf_obj['id']}'")
+        # with self.get_workers().lock:
+        existing_documents = DB().fetchall(
+            f"SELECT number FROM {self.dbdocument} WHERE leaf_id = '{leaf_obj['id']}'")
 
         existing_documents = [str(doc['number']) for doc in existing_documents]
         query = f'INSERT INTO {self.dbdocument} ' \
@@ -193,8 +193,8 @@ class Parser:
 
         if values:
             query += ', '.join(values)
-            with self.get_workers().lock:
-                DB().executeone(query)
+            # with self.get_workers().lock:
+            DB().executeone(query)
 
     # Проходится по аккордиону только в самом первом листе. Для поиска новых документов в реестре
     def get_first_documents_leaf(self, urls, cookies=None):
@@ -225,13 +225,13 @@ class Parser:
             leaf_obj = {'name': f"'{name}'",
                         'a_href_steps': f"'{json.dumps(urls + [URL_REG + a_href])}'",
                         'done': 'FALSE'}
-            with self.get_workers().lock:
-                exists = DB().fetchone(f"SELECT id FROM {self.dbleaf} WHERE name = {leaf_obj['name']}")
-                if exists:
-                    leaf_obj['id'] = exists['id']
-                    DB().update_row(self.dbleaf, leaf_obj)
-                else:
-                    leaf_obj['id'] = DB().add_row(self.dbleaf, leaf_obj)
+            # with self.get_workers().lock:
+            exists = DB().fetchone(f"SELECT id FROM {self.dbleaf} WHERE name = {leaf_obj['name']}")
+            if exists:
+                leaf_obj['id'] = exists['id']
+                DB().update_row(self.dbleaf, leaf_obj)
+            else:
+                leaf_obj['id'] = DB().add_row(self.dbleaf, leaf_obj)
             leaf_obj['a_href_steps'] = urls + [URL_REG + a_href]
 
             # Получение номеров документов
@@ -269,14 +269,14 @@ class Parser:
 
                 if not self.proxies:
                     self._lprint('Поиск прокси в БД')
-                    with self.get_workers().lock:
-                        proxies = DB().fetchall(f"SELECT * FROM interface_proxies "
-                                                f"WHERE is_banned = FALSE AND is_working = TRUE AND in_use = FALSE "
-                                                f"LIMIT {number}")
+                    # with self.get_workers().lock:
+                    proxies = DB().fetchall(f"SELECT * FROM interface_proxies "
+                                            f"WHERE is_banned = FALSE AND is_working = TRUE AND in_use = FALSE "
+                                            f"LIMIT {number}")
                     in_use = [f"'{p['id']}'" for p in proxies]
                     proxies_in_use.extend(in_use)
-                    with self.get_workers().lock:
-                        use_proxies(in_use)
+                    # with self.get_workers().lock:
+                    use_proxies(in_use)
 
                     if not proxies:
                         self._lprint('Нет доступных прокси. Ждем окончания потоков или закрытия программы')
@@ -301,8 +301,8 @@ class Parser:
             self._lprint('Парсинг окончен')
         finally:
             if proxies_in_use:
-                with self.get_workers().lock:
-                    release_proxies(proxies_in_use)
+                # with self.get_workers().lock:
+                release_proxies(proxies_in_use)
 
     # Начинает новый парсинг информации со страницы с документом из списка документов
     def start_parse_all_documents(self, proxy=None):
@@ -369,10 +369,10 @@ class Parser:
                         r = session.get(url, proxies=proxies, timeout=10)
                     except (requests.exceptions.ProxyError, requests.exceptions.ConnectTimeout) as err:
                         self._print(document_obj['number'], 'Ошибка прокси', str(err), type(err))
-                        with self.get_workers().lock:
-                            DB().executeone(f"UPDATE interface_proxies SET is_working = FALSE, "
-                                            f"status = '{'Ошибка прокси ' + str(err)}'"
-                                            f"WHERE id = '{proxy['id']}'")
+                        # with self.get_workers().lock:
+                        DB().executeone(f"UPDATE interface_proxies SET is_working = FALSE, "
+                                        f"status = '{'Ошибка прокси ' + str(err)}'"
+                                        f"WHERE id = '{proxy['id']}'")
                         return False
 
                     if r.status_code != 200:
@@ -387,18 +387,18 @@ class Parser:
                         self._print(document_obj['number'], text, url)
                     elif 'Превышен допустимый предел' in text:
                         self._print(document_obj['number'], text, url)
-                        with self.get_workers().lock:
-                            DB().executeone(f"UPDATE interface_proxies SET is_working = FALSE, "
-                                            f"status = '{text}'"
-                                            f"WHERE id = '{proxy['id']}'")
+                        # with self.get_workers().lock:
+                        DB().executeone(f"UPDATE interface_proxies SET is_working = FALSE, "
+                                        f"status = '{text}'"
+                                        f"WHERE id = '{proxy['id']}'")
                         return False
 
                     elif 'Вы заблокированы' in text:
                         self._print(text, 'Поток закрыт')
-                        with self.get_workers().lock:
-                            DB().executeone(f"UPDATE interface_proxies SET is_banned = TRUE, "
-                                            f"status = '{text}'"
-                                            f"WHERE id = '{proxy['id']}'")
+                        # with self.get_workers().lock:
+                        DB().executeone(f"UPDATE interface_proxies SET is_banned = TRUE, "
+                                        f"status = '{text}'"
+                                        f"WHERE id = '{proxy['id']}'")
                         return False
 
                     elif 'Документ с данным номером отсутствует' in text:
@@ -427,13 +427,13 @@ class Parser:
                     page_content = f.read()
 
             if not existence:
-                with self.get_workers().lock:
-                    DB().executeone(f"UPDATE {self.dbdocument} SET document_exists = FALSE WHERE id = '{document_obj['id']}'")
+                # with self.get_workers().lock:
+                DB().executeone(f"UPDATE {self.dbdocument} SET document_exists = FALSE WHERE id = '{document_obj['id']}'")
 
             else:
-                with self.get_workers().lock:
-                    DB().executeone(
-                        f"UPDATE {self.dbdocument} SET downloaded_page = '{filename}' WHERE id = '{document_obj['id']}'")
+                # with self.get_workers().lock:
+                DB().executeone(
+                    f"UPDATE {self.dbdocument} SET downloaded_page = '{filename}' WHERE id = '{document_obj['id']}'")
                 self.parse_document_page(page_content, document_obj, session, proxies)
                 return True
         finally:

@@ -18,25 +18,25 @@ class RegistersParser(Parser):
     def parse_document_page(self, page_content, document, session, proxies):
         page = BeautifulSoup(page_content, 'html.parser')  # Объект страницы для парсинга
 
-        with self.get_workers().lock:
-            document_parse = DB().fetchone(
-                f"SELECT id, document_id FROM {self.dbdocument_parse} "
-                f"WHERE document_id = '{document['id']}' LIMIT 1")
+        # with self.get_workers().lock:
+        document_parse = DB().fetchone(
+            f"SELECT id, document_id FROM {self.dbdocument_parse} "
+            f"WHERE document_id = '{document['id']}' LIMIT 1")
         if document_parse:
             document_parse = dict(document_parse)
-            with self.get_workers().lock:
-                service_items = DB().fetchall(
-                    f"SELECT id, number FROM {self.dbservice_item} "
-                    f"WHERE document_parse_id = '{document_parse['id']}'")
-                izv_exists_list = DB().fetchall(
-                    f"SELECT id, izv_type, date_publish FROM {self.dbdocument_izv} "
-                    f"WHERE document_parse_id = '{document_parse['id']}'")
-                izv_items_list = DB().fetchall(
-                    f"SELECT id, key, value FROM {self.dbdocument_izvitem} "
-                    f"WHERE document_id = '{document['id']}'")
-                izv_service_items = DB().fetchall(
-                    f"SELECT id, number, text FROM {self.dbdocument_izvserviceitem} "
-                    f"WHERE document_id = '{document['id']}'")
+            # with self.get_workers().lock:
+            service_items = DB().fetchall(
+                f"SELECT id, number FROM {self.dbservice_item} "
+                f"WHERE document_parse_id = '{document_parse['id']}'")
+            izv_exists_list = DB().fetchall(
+                f"SELECT id, izv_type, date_publish FROM {self.dbdocument_izv} "
+                f"WHERE document_parse_id = '{document_parse['id']}'")
+            izv_items_list = DB().fetchall(
+                f"SELECT id, key, value FROM {self.dbdocument_izvitem} "
+                f"WHERE document_id = '{document['id']}'")
+            izv_service_items = DB().fetchall(
+                f"SELECT id, number, text FROM {self.dbdocument_izvserviceitem} "
+                f"WHERE document_id = '{document['id']}'")
 
             izv_unique_list = [izv['izv_type'] + '-' + (izv['date_publish'] or 'NULL') for izv in izv_exists_list]
             service_items = [str(item['number']) for item in service_items]
@@ -61,8 +61,8 @@ class RegistersParser(Parser):
             d = date.today() - date_refreshed
         else:
             self._print(document['number'], 'Не найдена дата в статусе')
-            with self.get_workers().lock:
-                DB().executeone(f"UPDATE {self.dbdocument} SET document_exists = FALSE WHERE id = '{document['id']}'")
+            # with self.get_workers().lock:
+            DB().executeone(f"UPDATE {self.dbdocument} SET document_exists = FALSE WHERE id = '{document['id']}'")
             return
 
         # Проверка наличия извещений на странице регистрации
@@ -148,20 +148,20 @@ class RegistersParser(Parser):
         queries.append(order_query)
 
         # Сохраняем или обновляем парсинг документа
-        with self.get_workers().lock:
-            # exists = DB().fetchone(f"SELECT id FROM {self.dbdocument_parse} "
-            #                        f"WHERE document_id = '{document['id']}' LIMIT 1")
-            # if exists is None:
-            if document_parse.get('id') is None:
-                document_parse['id'] = f"'{DB().add_row(self.dbdocument_parse, document_parse)}'"
-            else:
-                # document_parse['id'] = f"'{exists['id']}'"
-                DB().executeone(update_by_id_query(self.dbdocument_parse, document_parse))
+        # with self.get_workers().lock:
+        # exists = DB().fetchone(f"SELECT id FROM {self.dbdocument_parse} "
+        #                        f"WHERE document_id = '{document['id']}' LIMIT 1")
+        # if exists is None:
+        if document_parse.get('id') is None:
+            document_parse['id'] = f"'{DB().add_row(self.dbdocument_parse, document_parse)}'"
+        else:
+            # document_parse['id'] = f"'{exists['id']}'"
+            DB().executeone(update_by_id_query(self.dbdocument_parse, document_parse))
 
         queries = list(map(lambda x: x.format(document_parse['id']), queries))
 
-        with self.get_workers().lock:
-            DB().executemany(queries, verbose=False)
+        # with self.get_workers().lock:
+        DB().executemany(queries, verbose=False)
 
 
 # Парсинг извещений на странице документа регистрации
