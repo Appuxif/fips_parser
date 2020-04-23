@@ -11,7 +11,7 @@ class Proxies(models.Model):
     is_banned = models.BooleanField(default=False)
     is_working = models.BooleanField(default=True)
     in_use = models.BooleanField(default=False)
-    status = models.CharField(max_length=500, null=True)
+    status = models.CharField(max_length=255, null=True)
 
     def __str__(self):
         s = [str(self.scheme), '']
