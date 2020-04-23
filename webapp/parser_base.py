@@ -184,6 +184,7 @@ class Parser:
                 # Некоторые ячейки могут быть пустыми (последние)
                 # Также пропускаем имеющиеся в базе документы
                 if tag_a is None or number in existing_documents or not number.isnumeric():
+                    self._print(number, 'skipped')
                     continue
 
                 a_href = tag_a.get('href')
