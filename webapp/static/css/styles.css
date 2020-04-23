@@ -99,6 +99,10 @@
     margin-left: 10px;
 }
 
+.list_display_button + input[type="checkbox"] {
+    display: none;
+}
+
 .displayed {
     border-color: #417690;
 }

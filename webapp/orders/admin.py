@@ -31,7 +31,7 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
     search_form = DocumentSearchForm
     list_display_static = ['id', 'number', 'url', 'document_exists', 'document_parsed', 'date_parsed']
     list_display = list_display_static + []
-    list_select_related = ('documentparse', )
+    # list_select_related = ('documentparse', )
     select_related = ('documentparse', )
     # ordering = ('documentparse__date_refreshed', )
     ordering = []
