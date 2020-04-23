@@ -1,0 +1,69 @@
+{% extends "admin/change_list.html" %}
+{% load admin_list advanced_search_form %}
+
+
+{% block search %}
+
+  {% search_form cl %}
+  {% advanced_search_form cl %}
+  <hr />
+    <form method="POST" id="list_display_form">
+        {% csrf_token %}
+        <h4>Управление</h4>
+        <div class="buttons_block">
+        <button name="clear_table" class="list_display_button">Сброс таблицы</button>
+        <button name="clear_search" formaction="." class="list_display_button">Сброс поиска</button>
+        <button name="clear_ordering" class="list_display_button">Сброс сортировки</button>
+        </div>
+        <hr />
+        {% if searching %}
+        <h4>Элементы поиска</h4>
+        <div class="buttons_block">
+            {% for k, v in searching %}
+                {{k}}: {{v}},
+            {% endfor %}
+        </div>
+        <hr />
+        {% endif %}
+        {% if document_parse_dict %}
+        <h4>Настраиваемые столбцы</h4>
+        <div class="buttons_block">
+            {% for key, value in document_parse_dict.items %}
+            {% if key in displayed_list %}
+            <button name="{{ key }}" class="list_display_button displayed">{{ value.string }}</button>
+            {% else %}
+            <button name="{{ key }}" class="list_display_button">{{ value.string }}</button>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </form>
+  <hr />
+{% if ordering_list %}
+<h4>Порядок сортировки</h4>
+<div class="buttons_block">
+{% for name, order in ordering_list %}
+<button form="list_display_form" name="ordering__{{ order }}" class="list_display_button">{{ name }}</button>
+{% endfor %}
+</div>
+<hr />
+{% endif %}
+
+<script>
+    function loaded() {
+        let cols = document.querySelectorAll('[class^="column-"]');
+        for (let i = 0; i < cols.length; i++){
+            let col = cols[i];
+            col.classList.add('sortable');
+            let div = col.firstElementChild;
+            let div_text = div.textContent.trim();
+            // col.innerHTML = '<button class="col_button" form="list_display_form" name="del_' + i + '">' + div.innerHTML + '</button>'
+            col.innerHTML = '<button class="col_button" form="list_display_form" name="col_' + i + '">' + div.innerHTML + '</button>'
+        }
+    }
+
+    window.onload = loaded;
+
+</script>
+
+{% endblock %}
