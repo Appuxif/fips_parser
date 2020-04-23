@@ -49,7 +49,6 @@ class RegistersParser(Parser):
         queries = []  # Список запросов к БД для отправки одной кучей
 
         # Получение статуса
-        print(page)
         status = page.find('tr', class_='Status').text
         status = ' '.join(status.split())
         document_parse['status'] = f"'{status}'"
