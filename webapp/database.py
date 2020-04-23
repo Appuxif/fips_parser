@@ -38,7 +38,12 @@ class DB:
 
     def executeone(self, query):
         try:
-            self.c.execute(query)
+            try:
+                self.c.execute(query)
+            except Exception as err:
+                traceback.print_exc(file=sys.stdout)
+                print(query)
+                return
             self.conn.commit()
             return self.c.lastrowid
         finally:
