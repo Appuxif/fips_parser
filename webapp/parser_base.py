@@ -183,7 +183,7 @@ class Parser:
                 number = getattr(tag_a, 'text', '')
                 # Некоторые ячейки могут быть пустыми (последние)
                 # Также пропускаем имеющиеся в базе документы
-                if tag_a is None or number in existing_documents:
+                if tag_a is None or number in existing_documents or not number.isnumeric():
                     continue
 
                 a_href = tag_a.get('href')
