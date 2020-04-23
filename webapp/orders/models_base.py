@@ -55,11 +55,11 @@ class DocumentParse(models.Model):
     color = models.CharField('Цветовое сочетание', max_length=200, null=True)
 
     order_number = models.IntegerField('Номер заявки', null=True)  # Номер документа в реестре
-    first_order_number = models.IntegerField('Номер первой заявки', null=True)  # Номер первой заявки
+    first_order_number = models.CharField('Номер первой заявки', max_length=20, null=True)  # Номер первой заявки
     order_register_number = models.IntegerField('Номер регистрации', null=True)  # Номер документа в реестре
     first_order_country_code = models.CharField('Код страны подачи первой заявки', max_length=10, null=True)  # Код страны подачи первой заявки
-    volumetric = models.CharField('Объемный знак', max_length=20, null=True)  # Объемный знак
-    unprotected = models.CharField('Неохраняемые элементы товарного знака', max_length=20, null=True)  # Неохраняемые элементы товарного знака
+    volumetric = models.CharField('Объемный знак', max_length=50, null=True)  # Объемный знак
+    unprotected = models.CharField('Неохраняемые элементы товарного знака', max_length=255, null=True)  # Неохраняемые элементы товарного знака
 
     date_refreshed = models.DateField('Дата обновления', null=True)  # Дата обновления документа. Парсится из статуса
     date_created = models.DateField('Дата поступления заявки', null=True)  # Дата поступления документа
