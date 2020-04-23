@@ -312,7 +312,7 @@ class Parser:
     def start_parse_all_documents(self, proxy=None):
         while self.start_parse_document(proxy):
             timer = monotonic()
-            while monotonic() - timer < 2:
+            while monotonic() - timer < 3:
                 sleep(0.1)
         self.proxies.remove(proxy)
 
