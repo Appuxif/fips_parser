@@ -267,7 +267,8 @@ class DocumentInLine(admin.StackedInline):
 
 
 @admin.register(Leaf)
-class LeafAdmin(AdvancedSearchAdmin):
+# class LeafAdmin(AdvancedSearchAdmin):
+class LeafAdmin(admin.ModelAdmin):
     # search_form = LeafSearchForm
     list_display = ('id', 'name', 'documents')
     exclude = ['a_href_steps']

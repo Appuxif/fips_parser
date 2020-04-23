@@ -187,7 +187,7 @@ class Parser:
                     continue
 
                 if not number.isnumeric():
-                    self._print(leaf_obj['name'], number, 'not numeric')
+                    # self._print(leaf_obj['name'], number, 'not numeric')
                     continue
 
                 a_href = tag_a.get('href')

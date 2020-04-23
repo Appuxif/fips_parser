@@ -19,3 +19,9 @@ class Proxies(models.Model):
             s = s[:-1] + [str(self.user), ':', str(self.password), '@'] + ['/']
         s = s[:-1] + [str(self.host), ':', str(self.port)] + s[-1:]
         return ''.join(s)
+
+
+# Таблица контактов, присваеваемых к документу
+class DocumentContact(models.Model):
+    is_correct = models.BooleanField('Верный контакт')
+

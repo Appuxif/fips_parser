@@ -182,10 +182,10 @@ def parse_workstate(page):
 
 
 if __name__ == '__main__':
-    release_proxies()
+    # release_proxies()
     p = OrdersParser(ORDERS_URL, 'orders')
     # p.check_new_documents()
-    # p.get_documents_list()
+    p.get_documents_list()
     # p.start_parse_one_document()
     # p.start_parse_all_documents()
-    p.parse_all_documents_in_threads()
+    # p.parse_all_documents_in_threads()
