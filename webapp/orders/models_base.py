@@ -52,7 +52,7 @@ class DocumentParse(models.Model):
     status = models.CharField('Статус', max_length=200)  # Спарсенный статус документа
     order_type = models.CharField('Тип', max_length=200)  # Тип документа (реестра) BibType
     patent_atty = models.CharField('Патентный поверенный', max_length=200, null=True)
-    color = models.CharField('Цветовое сочетание', max_length=200, null=True)
+    color = models.CharField('Цветовое сочетание', max_length=5000, null=True)
 
     order_number = models.IntegerField('Номер заявки', null=True)  # Номер документа в реестре
     first_order_number = models.CharField('Номер первой заявки', max_length=255, null=True)  # Номер первой заявки
