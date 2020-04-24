@@ -470,6 +470,8 @@ def get_date_from_string(string):
 # Сохраняет загруженный файл в нужное место
 def download_file(session, proxies, a, document, self_name):
     direct_url = a.get('href')
+    if not direct_url.startswith('http'):
+        direct_url = URL + direct_url
     filename = direct_url.split('/')[-1]
     filepath = os.path.join('.', 'media', self_name, str(document['number']))
     if not os.path.exists(filepath):
@@ -480,8 +482,6 @@ def download_file(session, proxies, a, document, self_name):
     # print(direct_url)
     # Если файла нет на диске, то загружаем его
     if not os.path.exists(filepath):
-        if not direct_url.startswith('http'):
-            direct_url = URL + direct_url
         r = session.get(direct_url, proxies=proxies)
         if r.status_code != 200:
             # print('Файл не был загружен')

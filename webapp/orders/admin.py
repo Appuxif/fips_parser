@@ -24,6 +24,14 @@ class DocumentParseInLine(admin.StackedInline):
     readonly_fields = fields
 
 
+class DocumentFileInLine(admin.StackedInline):
+    model = DocumentFile
+    fields = ('name', 'direct_url', 'link')
+    readonly_fields = fields
+    extra = 0
+    template = 'admin/edit_inline/stacked_file.html'
+
+
 class OrderContactPersonInLine(admin.StackedInline):
     model = OrderContactPerson
     extra = 0
@@ -50,7 +58,7 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
 
     # ordering = ('documentparse__date_refreshed', )
     ordering = []
-    inlines = [DocumentParseInLine, OrderContactInLine, OrderContactPersonInLine]
+    inlines = [DocumentParseInLine, DocumentFileInLine, OrderContactInLine, OrderContactPersonInLine]
 
     fieldsets = (
         (None, {'fields': (('leaf', 'number'),)}),
@@ -169,14 +177,6 @@ class ServiceItemInLine(admin.TabularInline):
     fields = ('text', )
     readonly_fields = fields
     extra = 0
-
-
-class DocumentFileInLine(admin.StackedInline):
-    model = DocumentFile
-    fields = ('name', 'direct_url', 'link')
-    readonly_fields = fields
-    extra = 0
-    template = 'admin/edit_inline/stacked_file.html'
 
 
 class WorkStateInLine(admin.TabularInline):
