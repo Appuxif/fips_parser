@@ -122,14 +122,14 @@ class Parser:
         with requests.Session() as session:
             session.headers.update({'User-Agent': get_random_useragent()})
             # Формирование куков
-            if cookies:
+            if cookies is not None:
                 session.cookies = cookies.copy()
             else:
                 # Из-за особенностей сайта, приходится открывать ссылки таким хитрым образом,
                 # чтобы сохранять куки в нужной последовательности
                 if self.session_get(session, self.url, 'get_page 1').status_code != 200 or \
                         self.session_get(session, self.url, 'get_page 2').status_code != 200:
-                    return
+                    raise Exception('request is bad', self.url)
 
             # Последовательный переход по списку ссылок.
             for url in urls:
@@ -145,19 +145,21 @@ class Parser:
                     r = None
                 if not r or r.status_code != 200:
                     self._lprint('request is bad', urls)
-                    raise Exception('request is bad')
+                    raise Exception('request is bad', urls)
 
             return session.cookies.copy(), BeautifulSoup(r.text, 'html.parser')
 
     # Получение содержимого страницы и парсинг этой страницы. Получение ссылок непосредственно на заявки
     def get_page_and_orders(self, order_leaf, cookies=None):
-        if cookies is None:
-            # Будет создана новая сессия, для прохода всех ссылок последовательно
-            urls = order_leaf['a_href_steps']
-        else:
-            # Для старой сессии достаточно перейти по последней ссылке
-            urls = [order_leaf['a_href_steps'][-1]]
-        cookies, page = self.get_page(urls, cookies)
+        # if cookies is None:
+        #     # Будет создана новая сессия, для прохода всех ссылок последовательно
+        #     urls = order_leaf['a_href_steps']
+        # else:
+        #     # Для старой сессии достаточно перейти по последней ссылке
+        #     urls = [order_leaf['a_href_steps'][-1]]
+        urls = order_leaf['a_href_steps']
+        # cookies, page = self.get_page(urls, cookies)
+        cookies, page = self.get_page(urls)
         self.get_orders_from_page(page, order_leaf)
 
     # Получение ссылок непосредственно на заявки
@@ -200,7 +202,8 @@ class Parser:
 
     # Проходится по аккордиону только в самом первом листе. Для поиска новых документов в реестре
     def get_first_documents_leaf(self, urls, cookies=None):
-        cookies, page = self.get_page(urls, cookies)
+        # cookies, page = self.get_page(urls, cookies)
+        cookies, page = self.get_page(urls)
         node = page.find_all(class_='middlenode')[-1]
         li = node.find('li')
         self.process_one_li(li, urls, cookies, self.get_first_documents_leaf, False)
@@ -217,9 +220,9 @@ class Parser:
             next_urls = urls + [URL_REG + a_href]
             # Новая сессия для нового ответвления в поток
             if new_thread:
-                self.get_workers().add_task(func, (next_urls, cookies))
+                self.get_workers().add_task(func, (next_urls,))
             else:
-                func(next_urls, cookies)
+                func(next_urls)
             return 1
         else:
             # Если в теге a нет img - это последний лист, который содержит ссылки на списки документов
@@ -247,7 +250,8 @@ class Parser:
     # Получение ссылок со списками документов. Проходится по аккордиону и переходит на страницу списка документов
     def get_orders_leafs(self, urls=None, cookies=None):
         urls = urls or []
-        cookies, page = self.get_page(urls, cookies)
+        # cookies, page = self.get_page(urls, cookies)
+        cookies, page = self.get_page(urls)
         # Находим последний раскрытый лист аккордиона на странице
         node = page.find_all(class_='middlenode')[-1]
         li_list = node.find_all('li')
