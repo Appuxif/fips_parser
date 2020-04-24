@@ -127,8 +127,8 @@ class Parser:
             else:
                 # Из-за особенностей сайта, приходится открывать ссылки таким хитрым образом,
                 # чтобы сохранять куки в нужной последовательности
-                if self.session_get(session, self.url, 'get_page 1') is None or \
-                        self.session_get(session, self.url, 'get_page 2') is None:
+                if self.session_get(session, self.url, 'get_page 1').status_code != 200 or \
+                        self.session_get(session, self.url, 'get_page 2').status_code != 200:
                     return
 
             # Последовательный переход по списку ссылок.
@@ -185,7 +185,7 @@ class Parser:
                     continue
 
                 if not number.isnumeric():
-                    # self._print(leaf_obj['name'], number, 'not numeric')
+                    self._print(leaf_obj['name'], number, 'not numeric')
                     continue
 
                 a_href = tag_a.get('href')
