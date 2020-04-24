@@ -20,7 +20,7 @@ class Leaf(models.Model):
 class Document(models.Model):
     leaf = models.ForeignKey(Leaf, on_delete=models.CASCADE)  # ID листа, в состав которого входил документ
 
-    number = models.IntegerField('Номер документа')  # Идентификатор документа в реестре в виде 2013742400
+    number = models.IntegerField('Номер документа', unique=True)  # Идентификатор документа в реестре в виде 2013742400
     url = models.URLField('Ссылка', max_length=200)  # Ссылка на документ
     document_exists = models.BooleanField('Наличие документа', default=True)  # False - если документа нет в реестре
     document_parsed = models.BooleanField('Документ спарсен', default=False)  # False - если документ не был спарсен

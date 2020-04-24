@@ -7,6 +7,7 @@ from import_export import resources
 from import_export.admin import ExportActionMixin, ExportActionModelAdmin, ExportMixin
 
 from orders.django_admin_search import AdvancedSearchAdmin
+from orders.admin import process_buttons, get_export_resource, documentparse_lookup
 from .models_base import Leaf, Document, DocumentParse, DocumentFile, ServiceItem, document_parse_dict
 from .models import IzvServiceItem, DocumentIzvItem, DocumentIzv
 from .forms import LeafSearchForm, DocumentSearchForm, DocumentParseSearchForm, fields_dict
@@ -22,10 +23,9 @@ class DocumentParseInLine(admin.StackedInline):
 
 @admin.register(Document)
 class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
-    # resource_class = Resource
-
     change_list_template = 'admin/custom_change_list_document.html'
     search_form = DocumentSearchForm
+
     list_display_static = ['id', 'number', 'url', 'document_exists', 'document_parsed', 'date_parsed']
     list_display = list_display_static + []
     # list_select_related = ('documentparse', )
@@ -37,9 +37,10 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
 
     # list_filter = ('document_exists', 'document_parsed', 'documentparse__id')
 
+    # Если в переменной list_display появляется кастомное поле для объекта documentparse
     def __getattr__(self, item):
         if item.startswith('documentparse'):
-            return documentparse_lookup(item)
+            return documentparse_lookup(item, document_parse_dict)
         return super(DocumentAdmin, self).__getattr__(item)
 
     # Кастомная обработка страницы /admin/orders/document/
@@ -59,10 +60,11 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
         # Подстройка экспорта таблицы
         action = request.POST.get('action')
         if action and action == 'export_admin_action':
-            self.resource_class = get_export_resource(self.model, list_display)
+            self.resource_class = get_export_resource(self.model, list_display, document_parse_dict)
 
         # Обработка нажатий на кнопки
-        process_buttons(self, request, list_display, ordering)
+        if request.method == 'POST':
+            process_buttons(self, request, list_display, ordering, document_parse_dict)
 
         request.GET._mutable = False
         self.list_display = list_display
@@ -71,7 +73,7 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
         user_query.register_document_ordering = ','.join(ordering)
         user_query.save()
         extra_context['document_parse_dict'] = document_parse_dict
-        extra_context['displayed_list'] = ['field__' + l for l in self.list_display]
+        extra_context['displayed_list'] = {'field__' + l: document_parse_dict['field__' + l] for l in self.list_display}
         extra_context['ordering_list'] = [
             [('↓ ' if '-' in order[0] else '↑ ') + document_parse_dict['field__' + order.replace('-', '')]['string'],
              order.replace('-', '')]
@@ -99,81 +101,6 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
                 if ids:
                     return Q(id__in=ids)
         return Q()
-
-    def search_income_value(self, field, field_value, form_field, request, param_values):
-        if field_value and field in param_values or 'income_date_gte' in param_values or 'income_date_lte' in param_values:
-            queries = WorkStateRow.objects.select_related('document').filter(type='income')
-            if field in param_values:
-                queries = queries.filter(key__icontains=field_value)
-            if 'income_date_gte' in param_values:
-                value = param_values['income_date_gte'][0]
-                queries = queries.filter(date__gte=value)
-            if 'income_date_lte' in param_values:
-                value = param_values['income_date_lte'][0]
-                queries = queries.filter(date__lte=value)
-            ids = [q.document.id for q in queries]
-            if ids:
-                return Q(id__in=ids)
-        return Q()
-
-    def search_outcome_value(self, field, field_value, form_field, request, param_values):
-        if field_value and field in param_values or 'outcome_date_gte' in param_values or 'outcome_date_lte' in param_values:
-            queries = WorkStateRow.objects.select_related('document').filter(type='outcome')
-            if field in param_values:
-                queries = queries.filter(key__icontains=field_value)
-            if 'outcome_date_gte' in param_values:
-                value = param_values['outcome_date_gte'][0]
-                queries = queries.filter(date__gte=value)
-            if 'outcome_date_lte' in param_values:
-                value = param_values['outcome_date_lte'][0]
-                queries = queries.filter(date__lte=value)
-            ids = [q.document.id for q in queries]
-            if ids:
-                return Q(id__in=ids)
-        return Q()
-
-
-# Обработка нажатий на кнопки на странице /admin/orders/document/
-def process_buttons(self, request, list_display, ordering):
-    for key in list(request.POST.keys()):
-        if key == 'clear_table':
-            list_display.clear()
-            list_display.extend(getattr(self, 'list_display_static', []) + [])
-            ordering.clear()
-        elif key == 'clear_search':
-            self.advanced_search_fields = {}
-        elif key == 'clear_ordering':
-            ordering.clear()
-        elif key.startswith('del_'):
-            num = int(key.split('_')[1])
-            try:
-                list_display.pop(num)
-            except IndexError:
-                pass
-        elif key.startswith('col_'):
-            num = int(key.split('_')[1])
-            value = list_display[num]
-            if value in ordering:
-                ordering.remove(value)
-                ordering.append('-' + value)
-            elif '-' + value in ordering:
-                ordering.remove('-' + value)
-                ordering.append(value)
-            else:
-                if document_parse_dict['field__' + value]['ordering']:
-                    ordering.append('-' + value)
-        elif key.startswith('field__'):
-            value = key.split('field__')[1]
-            if value not in list_display:
-                list_display.append(value)
-            else:
-                list_display.remove(value)
-        elif key.startswith('ordering__'):
-            value = key.split('ordering__')[1]
-            if value in ordering:
-                ordering.remove(value)
-            elif '-' + value in ordering:
-                ordering.remove('-' + value)
 
 
 class ServiceItemInLine(admin.StackedInline):
@@ -278,41 +205,3 @@ class LeafAdmin(admin.ModelAdmin):
     def documents(self, obj):
         return f'{obj.document_set.count()}'
     documents.short_description = 'Количество документов'
-
-
-# Функции ################################################################
-# Добавляет логику выдачи дополнительных столбцов для связанных объектов
-def documentparse_lookup(item):
-    keys = item.split('__')[1:]
-    def func(obj):
-        object = obj.documentparse
-        for k in keys:
-            if object is None:
-                break
-            object = getattr(object, k, None)
-        str_type = str(type(object))
-        if str_type == "<class 'function'>" or str_type == "<class 'method'>":
-            return object()
-        return object
-    func.short_description = document_parse_dict['field__' + item]['string']
-    return func
-
-
-# Генерация класса "ресурсов" для формирования файла экспорта
-def get_export_resource(model, fields):
-    resource_class = resources.ModelResource
-
-    # Некоторые столбцы неизбежно придется пропускать, так как они несут информативный характер
-    attrs = {'model': model, 'fields': tuple((f for f in fields if '_set' not in f))}
-    Meta = type(str('Meta'), (object,), attrs)
-
-    class_name = model.__name__ + str('Resource')
-    class_attrs = {
-        'Meta': Meta,
-    }
-    metaclass = resources.ModelDeclarativeMetaclass(class_name, (resource_class,), class_attrs)
-
-    # Объявление имен столбцов
-    for f in metaclass.fields:
-        metaclass.fields[f].column_name = document_parse_dict['field__' + f]['string']
-    return metaclass

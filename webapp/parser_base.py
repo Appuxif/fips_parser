@@ -118,7 +118,6 @@ class Parser:
         self.get_first_documents_leaf([URL_REG + URL_ROOT_PATH])
 
     # Возвращает сессию и объект bs4 для парсинга страницы
-    # def get_page(self, urls, session=None, cookies=None):
     def get_page(self, urls, cookies=None):
         with requests.Session() as session:
             session.headers.update({'User-Agent': get_random_useragent()})
@@ -148,7 +147,6 @@ class Parser:
                     self._lprint('request is bad', urls)
                     return
 
-        # return session, BeautifulSoup(r.text, 'html.parser')
             return session.cookies.copy(), BeautifulSoup(r.text, 'html.parser')
 
     # Получение содержимого страницы и парсинг этой страницы. Получение ссылок непосредственно на заявки
@@ -219,9 +217,9 @@ class Parser:
             next_urls = urls + [URL_REG + a_href]
             # Новая сессия для нового ответвления в поток
             if new_thread:
-                self.get_workers().add_task(func, (next_urls,))
+                self.get_workers().add_task(func, (next_urls, cookies))
             else:
-                func(next_urls)
+                func(next_urls, cookies)
             return 1
         else:
             # Если в теге a нет img - это последний лист, который содержит ссылки на списки документов
@@ -322,14 +320,11 @@ class Parser:
         with self.get_workers().lock:
             # Берем непарсенную заявку из БД
             if query is None:
-                # query = f'SELECT id, url, number FROM {self.dbdocument} ' \
-                #         'WHERE document_exists = TRUE AND document_parsed = FALSE AND order_done = FALSE '
                 # Берем все документы, для которых не принято решение и сортируем по дате парсинга
                 query = f'SELECT id, url, number FROM {self.dbdocument} ' \
                         'WHERE document_exists = TRUE AND order_done = FALSE '
                 if len(self.documents_in_parsing) > 0:
                     query += f'AND id NOT IN ({", ".join(self.documents_in_parsing)}) '
-                # query += 'ORDER BY number LIMIT 1'
                 query += 'ORDER BY date_parsed, number DESC LIMIT 1'
             document_obj = DB().fetchone(query)
             self.documents_in_parsing.append(f"'{document_obj['id']}'")

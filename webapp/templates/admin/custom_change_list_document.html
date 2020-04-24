@@ -1,6 +1,15 @@
 {% extends "admin/change_list.html" %}
 {% load admin_list advanced_search_form %}
 
+{% comment %}
+    Кастомная страница для настройки таблиц Orders и Registers
+    Добавлены кнопки для управления, которые отправляют данные POST запросом.
+    Запросы обрабатываются сервером и настраивают отображение таблиц.
+
+    При выборе отображаемых столбцов задействован джаваскрипт, указанный внизу,
+    который устанавливает порядок следования столбцов, добавляя порядковый номер в атрибут value
+{% endcomment %}
+
 
 {% block search %}
 
@@ -11,9 +20,10 @@
         {% csrf_token %}
         <h4>Управление</h4>
         <div class="buttons_block">
-        <button name="clear_table" class="list_display_button">Сброс таблицы</button>
-        <button name="clear_search" formaction="." class="list_display_button">Сброс поиска</button>
-        <button name="clear_ordering" class="list_display_button">Сброс сортировки</button>
+        <button name="clear_table" class="list_display_button"><span>Сброс таблицы</span></button>
+        <button name="clear_search" formaction="." class="list_display_button"><span>Сброс поиска</span></button>
+        <button name="clear_ordering" class="list_display_button"><span>Сброс сортировки</span></button>
+        <button name="apply_cols" class="list_display_button"><span>Применить столбцы</span></button>
         </div>
         <hr />
         {% if searching %}
@@ -27,13 +37,29 @@
         {% endif %}
         {% if document_parse_dict %}
         <h4>Настраиваемые столбцы</h4>
-        <div class="buttons_block">
+        <div id="changing_cols" class="buttons_block">
+            {# Сначала Отображаем кнопки включенных столбцов #}
+            {% for key, value in displayed_list.items %}
+        <!--            <button name="{{ key }}" class="list_display_button displayed">{{ value.string }}</button>-->
+                    <div class="list_display_button">
+                        <label for="{{ key }}">
+                            <input type="checkbox" id="{{ key }}" name="{{ key }}" class="" checked value="{{forloop.counter0}}">
+                            <span>{{ value.string }}</span>
+                        </label>
+                    </div>
+            {% endfor %}
+            {# Далее кнопки столбцов для включения #}
+
             {% for key, value in document_parse_dict.items %}
-            {% if key in displayed_list %}
-            <button name="{{ key }}" class="list_display_button displayed">{{ value.string }}</button>
-            {% else %}
-            <button name="{{ key }}" class="list_display_button">{{ value.string }}</button>
-            {% endif %}
+                {% if key not in displayed_list %}
+        <!--            <button name="{{ key }}" class="list_display_button">{{ value.string }}</button>-->
+                    <div class="list_display_button">
+                        <label for="{{ key }}">
+                            <input type="checkbox" id="{{ key }}" name="{{ key }}" class="">
+                            <span>{{ value.string }}</span>
+                        </label>
+                    </div>
+                {% endif %}
             {% endfor %}
         </div>
         {% endif %}
@@ -63,6 +89,25 @@
     }
 
     window.onload = loaded;
+    let order_number = 0;
+    let cols_div = document.getElementById('changing_cols');
+    let cols_inputs = cols_div.getElementsByTagName('input');
+    for (let input of cols_inputs) {
+        if (input.checked) {
+            order_number++;
+        }
+        input.addEventListener('click', (e) => {
+            console.log(e);
+            console.log(e.target.checked);
+            if (!e.target.checked) {
+                e.target.value = '';
+            } else {
+                e.target.value = ++order_number;
+            }
+        })
+    }
+
+
 
 </script>
 
