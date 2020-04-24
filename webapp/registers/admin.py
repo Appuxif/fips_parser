@@ -12,13 +12,28 @@ from .models_base import Leaf, Document, DocumentParse, DocumentFile, ServiceIte
 from .models import IzvServiceItem, DocumentIzvItem, DocumentIzv
 from .forms import LeafSearchForm, DocumentSearchForm, DocumentParseSearchForm, fields_dict
 from accounts.models import UserQuery
+from interface.models import RegisterContact, RegisterContactPerson
 
 
 class DocumentParseInLine(admin.StackedInline):
     model = DocumentParse
     extra = 0
-    fields = ('status', 'order_type')
+    fields = ('status', 'order_type', 'applicant', 'address', 'copyright_holder', 'date_refreshed')
     readonly_fields = fields
+
+
+class RegisterContactPersonInLine(admin.StackedInline):
+    model = RegisterContactPerson
+    extra = 0
+    fields = ('company_name', 'company_address')
+    readonly_fields = ('document', )
+
+
+class RegisterContactInLine(admin.StackedInline):
+    model = RegisterContact
+    extra = 0
+    fields = ('company_name', 'company_address')
+    readonly_fields = ('register', )
 
 
 @admin.register(Document)
@@ -32,7 +47,14 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
 
     # ordering = ('documentparse__date_refreshed', )
     ordering = []
-    inlines = [DocumentParseInLine]
+    inlines = [DocumentParseInLine, RegisterContactInLine, RegisterContactPersonInLine]
+
+    fieldsets = (
+        (None, {'fields': (('leaf', 'number'),)}),
+        (None, {'fields': ('url', )}),
+        (None, {'fields': ('document_exists', ('document_parsed', 'date_parsed'), 'order_done')})
+    )
+    readonly_fields = ('leaf', 'number', 'url', 'document_exists', 'document_parsed', 'date_parsed')
     sortable_by = ()
 
     # list_filter = ('document_exists', 'document_parsed', 'documentparse__id')

@@ -32,6 +32,9 @@ class OrderContact(models.Model):
     def __str__(self):
         return 'Contact for ' + str(self.order.number)
 
+    def get_absolute_url(self):
+        return f'/admin/interface/ordercontact/{self.id}/change/'
+
 
 # Таблица контактов, присваеваемых к документу
 class RegisterContact(models.Model):
@@ -42,9 +45,12 @@ class RegisterContact(models.Model):
     def __str__(self):
         return 'Contact for ' + str(self.register.number)
 
+    def get_absolute_url(self):
+        return f'/admin/interface/registercontact/{self.id}/change/'
+
 
 class OrderContactPerson(models.Model):
-    order_contact = models.ForeignKey(OrderDocument, on_delete=models.CASCADE, related_query_name='person')
+    document = models.ForeignKey(OrderDocument, on_delete=models.CASCADE, related_query_name='person')
     name = models.CharField('Персональные данные контактного лица', max_length=255, null=True, blank=True)
     address = models.CharField('Адрес контактного лица', max_length=255, null=True, blank=True)
     position = models.CharField('Должность контактного лица', max_length=255, null=True, blank=True)
@@ -52,11 +58,14 @@ class OrderContactPerson(models.Model):
     email = models.CharField('Электронная почта', max_length=255, null=True, blank=True)
 
     def __str__(self):
-        return self.order_contact
+        return self.document
+
+    def get_absolute_url(self):
+        return f'/admin/interface/ordercontactperson/{self.id}/change/'
 
 
 class RegisterContactPerson(models.Model):
-    register_contact = models.ForeignKey(OrderDocument, on_delete=models.CASCADE, related_query_name='person')
+    document = models.ForeignKey(RegisterDocument, on_delete=models.CASCADE, related_query_name='person')
     name = models.CharField('Персональные данные контактного лица', max_length=255, null=True, blank=True)
     address = models.CharField('Адрес контактного лица', max_length=255, null=True, blank=True)
     position = models.CharField('Должность контактного лица', max_length=255, null=True, blank=True)
@@ -64,4 +73,7 @@ class RegisterContactPerson(models.Model):
     email = models.CharField('Электронная почта', max_length=255, null=True, blank=True)
 
     def __str__(self):
-        return self.register_contact
+        return self.document
+
+    def get_absolute_url(self):
+        return f'/admin/interface/registercontactperson/{self.id}/change/'
