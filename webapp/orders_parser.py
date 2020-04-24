@@ -147,7 +147,7 @@ def get_work_state_queries(work_state_rows, work_state_row_items, dbwork_state_r
         # else:
         #     print(row['key'] + '-' + (str(row['date']) if row['date'] else 'NULL'))
     if values:
-        q = f"INSERT INTO {dbwork_state_row} (type, key, date, workstate_id, document_id) VALUES "
+        q = f"INSERT INTO {dbwork_state_row} (type, `key`, date, workstate_id, document_id) VALUES "
         q += ', '.join(values)
         return [q]
     return []
