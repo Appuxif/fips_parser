@@ -143,9 +143,9 @@ class Parser:
                         self._lprint('RETRY:', c, str(err))
                 else:
                     r = None
-                if not r:
+                if not r or r.status_code != 200:
                     self._lprint('request is bad', urls)
-                    return
+                    raise Exception('request is bad')
 
             return session.cookies.copy(), BeautifulSoup(r.text, 'html.parser')
 
