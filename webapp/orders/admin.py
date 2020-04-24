@@ -12,6 +12,7 @@ from .models import WorkState, WorkStateRow
 from .forms import LeafSearchForm, DocumentSearchForm, fields_dict
 from accounts.models import UserQuery
 from interface.models import OrderContact, OrderContactPerson
+from interface.change_message_utils import construct_change_message
 
 admin.site.site_header = 'Администрирование'
 
@@ -26,8 +27,8 @@ class DocumentParseInLine(admin.StackedInline):
 class OrderContactPersonInLine(admin.StackedInline):
     model = OrderContactPerson
     extra = 0
-    fields = ('company_name', 'company_address')
     readonly_fields = ('document', )
+    view_on_site = False
 
 
 class OrderContactInLine(admin.StackedInline):
@@ -35,6 +36,7 @@ class OrderContactInLine(admin.StackedInline):
     extra = 0
     fields = ('company_name', 'company_address')
     readonly_fields = ('order', )
+    view_on_site = False
 
 
 @admin.register(Document)
@@ -66,6 +68,11 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
         if item.startswith('documentparse'):
             return documentparse_lookup(item, document_parse_dict)
         return super(DocumentAdmin, self).__getattr__(item)
+
+    # Кастомное логирование при изменениях в заявках
+    def construct_change_message(self, request, form, formsets, add=False):
+        change_message = construct_change_message(form, formsets, add)
+        return change_message
 
     # Кастомная обработка страницы /admin/orders/document/
     def changelist_view(self, request, extra_context=None):
@@ -157,29 +164,39 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
         return Q()
 
 
-class ServiceItemInLine(admin.StackedInline):
+class ServiceItemInLine(admin.TabularInline):
     model = ServiceItem
-    exclude = ['document']
+    fields = ('text', )
+    readonly_fields = fields
     extra = 0
 
 
 class DocumentFileInLine(admin.StackedInline):
     model = DocumentFile
-    exclude = ['document']
+    fields = ('name', 'direct_url', 'link')
+    readonly_fields = fields
     extra = 0
+    template = 'admin/edit_inline/stacked_file.html'
 
 
 class WorkStateInLine(admin.TabularInline):
     model = WorkState
     fields = ['income', 'outcome']
+    readonly_fields = fields
     extra = 0
 
 
 @admin.register(DocumentParse)
 class DocumentParseAdmin(admin.ModelAdmin):
-    list_display = ('id', 'document')
+    list_display = (
+        'id', 'order_number', 'order_register_number', 'date_refreshed',
+        'date_created', 'date_publish', 'date_exclusive'
+    )
     exclude = ['document']
     inlines = [ServiceItemInLine, DocumentFileInLine, WorkStateInLine]
+
+    def get_readonly_fields(self, request, obj=None):
+        return [field.name for field in self.opts.local_fields]
 
 
 class WorkStateRowInLine(admin.TabularInline):

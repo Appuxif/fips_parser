@@ -13,7 +13,7 @@ class Leaf(models.Model):
 
     class Meta:
         verbose_name = 'Список документов'
-        verbose_name_plural = '2 Списки документов'
+        verbose_name_plural = ' Списки документов'
 
 
 # Документ в составе листа
@@ -31,7 +31,7 @@ class Document(models.Model):
 
     class Meta:
         verbose_name = 'Документ'
-        verbose_name_plural = '1 Документы'
+        verbose_name_plural = ' Документы'
 
     def __str__(self):
         return str(self.number)
@@ -74,7 +74,7 @@ class DocumentParse(models.Model):
 
     class Meta:
         verbose_name = 'Парсинг документа'
-        verbose_name_plural = '3 Парсинг документов'
+        verbose_name_plural = ' Парсинг документов'
 
     def __str__(self):
         return str(self.id)

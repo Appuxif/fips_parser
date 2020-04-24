@@ -37,7 +37,7 @@ class DocumentIzv(models.Model):
 
     class Meta:
         verbose_name = 'Извещание'
-        verbose_name_plural = '4 Извещания'
+        verbose_name_plural = 'Извещания'
 
     def __str__(self):
         return self.izv_type
@@ -59,7 +59,7 @@ class DocumentIzvItem(models.Model):
 
     class Meta:
         verbose_name = 'Элемент извещания'
-        verbose_name_plural = '5 Элементы извещаний'
+        verbose_name_plural = 'Элементы извещаний'
 
     def __str__(self):
         return self.key

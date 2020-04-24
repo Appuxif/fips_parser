@@ -13,6 +13,7 @@ from .models import IzvServiceItem, DocumentIzvItem, DocumentIzv
 from .forms import LeafSearchForm, DocumentSearchForm, DocumentParseSearchForm, fields_dict
 from accounts.models import UserQuery
 from interface.models import RegisterContact, RegisterContactPerson
+from interface.change_message_utils import construct_change_message
 
 
 class DocumentParseInLine(admin.StackedInline):
@@ -25,8 +26,8 @@ class DocumentParseInLine(admin.StackedInline):
 class RegisterContactPersonInLine(admin.StackedInline):
     model = RegisterContactPerson
     extra = 0
-    fields = ('company_name', 'company_address')
     readonly_fields = ('document', )
+    view_on_site = False
 
 
 class RegisterContactInLine(admin.StackedInline):
@@ -34,6 +35,7 @@ class RegisterContactInLine(admin.StackedInline):
     extra = 0
     fields = ('company_name', 'company_address')
     readonly_fields = ('register', )
+    view_on_site = False
 
 
 @admin.register(Document)
@@ -64,6 +66,11 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
         if item.startswith('documentparse'):
             return documentparse_lookup(item, document_parse_dict)
         return super(DocumentAdmin, self).__getattr__(item)
+
+    # Кастомное логирование при изменениях в регистрациях
+    def construct_change_message(self, request, form, formsets, add=False):
+        change_message = construct_change_message(form, formsets, add)
+        return change_message
 
     # Кастомная обработка страницы /admin/orders/document/
     def changelist_view(self, request, extra_context=None):
@@ -127,20 +134,22 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
 
 class ServiceItemInLine(admin.StackedInline):
     model = ServiceItem
-    exclude = ['document']
+    fields = ('text', )
+    readonly_fields = fields
     extra = 0
 
 
 class DocumentFileInLine(admin.StackedInline):
     model = DocumentFile
-    exclude = ['document']
+    fields = ('name', 'direct_url', 'link')
+    readonly_fields = fields
     extra = 0
+    template = 'admin/edit_inline/stacked_file.html'
 
 
 class DocumentIzvInLine(admin.StackedInline):
     model = DocumentIzv
     fields = ('date_publish', )
-    # exclude = ['document']
     readonly_fields = fields
     extra = 0
 
@@ -154,6 +163,9 @@ class DocumentParseAdmin(admin.ModelAdmin):
     list_display = ('id', 'order_number', 'order_register_number', 'date_refreshed', 'date_created', 'date_publish', 'date_exclusive')
     exclude = ['document']
     inlines = [ServiceItemInLine, DocumentFileInLine, DocumentIzvInLine]
+
+    def get_readonly_fields(self, request, obj=None):
+        return [field.name for field in self.opts.local_fields]
 
     # Кастомная обработка страницы /admin/orders/document/
     # def changelist_view(self, request, extra_context=None):

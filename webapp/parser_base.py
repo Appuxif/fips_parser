@@ -355,7 +355,7 @@ class Parser:
         try:
             document_obj = dict(document_obj)
             self._print(document_obj['number'], 'Парсинг документа', document_obj['url'])
-            filepath = os.path.join('.', 'webapp', 'media', self.name, str(document_obj['number']))
+            filepath = os.path.join('.', 'media', self.name, str(document_obj['number']))
             filename = os.path.join(filepath, 'page.html')
             url = document_obj['url']
             session = requests.Session()
@@ -471,7 +471,7 @@ def get_date_from_string(string):
 def download_file(session, proxies, a, document, self_name):
     direct_url = a.get('href')
     filename = direct_url.split('/')[-1]
-    filepath = os.path.join('.', 'webapp', 'media', self_name, str(document['number']))
+    filepath = os.path.join('.', 'media', self_name, str(document['number']))
     if not os.path.exists(filepath):
         os.makedirs(filepath)
 
@@ -486,7 +486,7 @@ def download_file(session, proxies, a, document, self_name):
         if r.status_code != 200:
             # print('Файл не был загружен')
             return None
-        # filename = os.path.join('.', 'webapp', 'media', 'files', )
+        # filename = os.path.join('.'', 'media', 'files', )
         with open(filepath, 'wb') as f:
             f.write(r.content)
     return direct_url, link

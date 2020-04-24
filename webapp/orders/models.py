@@ -11,7 +11,7 @@ class WorkState(models.Model):
 
     class Meta:
         verbose_name = 'Делопроизводство'
-        verbose_name_plural = '4 Делопроизводство'
+        verbose_name_plural = 'Делопроизводство'
 
     def __str__(self):
         return 'For ' + str(self.document_parse.id) + ' ' + str(self.document_parse.order_number)

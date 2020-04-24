@@ -3,4 +3,4 @@ from django.apps import AppConfig
 
 class OrdersConfig(AppConfig):
     name = 'orders'
-    verbose_name = '1 Заявки'
+    verbose_name = ' Заявки'
