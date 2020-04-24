@@ -274,6 +274,11 @@ def parse_izvs(document, start_izvs):
     return izvs_list[:-1]
 
 
+def start_parse_all_documents():
+    p = RegistersParser(REGISTERS_URL, 'registers')
+    p.start_parse_all_documents()
+
+
 if __name__ == '__main__':
     release_proxies()
     p = RegistersParser(REGISTERS_URL, 'registers')

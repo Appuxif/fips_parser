@@ -181,6 +181,11 @@ def parse_workstate(page):
     return work_state, obj_list
 
 
+def start_parse_all_documents():
+    p = OrdersParser(ORDERS_URL, 'orders')
+    p.start_parse_all_documents()
+
+
 if __name__ == '__main__':
     # release_proxies()
     p = OrdersParser(ORDERS_URL, 'orders')
