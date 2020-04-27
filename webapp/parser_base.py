@@ -61,6 +61,7 @@ class Parser:
     workers = None
     workers2 = None
     proxies = []
+    proxy_ids = []
 
     def __init__(self, url, name='default', verbosity=True):
         self.name = name
@@ -276,30 +277,39 @@ class Parser:
                 if not self.proxies:
                     self._lprint('Поиск прокси в БД')
                     with self.get_workers().lock:
-                        proxies = DB().fetchall(f"SELECT * FROM interface_proxies "
-                                                f"WHERE is_banned = FALSE AND is_working = TRUE AND in_use = FALSE "
-                                                f"LIMIT {number}")
-                    in_use = [f"'{p['id']}'" for p in proxies]
-                    proxies_in_use.extend(in_use)
-                    with self.get_workers().lock:
+                        # proxies = DB().fetchall(f"SELECT * FROM interface_proxies "
+                        #                         f"WHERE is_banned = FALSE AND is_working = TRUE AND in_use = FALSE "
+                        #                         f"LIMIT {number}")
+                        proxy = DB().fetchone(f"SELECT * FROM interface_proxies "
+                                              f"WHERE is_banned = FALSE AND is_working = TRUE AND in_use = FALSE "
+                                              f"LIMIT 1")
+                        if proxy is None:
+                            self._lprint('Нет доступных прокси. Ждем окончания потоков или закрытия программы')
+                            break
+                        # in_use = [f"'{p['id']}'" for p in proxies]
+                        in_use = [f"'{proxy['id']}'"]
+                        # proxies_in_use.extend(in_use)
                         use_proxies(in_use)
+                    proxies_in_use.append(in_use)
 
-                    if not proxies:
-                        self._lprint('Нет доступных прокси. Ждем окончания потоков или закрытия программы')
-                        break
-                    self.proxies = [dict(proxy) for proxy in proxies]
-                    proxies = iter(self.proxies)
-                    stop_iteration = False
+                    # if not proxies:
+                    #     self._lprint('Нет доступных прокси. Ждем окончания потоков или закрытия программы')
+                    #     break
+                    # self.proxies = [dict(proxy) for proxy in proxies]
+                    # proxies = iter(self.proxies)
+                    # stop_iteration = False
 
-                if stop_iteration:
-                    continue
+                # if stop_iteration:
+                #     continue
 
-                try:
-                    proxy = next(proxies)
-                except StopIteration:
-                    stop_iteration = True
-                    continue
+                # try:
+                #     proxy = next(proxies)
+                # except StopIteration:
+                #     stop_iteration = True
+                #     continue
 
+                # self._print('Запуск парсинга с прокси', proxy)
+                proxy = dict(proxy)
                 self._print('Запуск парсинга с прокси', proxy)
                 self.get_workers().add_task(self.start_parse_all_documents, (proxy,))
 
@@ -316,7 +326,8 @@ class Parser:
             timer = monotonic()
             while monotonic() - timer < 3:
                 sleep(0.1)
-        self.proxies.remove(proxy)
+        # self.proxies.remove(proxy)
+        release_proxies([f"'{proxy['id']}'"])
 
     # Берет из базы и парсит один непарсенный документ
     def start_parse_document(self, proxy=None, query=None):
@@ -337,7 +348,7 @@ class Parser:
         if document_obj is None:
             return False
 
-        return self.parse_one_document(document_obj, proxy)
+        return self.parse_one_document(dict(document_obj), proxy)
 
     # Парсит одну страницу документа
     def parse_one_document(self, document_obj, proxy=None):
@@ -353,8 +364,8 @@ class Parser:
                 proxies = {'socks5': s}
 
         try:
-            document_obj = dict(document_obj)
             self._print(document_obj['number'], 'Парсинг документа', document_obj['url'])
+
             filepath = os.path.join('.', 'media', self.name, str(document_obj['number']))
             filename = os.path.join(filepath, 'page.html')
             url = document_obj['url']
@@ -372,17 +383,19 @@ class Parser:
                         r = session.get(url, proxies=proxies, timeout=10)
                     except (requests.exceptions.ProxyError, requests.exceptions.ConnectTimeout) as err:
                         self._print(document_obj['number'], 'Ошибка прокси', str(err), type(err))
+                        err = str(err).replace("'", '"')
                         with self.get_workers().lock:
+
                             DB().executeone(f"UPDATE interface_proxies SET is_working = FALSE, "
-                                            f"status = '{'Ошибка прокси ' + str(err)}'"
+                                            f"status = '{'Ошибка прокси ' + err[200:]}'"
                                             f"WHERE id = '{proxy['id']}'")
                         return False
 
                     if r.status_code != 200:
                         self._lprint(document_obj['number'], 'parse_orders', r.status_code, r.reason, url)
                         return False
-                        existence = True
-                        break
+                        # existence = True
+                        # break
                     text = r.text
                     page_content = r.content
 
@@ -425,14 +438,14 @@ class Parser:
                     self._print(document_obj['number'], 'sleep')
                     sleep(3)
             else:
-                self._print(document_obj['number'], 'Парсим локальный файл')  # TODO: Временное решение
+                self._print(document_obj['number'], 'Парсим локальный файл')  # TODO: Для отладки
                 with open(filename, 'rb') as f:
                     page_content = f.read()
 
             if not existence:
                 with self.get_workers().lock:
                     DB().executeone(f"UPDATE {self.dbdocument} SET document_exists = FALSE WHERE id = '{document_obj['id']}'")
-
+                return True
             else:
                 with self.get_workers().lock:
                     DB().executeone(
@@ -651,17 +664,45 @@ def release_proxies(ids_list=None):
     if ids_list:
         ids = ', '.join(ids_list)
         DB().executeone(f'UPDATE interface_proxies SET in_use = FALSE WHERE id IN ({ids})')
+        print("Прокси", ids_list, "освобождены")
     else:
         DB().executeone(f'UPDATE interface_proxies SET in_use = FALSE')
+        print("Все прокси освобождены")
+
+
+def load_proxies_to_db_from_file(filename=None):
+    filename = filename or 'proxy_http_ip.txt'
+    if os.path.exists(filename):
+        with open(filename, 'r') as f:
+            proxies = f.readlines()
+        values = []
+        for proxy in proxies:
+            # match = re.match(r'(.*)(?P<value>(?P<day>\d{2})\.(?P<month>\d{2})\.(?P<year>\d{4}))(.*)', proxy)
+            match = re.match(r'(?P<scheme>https*://)(?P<host>\d+\.\d+\.\d+\.\d+):(?P<port>\d+)', proxy)
+            g = match.groupdict()
+            values.append(
+                f"('{g['scheme']}', '{g['host']}', '{g['port']}', FALSE, TRUE, FALSE)"
+            )
+            print(match.groupdict())
+        if values:
+            q = "INSERT INTO interface_proxies (scheme, host, port, is_banned, is_working, in_use) VALUES "
+            q += ', '.join(values)
+            print(q)
+            DB().executeone(q)
+        else:
+            print('Не получены значения')
+    else:
+        print('Файл не найден')
 
 
 if __name__ == '__main__':
-    p = Parser(REGISTERS_URL, 'registers')
+    pass
+    # p = Parser(REGISTERS_URL, 'registers')
     # p = Parser(URL1, 'orders')
     # p.get_orders()
     # p.check_new_orders()
     # p.start_parse_one_order()
-    p.start_parse_all_orders()
+    # p.start_parse_all_orders()
     #
     # # p.orders_urls = load_data_from_file(p.name + '.json')
     # # for url_obj in p.orders_urls:

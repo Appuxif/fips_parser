@@ -5,7 +5,7 @@ from registers.models_base import Document as RegisterDocument
 
 # Объект прокси
 class Proxies(models.Model):
-    scheme = models.CharField(max_length=10)
+    scheme = models.CharField(max_length=10, default='http://')
     user = models.CharField(max_length=100, null=True)
     password = models.CharField(max_length=100, null=True)
     host = models.CharField(max_length=100)

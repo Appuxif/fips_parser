@@ -18,7 +18,9 @@
   {% for fieldset in inline_admin_form %}
     {% include "admin/includes/fieldset.html" %}
   {% endfor %}
-    <a href="{{ inline_admin_form.absolute_url }}"><img src="{{ inline_admin_form.absolute_url }}" alt="file" width="300px"></a>
+{# Добавлено отображение изображения #}
+    <a href="{{ inline_admin_form.original.link }}"><img src="{{ inline_admin_form.original.link }}" alt="file" width="150px"></a>
+
   {% if inline_admin_form.needs_explicit_pk_field %}{{ inline_admin_form.pk_field.field }}{% endif %}
   {% if inline_admin_form.fk_field %}{{ inline_admin_form.fk_field.field }}{% endif %}
 </div>{% endfor %}
