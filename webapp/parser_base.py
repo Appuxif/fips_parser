@@ -563,7 +563,7 @@ def parse_main_info(page, document, document_info, document_parse, service_items
                 line = b.text.split()
                 number = line[0]
                 parsed_service_items.append(number)
-                text = ' '.join(line[1:])
+                text = ' '.join(line[1:]).replace("'", '"')
                 # print(number, text)
                 if number not in service_items:
                     serviceitem_values.append(f"('{document['id']}', {{0}}, '{number}', '{text}')")
