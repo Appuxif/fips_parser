@@ -194,3 +194,6 @@ if __name__ == '__main__':
     # p.start_parse_one_document()
     # p.start_parse_all_documents()
     # p.parse_all_documents_in_threads()
+
+# python -c "from orders_parser import *; release_proxies(); p = RegistersParser(REGISTERS_URL, 'registers'); p.parse_all_documents_in_threads(50)"
+# python -c "from orders_parser import *; p = OrdersParser(ORDERS_URL, 'orders'); p.parse_all_documents_in_threads(50)"

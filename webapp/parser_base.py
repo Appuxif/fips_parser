@@ -283,13 +283,14 @@ class Parser:
                         proxy = DB().fetchone(f"SELECT * FROM interface_proxies "
                                               f"WHERE is_banned = FALSE AND is_working = TRUE AND in_use = FALSE "
                                               f"LIMIT 1")
-                        if proxy is None:
-                            self._lprint('Нет доступных прокси. Ждем окончания потоков или закрытия программы')
-                            break
+                    if proxy is None:
+                        self._lprint('Нет доступных прокси. Ждем окончания потоков или закрытия программы')
+                        break
                         # in_use = [f"'{p['id']}'" for p in proxies]
                         in_use = [f"'{proxy['id']}'"]
                         # proxies_in_use.extend(in_use)
-                        use_proxies(in_use)
+                        with self.get_workers().lock:
+                            use_proxies(in_use)
                     proxies_in_use.append(in_use)
 
                     # if not proxies:
