@@ -20,7 +20,7 @@ class Leaf(models.Model):
 class Document(models.Model):
     leaf = models.ForeignKey(Leaf, on_delete=models.CASCADE)  # ID листа, в состав которого входил документ
 
-    number = models.IntegerField('Номер документа', unique=True)  # Идентификатор документа в реестре в виде 2013742400
+    number = models.CharField('Номер документа', max_length=255, unique=True)  # Идентификатор документа в реестре в виде 2013742400
     url = models.URLField('Ссылка', max_length=200)  # Ссылка на документ
     document_exists = models.BooleanField('Наличие документа', default=True)  # False - если документа нет в реестре
     document_parsed = models.BooleanField('Документ спарсен', default=False)  # False - если документ не был спарсен
@@ -54,9 +54,9 @@ class DocumentParse(models.Model):
     patent_atty = models.CharField('Патентный поверенный', max_length=200, null=True)
     color = models.CharField('Цветовое сочетание', max_length=5000, null=True)
 
-    order_number = models.IntegerField('Номер заявки', null=True)  # Номер документа в реестре
+    order_number = models.CharField('Номер заявки', max_length=255, null=True)  # Номер документа в реестре
     first_order_number = models.CharField('Номер первой заявки', max_length=255, null=True)  # Номер первой заявки
-    order_register_number = models.IntegerField('Номер регистрации', null=True)  # Номер документа в реестре
+    order_register_number = models.CharField('Номер регистрации', max_length=255, null=True)  # Номер документа в реестре
     first_order_country_code = models.CharField('Код страны подачи первой заявки', max_length=10, null=True)  # Код страны подачи первой заявки
     volumetric = models.CharField('Объемный знак', max_length=50, null=True)  # Объемный знак
     unprotected = models.CharField('Неохраняемые элементы товарного знака', max_length=10000, null=True)  # Неохраняемые элементы товарного знака
