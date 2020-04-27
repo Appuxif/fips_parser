@@ -227,37 +227,37 @@ def parse_izvs(document, start_izvs):
                     izvs_list[izv_i]['date_changes'] = f"'{date_changes}'" if date_changes else 'NULL'
                 # (732) Правообладатель
                 elif number == "732":
-                    izvs_list[izv_i]['copyright_holder'] = f"'{value}'"
+                    izvs_list[izv_i]['copyright_holder'] = f"'{value}'" if value else 'NULL'
                 # (750) Адрес для переписки
                 elif number == "750":
-                    izvs_list[izv_i]['address'] = f"'{value}'"
+                    izvs_list[izv_i]['address'] = f"'{value}'" if value else 'NULL'
                 # (770) Прежний правообладатель
                 elif number == "770":
-                    izvs_list[izv_i]['last_copyright_holder'] = f"'{value}'"
+                    izvs_list[izv_i]['last_copyright_holder'] = f"'{value}'" if value else 'NULL'
                 # (771) Прежнее наименование/имя правообладателя
                 elif number == "771":
-                    izvs_list[izv_i]['last_copyright_holder_name'] = f"'{value}'"
+                    izvs_list[izv_i]['last_copyright_holder_name'] = f"'{value}'" if value else 'NULL'
                 # (791) Лицензиат:
                 elif number == "791":
-                    izvs_list[izv_i]['licensee'] = f"'{value}'"
+                    izvs_list[izv_i]['licensee'] = f"'{value}'" if value else 'NULL'
                 # (793) Указание условий договора:
                 elif number == "793":
-                    izvs_list[izv_i]['contract_terms'] = f"'{value}'"
+                    izvs_list[izv_i]['contract_terms'] = f"'{value}'" if value else 'NULL'
                 # Сублицензиат
                 elif 'Сублицензиат' in sib_text:
-                    izvs_list[izv_i]['sublicensee'] = f"'{value}'"
+                    izvs_list[izv_i]['sublicensee'] = f"'{value}'" if value else 'NULL'
                 # Вид договора
                 elif 'Вид договора' in sib_text:
-                    izvs_list[izv_i]['contract_type'] = f"'{value}'"
+                    izvs_list[izv_i]['contract_type'] = f"'{value}'" if value else 'NULL'
                 # Лицо, передающее исключительное право
                 elif 'Лицо, передающее' in sib_text:
-                    izvs_list[izv_i]['transferor'] = f"'{value}'"
+                    izvs_list[izv_i]['transferor'] = f"'{value}'" if value else 'NULL'
                 # Лицо, передающее исключительное право
                 elif 'Лицо, предоставляющее право использования' in sib_text:
-                    izvs_list[izv_i]['grantor'] = f"'{value}'"
+                    izvs_list[izv_i]['grantor'] = f"'{value}'" if value else 'NULL'
                 # Лицо, передающее исключительное право
                 elif 'Лицо, которому предоставлено право использования' in sib_text:
-                    izvs_list[izv_i]['granted'] = f"'{value}'"
+                    izvs_list[izv_i]['granted'] = f"'{value}'" if value else 'NULL'
                 # # Дата и номер государственной регистрации договора
                 # elif 'Дата и номер' in sib_text:
                 #     izvs_list[izv_i]['date_number_changes'] = f"'{value}'"
