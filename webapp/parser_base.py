@@ -507,27 +507,27 @@ def download_file(session, proxies, a, document, self_name):
 
 
 numbers_fields_values_dict = {
-    '111': 'order_register_number',
-    '210': 'order_number',
-    '310': 'first_order_number',
-    '330': 'first_order_country_code',
-    '526': 'unprotected',
-    '554': 'volumetric',
-    '550': 'sign_char',
-    '591': 'color',
-    '731': 'applicant',
-    '732': 'copyright_holder',
-    '740': 'patent_atty',
-    '750': 'address'
+    '111': 'order_register_number',  # (111) Номер регистрации
+    '210': 'order_number',  # (210) Номер заявки
+    '310': 'first_order_number',  # (310) Номер первой заявки
+    '330': 'first_order_country_code',  # (330) Код страны подачи первой заявки
+    '526': 'unprotected',  # (526) Неохраняемые элементы товарного знака
+    '554': 'volumetric',  # (554) Объемный знак
+    '550': 'sign_char',  # (550) Указание, относящееся к виду знака, и его характеристики
+    '591': 'color',  # (591) Указание цвета или цветового сочетания
+    '731': 'applicant',  # (731) Заявитель
+    '732': 'copyright_holder',  # (732) Правообладатель
+    '740': 'patent_atty',  # (740) Патентный поверенный (полное имя, регистрационный номер, местонахождение)
+    '750': 'address'  # (750) Адрес для переписки
 }
 
 numbers_fields_dates_dict = {
-    '151': 'date_gos_reg',
-    '181': 'date_exclusive',
-    '220': 'date_created',
-    '320': 'first_order_date',
-    '450': 'date_publish',
-    '580': 'date_changes'
+    '151': 'date_gos_reg',  # (151) Дата государственной регистрации
+    '181': 'date_exclusive',  # (181) Дата истечения срока действия исключительного права
+    '220': 'date_created',  # (220) Дата подачи заявки
+    '320': 'first_order_date',  # (320) Дата подачи заявки
+    '450': 'date_publish',  # (450) Дата публикации
+    '580': 'date_changes'  # (580) Дата внесения записи в Государственный реестр:
 }
 
 
@@ -547,54 +547,14 @@ def parse_main_info(page, document, document_info, document_parse, service_items
     for child in all_p:
         child_text = getattr(child, 'text', '')
         number, name, value = regex_string(child_text) or ("", "", "")
-        # print(number, name, value)
+
         if number in numbers_fields_values_dict:
+            value = value.replace("'", '"')
             document_parse[numbers_fields_values_dict[number]] = f"'{value}'" if value else 'NULL'
 
         elif number in numbers_fields_dates_dict:
             date = get_date_from_string(value)
             document_parse[numbers_fields_dates_dict[number]] = f"'{date}'" if date else 'NULL'
-
-        # (111) Номер регистрации
-        # if number == '111':
-        #     document_parse['order_register_number'] = f"'{value}'" if value else 'NULL'
-
-        # (151) Дата государственной регистрации
-        # elif number == '151':
-        #     date_gos_reg = get_date_from_string(value)
-        #     document_parse['date_gos_reg'] = f"'{date_gos_reg}'" if date_gos_reg else 'NULL'
-
-        # (181) Дата истечения срока действия исключительного права
-        # elif number == '181':
-        #     date_exclusive = get_date_from_string(value)
-        #     document_parse['date_exclusive'] = f"'{date_exclusive}'" if date_exclusive else 'NULL'
-
-        # (210) Номер заявки
-        # elif number == '210':
-        #     document_parse['order_number'] = f"'{value}'" if value else 'NULL'
-
-        # (220) Дата подачи заявки
-        # elif number == '220':
-        #     date_created = get_date_from_string(value)
-        #     document_parse['date_created'] = f"'{date_created}'" if date_created else 'NULL'
-
-        # (310) Номер первой заявки
-        # elif number == '310':
-        #     document_parse['first_order_number'] = f"'{value}'" if value else 'NULL'
-
-        # (320) Дата подачи заявки
-        # elif number == '320':
-        #     first_order_date = get_date_from_string(value)
-        #     document_parse['first_order_date'] = f"'{first_order_date}'" if first_order_date else 'NULL'
-
-        # (330) Код страны подачи первой заявки
-        # elif number == '330':
-        #     document_parse['first_order_country_code'] = f"'{value}'" if value else 'NULL'
-
-        # (450) Дата публикации
-        # elif number == '450':
-        #     date_publish = get_date_from_string(value)
-        #     document_parse['date_publish'] = f"'{date_publish}'" if date_publish else 'NULL'
 
         # (511) Классы МКТУ и перечень товаров и/или услуг:
         elif number == '511':
@@ -610,10 +570,6 @@ def parse_main_info(page, document, document_info, document_parse, service_items
             if parsed_service_items:
                 document_parse['service_items'] = f"'{', '.join(parsed_service_items)}'"
 
-        # (526) Неохраняемые элементы товарного знака
-        # elif number == '526':
-        #     document_parse['unprotected'] = f"'{value}'" if value else 'NULL'
-
         # (540) Изображение заявляемого обозначения
         elif number == '540':
             a = child.find('a')
@@ -625,39 +581,6 @@ def parse_main_info(page, document, document_info, document_parse, service_items
                 documentfile_values.append(
                     f"('{document['id']}', {{0}}, 'image', '{direct_url}', '{link}')"
                 )
-
-        # (554) Объемный знак
-        # elif number == '554':
-        #     document_parse['volumetric'] = f"'{value}'" if value else 'NULL'
-
-        # (550) Указание, относящееся к виду знака, и его характеристики
-        # elif number == '550':
-        #     document_parse['sign_char'] = f"'{value}'" if value else 'NULL'
-
-        # (580) Дата внесения записи в Государственный реестр:
-        # elif number == '580':
-        #     date_changes = get_date_from_string(value)
-        #     document_parse['date_changes'] = f"'{date_changes}'" if date_changes else 'NULL'
-
-        # (591) Указание цвета или цветового сочетания
-        # elif number == '591':
-        #     document_parse['color'] = f"'{value}'" if value else 'NULL'
-
-        # (731) Заявитель
-        # elif number == '731':
-        #     document_parse['applicant'] = f"'{value}'" if value else 'NULL'
-
-        # (732) Правообладатель
-        # elif number == '732':
-        #     document_parse['copyright_holder'] = f"'{value}'" if value else 'NULL'
-
-        # (740) Патентный поверенный (полное имя, регистрационный номер, местонахождение)
-        # elif number == '740':
-        #     document_parse['patent_atty'] = f"'{value}'" if value else 'NULL'
-
-        # (750) Адрес для переписки
-        # elif number == '750':
-        #     document_parse['address'] = f"'{value}'" if value else 'NULL'
 
         # Сохраняем неучтенные объекты
         else:
