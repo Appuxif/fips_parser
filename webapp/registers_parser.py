@@ -32,7 +32,7 @@ class RegistersParser(Parser):
                     f"SELECT id, izv_type, date_publish FROM {self.dbdocument_izv} "
                     f"WHERE document_parse_id = '{document_parse['id']}'")
                 izv_items_list = DB().fetchall(
-                    f"SELECT id, key, value FROM {self.dbdocument_izvitem} "
+                    f"SELECT id, `key`, value FROM {self.dbdocument_izvitem} "
                     f"WHERE document_id = '{document['id']}'")
                 izv_service_items = DB().fetchall(
                     f"SELECT id, number, text FROM {self.dbdocument_izvserviceitem} "
@@ -116,7 +116,7 @@ class RegistersParser(Parser):
         if documentizvitem_values:
             queries.append(
                 f"INSERT INTO {self.dbdocument_izvitem} " +
-                f"(document_id, document_izv_id, full_text, key, value, date) " +
+                f"(document_id, document_izv_id, full_text, `key`, value, date) " +
                 'VALUES ' + ', '.join(documentizvitem_values)
             )
 
@@ -288,4 +288,4 @@ if __name__ == '__main__':
     # p.start_parse_all_documents()
     p.parse_all_documents_in_threads(5)
 
-# python -s 'from register_parser import RegistersParser; p = RegistersParser(REGISTERS_URL, 'registers'); p.parse_all_documents_in_threads(5)'
+# python -c "from registers_parser import *; release_proxies(); p = RegistersParser(REGISTERS_URL, 'registers'); p.parse_all_documents_in_threads(50)"
