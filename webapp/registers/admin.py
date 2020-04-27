@@ -19,7 +19,7 @@ from interface.change_message_utils import construct_change_message
 class DocumentParseInLine(admin.StackedInline):
     model = DocumentParse
     extra = 0
-    fields = ('status', 'order_type', 'applicant', 'address', 'copyright_holder', 'date_refreshed')
+    fields = ('status', 'order_type', 'applicant', 'address', 'copyright_holder', 'patent_atty', 'date_refreshed')
     readonly_fields = fields
 
 

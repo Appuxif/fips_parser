@@ -20,7 +20,7 @@ admin.site.site_header = 'Администрирование'
 class DocumentParseInLine(admin.StackedInline):
     model = DocumentParse
     extra = 0
-    fields = ('status', 'order_type', 'applicant', 'address', 'copyright_holder', 'date_refreshed')
+    fields = ('status', 'order_type', 'applicant', 'address', 'copyright_holder', 'patent_atty', 'date_refreshed')
     readonly_fields = fields
 
 
