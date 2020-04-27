@@ -270,7 +270,7 @@ class Parser:
         proxies_in_use = []
         try:
             while True:
-                if self.get_workers(number)._queue.qsize() >= number:
+                if self.get_workers(number)._queue.qsize() > 0:
                     sleep(1)
                     continue
 

@@ -286,6 +286,6 @@ if __name__ == '__main__':
     # p.get_documents_list()
     # p.start_parse_document()
     # p.start_parse_all_documents()
-    p.parse_all_documents_in_threads(1)
+    p.parse_all_documents_in_threads(5)
 
 # python -s 'from register_parser import RegistersParser; p = RegistersParser(REGISTERS_URL, 'registers'); p.parse_all_documents_in_threads(5)'
