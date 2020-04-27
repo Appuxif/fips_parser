@@ -38,12 +38,19 @@ class RegisterContactPersonInLine(admin.StackedInline):
     view_on_site = False
 
 
-class RegisterContactInLine(admin.StackedInline):
-    model = RegisterContact
+# class RegisterContactInLine(admin.StackedInline):
+#     model = RegisterContact
+#     extra = 0
+#     fields = ('company_name', 'company_address')
+#     readonly_fields = ('register', )
+#     view_on_site = False
+
+
+class DocumentIzvInLine(admin.StackedInline):
+    model = DocumentIzv
+    fields = ('date_publish', )
+    readonly_fields = fields
     extra = 0
-    fields = ('company_name', 'company_address')
-    readonly_fields = ('register', )
-    view_on_site = False
 
 
 @admin.register(Document)
@@ -57,7 +64,9 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
 
     # ordering = ('documentparse__date_refreshed', )
     ordering = []
-    inlines = [DocumentParseInLine, DocumentFileInLine, RegisterContactInLine, RegisterContactPersonInLine]
+    inlines = [DocumentParseInLine, DocumentFileInLine, DocumentIzvInLine,
+               # RegisterContactInLine, RegisterContactPersonInLine]
+               RegisterContactPersonInLine]
 
     fieldsets = (
         (None, {'fields': (('leaf', 'number'),)}),
@@ -143,13 +152,6 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
 class ServiceItemInLine(admin.StackedInline):
     model = ServiceItem
     fields = ('text', )
-    readonly_fields = fields
-    extra = 0
-
-
-class DocumentIzvInLine(admin.StackedInline):
-    model = DocumentIzv
-    fields = ('date_publish', )
     readonly_fields = fields
     extra = 0
 

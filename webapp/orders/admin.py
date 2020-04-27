@@ -39,12 +39,19 @@ class OrderContactPersonInLine(admin.StackedInline):
     view_on_site = False
 
 
-class OrderContactInLine(admin.StackedInline):
-    model = OrderContact
+# class OrderContactInLine(admin.StackedInline):
+#     model = OrderContact
+#     extra = 0
+#     fields = ('company_name', 'company_address')
+#     readonly_fields = ('order', )
+#     view_on_site = False
+
+
+class WorkStateInLine(admin.TabularInline):
+    model = WorkState
+    fields = ['income', 'outcome']
+    readonly_fields = fields
     extra = 0
-    fields = ('company_name', 'company_address')
-    readonly_fields = ('order', )
-    view_on_site = False
 
 
 @admin.register(Document)
@@ -58,7 +65,9 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
 
     # ordering = ('documentparse__date_refreshed', )
     ordering = []
-    inlines = [DocumentParseInLine, DocumentFileInLine, OrderContactInLine, OrderContactPersonInLine]
+    inlines = [DocumentParseInLine, DocumentFileInLine, WorkStateInLine,
+               # OrderContactInLine, OrderContactPersonInLine]
+               OrderContactPersonInLine]
 
     fieldsets = (
         (None, {'fields': (('leaf', 'number'),)}),
@@ -323,5 +332,5 @@ def process_buttons(self, request, list_display, ordering, document_parse_dict):
             elif '-' + value in ordering:
                 ordering.remove('-' + value)
     list_display_ordered = sorted(list_display_ordered, key=lambda x: x[1])
-    print(list_display_ordered)
+    # print(list_display_ordered)
     list_display.extend([x[0] for x in list_display_ordered])

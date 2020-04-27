@@ -92,7 +92,7 @@
     border: 1px solid #ddd;
     background-clip: padding-box;
     cursor: pointer;
-    width: 130px;
+    width: 150px;
     height: 30px;
     /*margin: 0 auto;*/
     margin-bottom: 5px;
@@ -111,7 +111,7 @@
 }
 
 .list_display_button label input:checked + span {
-    width: 130px;
+    width: 150px;
     line-height: 30px;
     border: 1px solid #417690;
     border-radius: 3px;
