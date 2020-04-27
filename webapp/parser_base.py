@@ -364,7 +364,7 @@ class Parser:
                 proxies = {'socks5': s}
 
         try:
-            self._print(document_obj['number'], 'Парсинг документа', document_obj['url'])
+            self._print(document_obj['number'], 'Парсинг документа', document_obj['url'], proxies)
 
             filepath = os.path.join('.', 'media', self.name, str(document_obj['number']))
             filename = os.path.join(filepath, 'page.html')
