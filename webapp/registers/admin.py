@@ -53,7 +53,7 @@ class DocumentFileInLine(admin.StackedInline):
 #     view_on_site = False
 
 class CompanyInline(admin.StackedInline):
-    model = Company.order.through
+    model = Company.register.through
     extra = 0
     view_on_site = False
 
