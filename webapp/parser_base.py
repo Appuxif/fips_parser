@@ -595,7 +595,7 @@ def parse_main_info(page, document, document_info, document_parse, service_items
         number, name, value = regex_string(child_text) or ("", "", "")
 
         if number in numbers_fields_values_dict:
-            value = re.sub('[\'{}]', '', value)
+            value = re.sub('[-\'{}]', '', value)
             # value = value.replace("'", '"')
             document_parse[numbers_fields_values_dict[number]] = f"'{value}'" if value else 'NULL'
 
@@ -610,7 +610,8 @@ def parse_main_info(page, document, document_info, document_parse, service_items
                 line = b.text.split()
                 number = line[0]
                 parsed_service_items.append(number)
-                text = ' '.join(line[1:]).replace("'", '"')
+                text = ' '.join(line[1:])
+                text = re.sub('[-\'{}]', '', text)
                 # print(number, text)
                 if number not in service_items:
                     serviceitem_values.append(f"('{document['id']}', {{0}}, '{number}', '{text}')")

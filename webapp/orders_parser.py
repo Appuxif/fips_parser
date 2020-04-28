@@ -197,12 +197,12 @@ def start_parse_all_documents():
 
 
 if __name__ == '__main__':
-    start_parse_all_documents()
-    # release_proxies()
-    # p = OrdersParser(ORDERS_URL, 'orders')
+    # start_parse_all_documents()
+    release_proxies()
+    p = OrdersParser(ORDERS_URL, 'orders')
     # p.check_new_documents()
     # p.get_documents_list()
-    # p.start_parse_one_document()
+    p.start_parse_document()
     # p.start_parse_all_documents()
     # p.parse_all_documents_in_threads()
 
