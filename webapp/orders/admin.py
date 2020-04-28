@@ -12,7 +12,7 @@ from .models import WorkState, WorkStateRow
 from .forms import LeafSearchForm, DocumentSearchForm, fields_dict
 from accounts.models import UserQuery
 # from interface.models import OrderContact, OrderContactPerson
-from interface.models import ContactPerson, Company, DocumentCompanyRel
+from interface.models import ContactPerson, Company, OrderCompanyRel
 from interface.change_message_utils import construct_change_message
 
 admin.site.site_header = 'Администрирование'
@@ -48,7 +48,7 @@ class DocumentFileInLine(admin.StackedInline):
 
 class CompanyInline(admin.StackedInline):
     # model = Company.order.through
-    model = DocumentCompanyRel
+    model = OrderCompanyRel
     extra = 0
     # readonly_fields = ('document', )
     view_on_site = False

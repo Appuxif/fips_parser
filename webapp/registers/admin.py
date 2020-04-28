@@ -13,7 +13,7 @@ from .models import IzvServiceItem, DocumentIzvItem, DocumentIzv
 from .forms import LeafSearchForm, DocumentSearchForm, DocumentParseSearchForm, fields_dict
 from accounts.models import UserQuery
 # from interface.models import RegisterContact, RegisterContactPerson
-from interface.models import ContactPerson, Company, DocumentCompanyRel
+from interface.models import ContactPerson, Company, RegisterCompanyRel
 from interface.change_message_utils import construct_change_message
 
 
@@ -60,7 +60,7 @@ class DocumentFileInLine(admin.StackedInline):
 
 class CompanyInline(admin.StackedInline):
     # model = Company.register.through
-    model = DocumentCompanyRel
+    model = RegisterCompanyRel
     extra = 0
     # readonly_fields = ('document',)
     view_on_site = False

@@ -4,7 +4,7 @@ from django.contrib import admin
 # Все контакты отображаются непосредственно в документе
 
 # from .models import OrderContact, OrderContactPerson, RegisterContact, RegisterContactPerson, ContactPerson, Company
-from .models import ContactPerson, Company, DocumentCompanyRel
+from .models import ContactPerson, Company, RegisterCompanyRel, OrderCompanyRel
 from orders.admin import CompanyInline as OrderCompanyInline
 from registers.admin import CompanyInline as RegisterCompanyInline
 
