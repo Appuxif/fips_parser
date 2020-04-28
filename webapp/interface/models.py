@@ -128,7 +128,7 @@ class ContactPerson(models.Model):
             models.Index(fields=['id']),
             models.Index(fields=['email']),
             models.Index(fields=['full_name']),
-            models.Index(fields=['company_name']),
+            # models.Index(fields=['company_name']),
         ]
 
 
