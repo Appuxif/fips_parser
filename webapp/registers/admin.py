@@ -12,7 +12,7 @@ from .models_base import Leaf, Document, DocumentParse, DocumentFile, ServiceIte
 from .models import IzvServiceItem, DocumentIzvItem, DocumentIzv
 from .forms import LeafSearchForm, DocumentSearchForm, DocumentParseSearchForm, fields_dict
 from accounts.models import UserQuery
-from interface.models import RegisterContact, RegisterContactPerson
+from interface.models import RegisterContact, RegisterContactPerson, ContactPerson
 from interface.change_message_utils import construct_change_message
 
 
@@ -37,6 +37,12 @@ class RegisterContactPersonInLine(admin.StackedInline):
     readonly_fields = ('document', )
     view_on_site = False
 
+
+class ContactPersonInline(admin.StackedInline):
+    model = ContactPerson
+    extra = 0
+    readonly_fields = ('order', 'register')
+    view_on_site = False
 
 # class RegisterContactInLine(admin.StackedInline):
 #     model = RegisterContact
@@ -66,7 +72,7 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
     ordering = []
     inlines = [DocumentParseInLine, DocumentFileInLine, DocumentIzvInLine,
                # RegisterContactInLine, RegisterContactPersonInLine]
-               RegisterContactPersonInLine]
+               RegisterContactPersonInLine, ContactPersonInline]  # TODO: Удалить RegisterContactPersonInLine
 
     fieldsets = (
         (None, {'fields': (('leaf', 'number'),)}),

@@ -57,6 +57,61 @@ class RegisterContact(models.Model):
         verbose_name_plural = 'Контакты регистраций'
 
 
+class ContactPerson(models.Model):
+    order = models.ManyToManyField(OrderDocument, on_delete=models.CASCADE,
+                                   related_query_name='person', null=True, blank=True)
+    register = models.ManyToManyField(RegisterDocument, on_delete=models.CASCADE,
+                                      related_query_name='person', null=True, blank=True)
+    category = models.CharField(max_length=50, default='DEFAULT')  # DEFAULT или REPRESENTATIVE (поверенный)
+
+    email = models.CharField('Электронная почта', max_length=255, null=True, blank=True)  #
+    full_name = models.CharField('Полное имя', max_length=255, null=True, blank=True)  #
+    first_name = models.CharField('Имя', max_length=50, null=True, blank=True)
+    middle_name = models.CharField('Отчество', max_length=50, null=True, blank=True)
+    last_name = models.CharField('Фамилия', max_length=50, null=True, blank=True)
+    nick_name = models.CharField('Никнейм', max_length=50, null=True, blank=True)
+    gender = models.CharField('Пол', max_length=10, null=True, blank=True)
+    job_title = models.CharField('Должность', max_length=50, null=True, blank=True)
+
+    company_name = models.CharField('Наименование комании', max_length=100, null=True, blank=True)  # #
+    company_form = models.CharField(max_length=50, null=True, blank=True)  # ! # Организационная форма ООО
+    company_web = models.CharField(max_length=100, null=True, blank=True)
+
+    personal_web = models.CharField(max_length=150, null=True, blank=True)
+    office_address = models.CharField(max_length=100, null=True, blank=True)  # ! #
+    home_phone = models.CharField('Домашний телефон', max_length=25, null=True, blank=True)
+    office_phone = models.CharField('Оффисный телефон', max_length=25, null=True, blank=True)
+    mobile_phone = models.CharField('Мобильный телефон', max_length=25, null=True, blank=True)
+    messenger_id = models.CharField(max_length=25, null=True, blank=True)
+    messenger_type = models.CharField(max_length=25, null=True, blank=True)
+    fax = models.CharField(max_length=25, null=True, blank=True)
+    city = models.CharField('Город', max_length=50, null=True, blank=True)  # ! #
+    zip = models.IntegerField('Индекс', null=True, blank=True)  # ! #
+    area = models.CharField(max_length=50, null=True, blank=True)  # ! #
+    state = models.CharField(max_length=50, null=True, blank=True)  # ! #
+    country = models.CharField(max_length=50, null=True, blank=True)  # ! #
+
+    rep_reg_number = models.CharField(max_length=20, null=True, blank=True)
+    rep_correspondence_address = models.CharField(max_length=255, null=True, blank=True)  # ! #
+
+
+    def __str__(self):
+        return 'Person ' + str(self.id) + ' for order ' + str(self.document)
+
+    def get_absolute_url(self):
+        return f'/admin/interface/ordercontactperson/{self.id}/change/'
+
+    class Meta:
+        verbose_name = 'Представитель заявки'
+        verbose_name_plural = 'Представители заявок'
+        indexes = [
+            models.Index(fields=['id']),
+            models.Index(fields=['email']),
+            models.Index(fields=['full_name']),
+            models.Index(fields=['company_name']),
+        ]
+
+
 class OrderContactPerson(models.Model):
     document = models.ForeignKey(OrderDocument, on_delete=models.CASCADE, related_query_name='person')
     category = models.CharField(max_length=50, default='DEFAULT')  # DEFAULT или REPRESENTATIVE (поверенный)

@@ -11,7 +11,7 @@ from .models_base import Leaf, Document, DocumentParse, DocumentFile, ServiceIte
 from .models import WorkState, WorkStateRow
 from .forms import LeafSearchForm, DocumentSearchForm, fields_dict
 from accounts.models import UserQuery
-from interface.models import OrderContact, OrderContactPerson
+from interface.models import OrderContact, OrderContactPerson, ContactPerson
 from interface.change_message_utils import construct_change_message
 
 admin.site.site_header = 'Администрирование'
@@ -38,6 +38,12 @@ class OrderContactPersonInLine(admin.StackedInline):
     readonly_fields = ('document', )
     view_on_site = False
 
+
+class ContactPersonInline(admin.StackedInline):
+    model = ContactPerson
+    extra = 0
+    readonly_fields = ('order', 'register')
+    view_on_site = False
 
 # class OrderContactInLine(admin.StackedInline):
 #     model = OrderContact
@@ -67,7 +73,7 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
     ordering = []
     inlines = [DocumentParseInLine, DocumentFileInLine, WorkStateInLine,
                # OrderContactInLine, OrderContactPersonInLine]
-               OrderContactPersonInLine]
+               OrderContactPersonInLine, ContactPersonInline]  # TODO: Удалить OrderContactPersonInLine
 
     fieldsets = (
         (None, {'fields': (('leaf', 'number'),)}),
