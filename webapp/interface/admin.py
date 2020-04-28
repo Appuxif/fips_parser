@@ -49,6 +49,11 @@ class ContactPersonAdmin(admin.ModelAdmin):
     pass
 
 # TODO: Для отладки. Потом удалить
-@admin.register(DocumentCompanyRel)
-class DocumentCompanyRelAdmin(admin.ModelAdmin):
+@admin.register(OrderCompanyRel)
+class OrderCompanyRelAdmin(admin.ModelAdmin):
+    pass
+
+# TODO: Для отладки. Потом удалить
+@admin.register(RegisterCompanyRel)
+class RegisterCompanyRelAdmin(admin.ModelAdmin):
     pass
