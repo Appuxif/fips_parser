@@ -58,8 +58,8 @@ class RegisterContact(models.Model):
 
 
 class ContactPerson(models.Model):
-    order = models.ManyToManyField(OrderDocument, related_query_name='person', null=True, blank=True)
-    register = models.ManyToManyField(RegisterDocument, related_query_name='person', null=True, blank=True)
+    order = models.ManyToManyField(OrderDocument, related_query_name='person', blank=True)
+    register = models.ManyToManyField(RegisterDocument, related_query_name='person', blank=True)
     category = models.CharField(max_length=50, default='DEFAULT')  # DEFAULT или REPRESENTATIVE (поверенный)
 
     email = models.CharField('Электронная почта', max_length=255, null=True, blank=True)  #

@@ -38,11 +38,11 @@ class RegisterContactPersonInLine(admin.StackedInline):
     view_on_site = False
 
 
-class ContactPersonInline(admin.StackedInline):
-    model = ContactPerson
-    extra = 0
-    readonly_fields = ('order', 'register')
-    view_on_site = False
+# class ContactPersonInline(admin.StackedInline):
+#     model = ContactPerson
+#     extra = 0
+#     readonly_fields = ('order', 'register')
+#     view_on_site = False
 
 # class RegisterContactInLine(admin.StackedInline):
 #     model = RegisterContact
@@ -72,7 +72,8 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
     ordering = []
     inlines = [DocumentParseInLine, DocumentFileInLine, DocumentIzvInLine,
                # RegisterContactInLine, RegisterContactPersonInLine]
-               RegisterContactPersonInLine, ContactPersonInline]  # TODO: Удалить RegisterContactPersonInLine
+               # RegisterContactPersonInLine, ContactPersonInline]  # TODO: Удалить RegisterContactPersonInLine
+               RegisterContactPersonInLine]
 
     fieldsets = (
         (None, {'fields': (('leaf', 'number'),)}),
