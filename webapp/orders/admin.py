@@ -24,6 +24,9 @@ class DocumentParseInLine(admin.StackedInline):
     fields = ('status', 'order_type', 'applicant', 'address', 'copyright_holder', 'patent_atty', 'date_refreshed')
     readonly_fields = fields
 
+    def has_add_permission(self, request, obj):
+        return False
+
 
 class DocumentFileInLine(admin.StackedInline):
     model = DocumentFile
@@ -31,6 +34,9 @@ class DocumentFileInLine(admin.StackedInline):
     readonly_fields = fields
     extra = 0
     template = 'admin/edit_inline/stacked_file.html'
+
+    def has_add_permission(self, request, obj):
+        return False
 
 
 # class OrderContactPersonInLine(admin.StackedInline):
@@ -64,6 +70,9 @@ class WorkStateInLine(admin.TabularInline):
     fields = ['income', 'outcome']
     readonly_fields = fields
     extra = 0
+
+    def has_add_permission(self, request, obj):
+        return False
 
 
 @admin.register(Document)
@@ -200,6 +209,9 @@ class ServiceItemInLine(admin.TabularInline):
     readonly_fields = fields
     extra = 0
 
+    def has_add_permission(self, request, obj):
+        return False
+
 
 @admin.register(DocumentParse)
 class DocumentParseAdmin(admin.ModelAdmin):
@@ -236,6 +248,9 @@ class DocumentInLine(admin.StackedInline):
     fields = ('url', 'document_exists', 'document_parsed')
     readonly_fields = fields
     ordering = ('number', )
+
+    def has_add_permission(self, request, obj):
+        return False
 
 
 @admin.register(Leaf)

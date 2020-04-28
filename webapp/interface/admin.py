@@ -4,7 +4,7 @@ from django.contrib import admin
 # Все контакты отображаются непосредственно в документе
 
 # from .models import OrderContact, OrderContactPerson, RegisterContact, RegisterContactPerson, ContactPerson, Company
-from .models import ContactPerson, Company
+from .models import ContactPerson, Company, DocumentCompanyRel
 from orders.admin import CompanyInline as OrderCompanyInline
 from registers.admin import CompanyInline as RegisterCompanyInline
 
@@ -41,3 +41,14 @@ class ContactPersonInline(admin.StackedInline):
 class CompanyAdmin(admin.ModelAdmin):
     inlines = [ContactPersonInline, OrderCompanyInline, RegisterCompanyInline]
     exclude = ('order', 'register')
+
+
+# TODO: Для отладки. Потом удалить
+@admin.register(ContactPerson)
+class ContactPersonAdmin(admin.ModelAdmin):
+    pass
+
+# TODO: Для отладки. Потом удалить
+@admin.register(DocumentCompanyRel)
+class DocumentCompanyRelAdmin(admin.ModelAdmin):
+    pass
