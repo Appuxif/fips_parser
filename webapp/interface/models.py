@@ -65,8 +65,10 @@ class Company(models.Model):
     company_web = models.CharField(max_length=100, null=True, blank=True)
     company_form = models.CharField(max_length=50, null=True, blank=True)  # ! # Организационная форма ООО
 
-    order = models.ManyToManyField(OrderDocument, related_query_name='person', blank=True)
-    register = models.ManyToManyField(RegisterDocument, related_query_name='person', blank=True)
+    order = models.ManyToManyField(OrderDocument, related_query_name='person',
+                                   blank=True, through='DocumentCompanyRel')
+    register = models.ManyToManyField(RegisterDocument, related_query_name='person',
+                                      blank=True, through='DocumentCompanyRel')
 
     def __str__(self):
         return str(self.company_name)
@@ -77,6 +79,16 @@ class Company(models.Model):
     class Meta:
         verbose_name = 'Компания'
         verbose_name_plural = 'Компании'
+
+
+class DocumentCompanyRel(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    order = models.ForeignKey(OrderDocument, on_delete=models.CASCADE, null=True)
+    register = models.ForeignKey(RegisterDocument, on_delete=models.CASCADE, null=True)
+
+    class Meta:
+        verbose_name = 'Связь Документ-Компания'
+        verbose_name_plural = 'Связи Документ-Компания'
 
 
 class ContactPerson(models.Model):

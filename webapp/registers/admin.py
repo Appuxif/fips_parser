@@ -13,7 +13,7 @@ from .models import IzvServiceItem, DocumentIzvItem, DocumentIzv
 from .forms import LeafSearchForm, DocumentSearchForm, DocumentParseSearchForm, fields_dict
 from accounts.models import UserQuery
 # from interface.models import RegisterContact, RegisterContactPerson
-from interface.models import ContactPerson, Company
+from interface.models import ContactPerson, Company, DocumentCompanyRel
 from interface.change_message_utils import construct_change_message
 
 
@@ -53,9 +53,14 @@ class DocumentFileInLine(admin.StackedInline):
 #     view_on_site = False
 
 class CompanyInline(admin.StackedInline):
-    model = Company.register.through
+    # model = Company.register.through
+    model = DocumentCompanyRel
     extra = 0
+    # readonly_fields = ('document',)
     view_on_site = False
+
+    def has_add_permission(self, request, obj):
+        return False
 
 
 class DocumentIzvInLine(admin.StackedInline):

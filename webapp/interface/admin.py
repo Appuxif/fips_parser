@@ -5,6 +5,8 @@ from django.contrib import admin
 
 # from .models import OrderContact, OrderContactPerson, RegisterContact, RegisterContactPerson, ContactPerson, Company
 from .models import ContactPerson, Company
+from orders.admin import CompanyInline as OrderCompanyInline
+from registers.admin import CompanyInline as RegisterCompanyInline
 
 
 # @admin.register(OrderContact)
@@ -37,4 +39,5 @@ class ContactPersonInline(admin.StackedInline):
 # Отображение компании в БД
 @admin.register(Company)
 class CompanyAdmin(admin.ModelAdmin):
-    inlines = [ContactPersonInline]
+    inlines = [ContactPersonInline, OrderCompanyInline, RegisterCompanyInline]
+    exclude = ('order', 'register')
