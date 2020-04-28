@@ -31,10 +31,10 @@ from .models import ContactPerson, Company
 class ContactPersonInline(admin.StackedInline):
     model = ContactPerson
     extra = 0
-    exclude = ('company',)
     view_on_site = False
 
 
 # Отображение компании в БД
+@admin.register(Company)
 class CompanyAdmin(admin.ModelAdmin):
     inlines = [ContactPersonInline]
