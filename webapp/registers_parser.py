@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 from parser_base import *
+proxy = surnames = names = cities = regions = None
 
 
 class RegistersParser(Parser):
@@ -146,15 +147,14 @@ class RegistersParser(Parser):
         order_query += f"WHERE id = '{document['id']}'"
         queries.append(order_query)
 
+        # Получаем контакты из спарсенной информации
+        parse_contacts_from_documentparse(document_parse)
+
         # Сохраняем или обновляем парсинг документа
         with self.get_workers().lock:
-            # exists = DB().fetchone(f"SELECT id FROM {self.dbdocument_parse} "
-            #                        f"WHERE document_id = '{document['id']}' LIMIT 1")
-            # if exists is None:
             if document_parse.get('id') is None:
                 document_parse['id'] = f"'{DB().add_row(self.dbdocument_parse, document_parse)}'"
             else:
-                # document_parse['id'] = f"'{exists['id']}'"
                 DB().executeone(update_by_id_query(self.dbdocument_parse, document_parse))
 
         queries = list(map(lambda x: x.format(document_parse['id']), queries))
@@ -275,6 +275,11 @@ def parse_izvs(document, start_izvs):
 
 
 def start_parse_all_documents():
+    global surnames, names, cities, regions
+    surnames = get_surnames()
+    names = get_names()
+    cities = get_cities()
+    regions = get_regions()
     p = RegistersParser(REGISTERS_URL, 'registers')
     p.start_parse_all_documents()
 

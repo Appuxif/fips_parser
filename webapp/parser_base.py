@@ -28,8 +28,42 @@ proxy_list = ['http://52.15.172.134:7778']
 # with open('proxy.txt', 'r') as f:
 #     proxy_list = ['http://' + line.strip() for line in f.readlines()]
 # print(proxy_list)
-proxy = None
+proxy = surnames = names = cities = regions = None
 
+
+# Подготавливаем список фамилий, городов и регионов для парсинга
+def get_surnames(filename=None):
+    filename = filename or 'surnames.txt'
+    with open(filename, 'rb') as f:
+        s = f.read()
+    s = s.decode()
+    return ''.join(s.splitlines())
+
+
+def get_names():
+    return get_surnames('names.txt')
+
+
+def get_cities():
+    with open('cities.txt', 'rb') as f:
+        s = f.read()
+    s = s.decode().splitlines()
+    r = {}
+    for k in s:
+        k = k.split()
+        r[k[1]] = k[0]
+    return r
+
+
+def get_regions():
+    with open('regions.txt', 'rb') as f:
+        s = f.read()
+    s = s.decode().splitlines()
+    r = {}
+    for k in s:
+        k = k.split()
+        r[k[0]] = k[1]
+    return r
 
 # {'https': 'http://52.15.172.134:7778'}
 
@@ -187,9 +221,9 @@ class Parser:
                 if tag_a is None or number in existing_documents:
                     continue
 
-                if not number.isnumeric():
-                    self._print(leaf_obj['name'], number, 'not numeric')
-                    continue
+                # if not number.isnumeric():
+                #     self._print(leaf_obj['name'], number, 'not numeric')
+                #     continue
 
                 a_href = tag_a.get('href')
                 url = URL + a_href
@@ -650,8 +684,23 @@ def load_proxies_to_db_from_file(filename=None):
         print('Файл не найден')
 
 
-if __name__ == '__main__':
+def parse_contacts_from_documentparse(document_parse):
+    # Получаем наименование компании из поля document_parse['']
+
+    # Ищем компанию в БД
+
+    # Если компания найдена, то работаем с найденной
+    # Если компания не найдена, то создаем новую компанию в БД
+    # Если компания не спарсилась, запись все равно нужно создать в виде Company for document document_parse['number']
     pass
+
+
+
+if __name__ == '__main__':
+    print('get_surnames()\n', get_surnames())
+    print('get_names()\n', get_names())
+    print('get_cities()\n', get_cities())
+    print('get_regions()\n', get_regions())
     # p = Parser(REGISTERS_URL, 'registers')
     # p = Parser(URL1, 'orders')
     # p.get_orders()

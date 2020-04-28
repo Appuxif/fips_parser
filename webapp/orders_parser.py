@@ -1,4 +1,5 @@
 from parser_base import *
+proxy = surnames = names = cities = regions = None
 
 
 class OrdersParser(Parser):
@@ -83,6 +84,9 @@ class OrdersParser(Parser):
             order_query += ', order_done = TRUE '
         order_query += f"WHERE id = '{document['id']}'"
         queries.append(order_query)
+
+        # Получаем контакты из спарсенной информации
+        parse_contacts_from_documentparse(document_parse)
 
         # Сохраняем или обновляем парсинг документа
         with self.get_workers().lock:
@@ -182,6 +186,11 @@ def parse_workstate(page):
 
 
 def start_parse_all_documents():
+    global surnames, names, cities, regions
+    surnames = get_surnames()
+    names = get_names()
+    cities = get_cities()
+    regions = get_regions()
     p = OrdersParser(ORDERS_URL, 'orders')
     p.start_parse_all_documents()
 
@@ -195,5 +204,6 @@ if __name__ == '__main__':
     # p.start_parse_all_documents()
     # p.parse_all_documents_in_threads()
 
-# python -c "from orders_parser import *; release_proxies(); p = RegistersParser(REGISTERS_URL, 'registers'); p.parse_all_documents_in_threads(50)"
+# python -c "from orders_parser import *; p = OrdersParser(ORDERS_URL, 'orders'); p.get_documents_list()"
+# python -c "from orders_parser import *; release_proxies(); p = OrdersParser(ORDERS_URL, 'orders'); p.parse_all_documents_in_threads(50)"
 # python -c "from orders_parser import *; p = OrdersParser(ORDERS_URL, 'orders'); p.parse_all_documents_in_threads(50)"
