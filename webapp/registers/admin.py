@@ -12,7 +12,8 @@ from .models_base import Leaf, Document, DocumentParse, DocumentFile, ServiceIte
 from .models import IzvServiceItem, DocumentIzvItem, DocumentIzv
 from .forms import LeafSearchForm, DocumentSearchForm, DocumentParseSearchForm, fields_dict
 from accounts.models import UserQuery
-from interface.models import RegisterContact, RegisterContactPerson, ContactPerson
+# from interface.models import RegisterContact, RegisterContactPerson
+from interface.models import ContactPerson, Company
 from interface.change_message_utils import construct_change_message
 
 
@@ -31,11 +32,11 @@ class DocumentFileInLine(admin.StackedInline):
     template = 'admin/edit_inline/stacked_file.html'
 
 
-class RegisterContactPersonInLine(admin.StackedInline):
-    model = RegisterContactPerson
-    extra = 0
-    readonly_fields = ('document', )
-    view_on_site = False
+# class RegisterContactPersonInLine(admin.StackedInline):
+#     model = RegisterContactPerson
+#     extra = 0
+#     readonly_fields = ('document', )
+#     view_on_site = False
 
 
 # class ContactPersonInline(admin.StackedInline):
@@ -50,6 +51,11 @@ class RegisterContactPersonInLine(admin.StackedInline):
 #     fields = ('company_name', 'company_address')
 #     readonly_fields = ('register', )
 #     view_on_site = False
+
+class CompanyInline(admin.StackedInline):
+    model = Company.order.through
+    extra = 0
+    view_on_site = False
 
 
 class DocumentIzvInLine(admin.StackedInline):
@@ -73,7 +79,7 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
     inlines = [DocumentParseInLine, DocumentFileInLine, DocumentIzvInLine,
                # RegisterContactInLine, RegisterContactPersonInLine]
                # RegisterContactPersonInLine, ContactPersonInline]  # TODO: Удалить RegisterContactPersonInLine
-               RegisterContactPersonInLine]
+               CompanyInline]
 
     fieldsets = (
         (None, {'fields': (('leaf', 'number'),)}),

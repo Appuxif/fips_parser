@@ -11,7 +11,8 @@ from .models_base import Leaf, Document, DocumentParse, DocumentFile, ServiceIte
 from .models import WorkState, WorkStateRow
 from .forms import LeafSearchForm, DocumentSearchForm, fields_dict
 from accounts.models import UserQuery
-from interface.models import OrderContact, OrderContactPerson, ContactPerson
+# from interface.models import OrderContact, OrderContactPerson
+from interface.models import ContactPerson, Company
 from interface.change_message_utils import construct_change_message
 
 admin.site.site_header = 'Администрирование'
@@ -32,18 +33,18 @@ class DocumentFileInLine(admin.StackedInline):
     template = 'admin/edit_inline/stacked_file.html'
 
 
-class OrderContactPersonInLine(admin.StackedInline):
-    model = OrderContactPerson
+# class OrderContactPersonInLine(admin.StackedInline):
+#     model = OrderContactPerson
+#     extra = 0
+#     readonly_fields = ('document', )
+#     view_on_site = False
+
+
+class CompanyInline(admin.StackedInline):
+    model = Company.order.through
     extra = 0
-    readonly_fields = ('document', )
     view_on_site = False
 
-
-# class ContactPersonInline(admin.StackedInline):
-#     model = ContactPerson
-#     extra = 0
-#     readonly_fields = ('order', 'register')
-#     view_on_site = False
 
 # class OrderContactInLine(admin.StackedInline):
 #     model = OrderContact
@@ -73,13 +74,13 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
     ordering = []
     inlines = [DocumentParseInLine, DocumentFileInLine, WorkStateInLine,
                # OrderContactInLine, OrderContactPersonInLine]
-               OrderContactPersonInLine]  # TODO: Удалить OrderContactPersonInLine
-               # OrderContactPersonInLine, ContactPersonInline]
+               # OrderContactPersonInLine]  # TODO: Удалить OrderContactPersonInLine
+               CompanyInline]
 
     fieldsets = (
         (None, {'fields': (('leaf', 'number'),)}),
         (None, {'fields': ('url', )}),
-        (None, {'fields': ('document_exists', ('document_parsed', 'date_parsed'), 'order_done')})
+        (None, {'fields': ('document_exists', ('document_parsed', 'date_parsed'), 'order_done')}),
     )
     readonly_fields = ('leaf', 'number', 'url', 'document_exists', 'document_parsed', 'date_parsed')
 
@@ -191,13 +192,6 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
 class ServiceItemInLine(admin.TabularInline):
     model = ServiceItem
     fields = ('text', )
-    readonly_fields = fields
-    extra = 0
-
-
-class WorkStateInLine(admin.TabularInline):
-    model = WorkState
-    fields = ['income', 'outcome']
     readonly_fields = fields
     extra = 0
 
