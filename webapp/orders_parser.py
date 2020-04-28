@@ -1,5 +1,5 @@
 from parser_base import *
-proxy = surnames = names = cities = regions = None
+# proxy = surnames = names = cities = regions = None
 
 
 class OrdersParser(Parser):
@@ -86,8 +86,8 @@ class OrdersParser(Parser):
         queries.append(order_query)
 
         # Получаем контакты из спарсенной информации
-        parse_contacts_from_documentparse(document_parse)
-
+        # parse_contacts_from_documentparse(document_parse)
+        # return
         # Сохраняем или обновляем парсинг документа
         with self.get_workers().lock:
             if document_parse.get('id') is None:
@@ -191,15 +191,17 @@ def start_parse_all_documents():
     names = get_names()
     cities = get_cities()
     regions = get_regions()
+    forms = get_forms()
     p = OrdersParser(ORDERS_URL, 'orders')
     p.start_parse_all_documents()
 
 
 if __name__ == '__main__':
+    start_parse_all_documents()
     # release_proxies()
-    p = OrdersParser(ORDERS_URL, 'orders')
+    # p = OrdersParser(ORDERS_URL, 'orders')
     # p.check_new_documents()
-    p.get_documents_list()
+    # p.get_documents_list()
     # p.start_parse_one_document()
     # p.start_parse_all_documents()
     # p.parse_all_documents_in_threads()

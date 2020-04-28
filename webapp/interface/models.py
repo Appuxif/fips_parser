@@ -60,12 +60,13 @@ class Proxies(models.Model):
 
 
 class Company(models.Model):
-    company_name = models.CharField('Наименование компании', max_length=255, null=True, blank=True)
-    company_name_latin = models.CharField('Наименование компании латинское', max_length=255, null=True, blank=True)
-    company_address = models.CharField('Адрес компании', max_length=255, null=True, blank=True)
-    company_address_latin = models.CharField('Адрес компании латинский', max_length=255, null=True, blank=True)
-    company_web = models.CharField(max_length=100, null=True, blank=True)
-    company_form = models.CharField(max_length=50, null=True, blank=True)  # ! # Организационная форма ООО
+    name = models.CharField('Наименование компании', max_length=255, null=True, blank=True)
+    name_latin = models.CharField('Наименование компании латинское', max_length=255, null=True, blank=True)
+    address = models.CharField('Адрес компании', max_length=255, null=True, blank=True)
+    address_latin = models.CharField('Адрес компании латинский', max_length=255, null=True, blank=True)
+    sign_char = models.CharField('Код страны', max_length=5, null=True)
+    web = models.CharField(max_length=100, null=True, blank=True)
+    form = models.CharField(max_length=50, null=True, blank=True)  # ! # Организационная форма ООО
 
     order = models.ManyToManyField(OrderDocument, related_query_name='person',
                                    blank=True, through='OrderCompanyRel')

@@ -28,7 +28,7 @@ proxy_list = ['http://52.15.172.134:7778']
 # with open('proxy.txt', 'r') as f:
 #     proxy_list = ['http://' + line.strip() for line in f.readlines()]
 # print(proxy_list)
-proxy = surnames = names = cities = regions = None
+proxy = surnames = names = cities = regions = forms = None
 
 
 # Подготавливаем список фамилий, городов и регионов для парсинга
@@ -36,8 +36,7 @@ def get_surnames(filename=None):
     filename = filename or 'surnames.txt'
     with open(filename, 'rb') as f:
         s = f.read()
-    s = s.decode()
-    return ''.join(s.splitlines())
+    return s.decode().splitlines()
 
 
 def get_names():
@@ -49,9 +48,11 @@ def get_cities():
         s = f.read()
     s = s.decode().splitlines()
     r = {}
-    for k in s:
-        k = k.split()
-        r[k[1]] = k[0]
+    for l in s:
+        l = l.split()
+        city = ' '.join(l[1:])
+        r[city] = l[0]
+    # print(r)
     return r
 
 
@@ -60,11 +61,22 @@ def get_regions():
         s = f.read()
     s = s.decode().splitlines()
     r = {}
-    for k in s:
-        k = k.split()
-        r[k[0]] = k[1]
+    for l in s:
+        l = l.split()
+        city = ' '.join(l[1:])
+        r[l[0]] = city
+    # print(r)
     return r
 
+
+def get_forms():
+    with open('forms.txt', 'rb') as f:
+        s = f.read()
+    r = {}
+    for l in s.decode().splitlines():
+        l = l.split(' - ')
+        r[l[0]] = l[1]
+    return r
 # {'https': 'http://52.15.172.134:7778'}
 
 
@@ -125,7 +137,7 @@ class Parser:
             self.workers = MyWorkers(number)
         return self.workers
 
-    def get_workers2(self, number=20):
+    def get_workers2(self, number=30):
         if self.workers2 is None:
             self.workers2 = MyWorkers(number)
         return self.workers2
@@ -583,7 +595,8 @@ def parse_main_info(page, document, document_info, document_parse, service_items
         number, name, value = regex_string(child_text) or ("", "", "")
 
         if number in numbers_fields_values_dict:
-            value = value.replace("'", '"')
+            value = re.sub('[\'{}]', '', value)
+            # value = value.replace("'", '"')
             document_parse[numbers_fields_values_dict[number]] = f"'{value}'" if value else 'NULL'
 
         elif number in numbers_fields_dates_dict:
@@ -685,7 +698,59 @@ def load_proxies_to_db_from_file(filename=None):
 
 
 def parse_contacts_from_documentparse(document_parse):
-    # Получаем наименование компании из поля document_parse['']
+    applicant = {'company': {}, 'person': {}}
+    # Получаем наименование компании из поля document_parse['applicant'] или document_parse['copyright_holder']
+    # Нужно искать компанию, либо Имя-Фамилию контакта
+    applicant_string = document_parse.get('applicant') or document_parse.get('copyright_holder')
+    # applicant_string = "'RU, ИП Фрольцов Александр Вячеславович, 127299, г. Москва, ул. Приорова, д.14а, кв. 79'"
+    if applicant_string:
+        # Ищем известную организационную форму
+        applicant_string_splitted = applicant_string[1:-1].split(', ')
+        for item in applicant_string_splitted:
+            # Находим код страны
+            print(item)
+            city = re.sub(r'(г|\.)', '', item).strip()
+            if re.match(r'^[A-Z]{2}$', item):
+                applicant['company']['sign_char'] = item
+                applicant_string = applicant_string.replace(item, '')
+                print('Код страны', item)
+            elif re.match(r'^\d{5,6}$', item):
+                applicant['person']['zip'] = item
+            elif city in cities:
+                applicant['person']['city'] = city
+                applicant['person']['state'] = regions[cities[city]]
+            else:
+                # Если найдена форма - это название компании
+                for form in forms:
+                    if form in item:
+                        applicant['company']['company_form'] = forms[form]
+                        applicant['company']['company_name'] = item
+                        applicant_string = applicant_string.replace(item, '')
+
+                # Если найдена фамилия - то это ФИО контакта
+                item_splitted = item.split()
+                sur_found = first_found = second_found = middle_found = False
+
+                if 'ул.' in item or 'г.' in item or 'обл.' in item:
+                    pass
+                else:
+                    for isp in item_splitted:
+                        if not sur_found and isp in surnames:
+                            sur_found = True
+                            applicant['person']['full_name'] = re.sub('(ИП|Индивидуальный предприниматель)', '', item).strip()
+                            applicant['person']['last_name'] = isp
+                            applicant_string = applicant_string.replace(item, '')
+                            splitted = applicant['person']['full_name'].split()
+                            if isp in splitted:
+                                splitted.remove(isp)
+                            first_name = splitted[:1]
+                            middle_name = splitted[1:]
+                            applicant['person']['first_name'] = splitted[:1][0] if splitted[:1] else 'NULL'
+                            applicant['person']['middle_name'] = splitted[1:][0] if splitted[1:] else 'NULL'
+        print(applicant_string.replace(',', '').replace("'", '').strip())
+    else:
+        print('Имя компании не получено')
+    print(applicant)
 
     # Ищем компанию в БД
 
@@ -693,7 +758,6 @@ def parse_contacts_from_documentparse(document_parse):
     # Если компания не найдена, то создаем новую компанию в БД
     # Если компания не спарсилась, запись все равно нужно создать в виде Company for document document_parse['number']
     pass
-
 
 
 if __name__ == '__main__':

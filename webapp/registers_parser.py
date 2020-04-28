@@ -1,7 +1,8 @@
 from uuid import uuid4
 
+import parser_base
 from parser_base import *
-proxy = surnames = names = cities = regions = None
+# proxy = surnames = names = cities = regions = None
 
 
 class RegistersParser(Parser):
@@ -149,7 +150,7 @@ class RegistersParser(Parser):
 
         # Получаем контакты из спарсенной информации
         parse_contacts_from_documentparse(document_parse)
-
+        return
         # Сохраняем или обновляем парсинг документа
         with self.get_workers().lock:
             if document_parse.get('id') is None:
@@ -275,22 +276,24 @@ def parse_izvs(document, start_izvs):
 
 
 def start_parse_all_documents():
-    global surnames, names, cities, regions
-    surnames = get_surnames()
-    names = get_names()
-    cities = get_cities()
-    regions = get_regions()
+    parser_base.surnames = get_surnames()
+    parser_base.names = get_names()
+    parser_base.cities = get_cities()
+    parser_base.regions = get_regions()
+    parser_base.forms = get_forms()
     p = RegistersParser(REGISTERS_URL, 'registers')
-    p.start_parse_all_documents()
+    # p.start_parse_all_documents()
+    p.start_parse_document()
 
 
 if __name__ == '__main__':
-    release_proxies()
-    p = RegistersParser(REGISTERS_URL, 'registers')
+    start_parse_all_documents()
+    # release_proxies()
+    # p = RegistersParser(REGISTERS_URL, 'registers')
     # p.check_new_documents()
     # p.get_documents_list()
     # p.start_parse_document()
     # p.start_parse_all_documents()
-    p.parse_all_documents_in_threads(5)
+    # p.parse_all_documents_in_threads(5)
 
 # python -c "from registers_parser import *; release_proxies(); p = RegistersParser(REGISTERS_URL, 'registers'); p.parse_all_documents_in_threads(50)"
