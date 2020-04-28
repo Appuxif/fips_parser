@@ -85,18 +85,32 @@ class OrderCompanyRel(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     order = models.ForeignKey(OrderDocument, on_delete=models.CASCADE, null=True)
 
+    def __str__(self):
+        # return str(self.order) + ' - ' + str(self.company)
+        return str(self.id)
+
+    def get_absolute_url(self):
+        return f'/admin/orders/document/{self.order.id}/change/'
+
     class Meta:
-        verbose_name = 'Связь Заявка-Компания'
-        verbose_name_plural = 'Связи Заявка-Компания'
+        verbose_name = 'Связанная Компания'
+        verbose_name_plural = 'Связанные Компании'
 
 
 class RegisterCompanyRel(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     register = models.ForeignKey(RegisterDocument, on_delete=models.CASCADE, null=True)
 
+    def __str__(self):
+        # return str(self.register) + ' - ' + str(self.company)
+        return str(self.id)
+
+    def get_absolute_url(self):
+        return f'/admin/registers/document/{self.register.id}/change/'
+
     class Meta:
-        verbose_name = 'Связь Регистрация-Компания'
-        verbose_name_plural = 'Связи Регистрация-Компания'
+        verbose_name = 'Связанная Компания'
+        verbose_name_plural = 'Связанные Компании'
 
 
 class ContactPerson(models.Model):

@@ -59,14 +59,16 @@ class DocumentFileInLine(admin.StackedInline):
 #     view_on_site = False
 
 class CompanyInline(admin.StackedInline):
-    # model = Company.register.through
+    # Такой же есть в interface\admin.py
     model = RegisterCompanyRel
     extra = 0
-    # readonly_fields = ('document',)
-    view_on_site = False
+    readonly_fields = ('company', 'register')
 
-    def has_add_permission(self, request, obj):
-        return False
+    def view_on_site(self, obj):
+        return f'/admin/interface/company/{obj.id}/change/'
+
+    # def has_add_permission(self, request, obj):
+    #     return False
 
 
 class DocumentIzvInLine(admin.StackedInline):

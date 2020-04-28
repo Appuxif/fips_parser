@@ -1,7 +1,9 @@
+import sys
 from django.contrib import admin
 # from django.contrib.auth.models import User
 from django.db.models import Q
 # from django_admin_search.admin import AdvancedSearchAdmin
+from django.urls import reverse
 
 from import_export import resources
 from import_export.admin import ExportActionMixin, ExportActionModelAdmin, ExportMixin
@@ -47,14 +49,17 @@ class DocumentFileInLine(admin.StackedInline):
 
 
 class CompanyInline(admin.StackedInline):
-    # model = Company.order.through
+    # Такой же есть в interface\admin.py
     model = OrderCompanyRel
+    # model = Document.company_set.rel.through
     extra = 0
-    # readonly_fields = ('document', )
-    view_on_site = False
+    readonly_fields = ('company', 'order')
 
-    def has_add_permission(self, request, obj):
-        return False
+    def view_on_site(self, obj):
+        return f'/admin/interface/company/{obj.id}/change/'
+
+    # def has_add_permission(self, request, obj):
+    #     return False
 
 
 # class OrderContactInLine(admin.StackedInline):
