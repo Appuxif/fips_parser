@@ -65,10 +65,10 @@ class Company(models.Model):
     company_web = models.CharField(max_length=100, null=True, blank=True)
     company_form = models.CharField(max_length=50, null=True, blank=True)  # ! # Организационная форма ООО
 
-    # order = models.ManyToManyField(OrderDocument, related_query_name='person',
-    #                                blank=True, through='DocumentCompanyRel')
-    # register = models.ManyToManyField(RegisterDocument, related_query_name='person',
-    #                                   blank=True, through='DocumentCompanyRel')
+    order = models.ManyToManyField(OrderDocument, related_query_name='person',
+                                   blank=True, through='DocumentCompanyRel')
+    register = models.ManyToManyField(RegisterDocument, related_query_name='person',
+                                      blank=True, through='DocumentCompanyRel')
 
     def __str__(self):
         return str(self.company_name)
