@@ -1,3 +1,11 @@
+.modal {
+    max-width: 1200px !important;
+}
+
+.form-field div {
+    /*width: 200px;*/
+}
+
 .form-field input[type=text],
 .form-field input[type=password],
 .form-field input[type=email],
@@ -15,15 +23,29 @@
     width: 100%;
 }
 
+.form-field input[type=checkbox] {
+    width: 20px;
+    height: 20px;
+}
+
 .form-field {
-    margin: 0 0 5px 0;
+    margin: 10px;
+    width: 350px;
+    height: 50px;
+}
+
+.aligned {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .aligned label {
-    /*display: block;*/
+    display: block;
     padding: 4px 10px 0 0;
-    /*float: left;*/
-    width: 160px;
+    float: left;
+    /*width: 160px;*/
     word-wrap: break-word;
     line-height: 1;
 }
