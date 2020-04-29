@@ -295,8 +295,8 @@ def documentparse_lookup(item, document_parse_dict):
                 object = object.filter(name="image").first()
                 if object:
                     # <a href="{{ inline_admin_form.original.link }}" target="_blank"><img src="{{ inline_admin_form.original.link }}" alt="file" width="150px"></a>
-                    # object = f'{object.link}'
-                    object = f'<a href="{object.link}" target="_blank"><img src="{object.link}" alt="file" width="50px"></a>'
+                    object = f'{object.link}'
+                    # object = f'<a href="{object.link}" target="_blank"><img src="{object.link}" alt="file" width="100px"></a>'
             else:
                 object = getattr(object, k, None)
         str_type = str(type(object))

@@ -90,6 +90,7 @@
         let td_links = document.getElementsByClassName('field-documentparse__documentfile_set__links');
         for (let link of td_links) {
             link.innerHTML = link.innerText;
+            link.innerHTML = '<a href="' + link.innerText + '" target="_blank"><img src="' + link.innerText + '" alt="file" width="100px"></a>'
         }
     }
 
