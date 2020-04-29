@@ -22,8 +22,8 @@ class WorkState(models.Model):
 
 # Строчка из таблицы делопроизводства
 class WorkStateRow(models.Model):
-    document = models.ForeignKey(Document, on_delete=models.CASCADE)
-    workstate = models.ForeignKey(WorkState, on_delete=models.CASCADE)
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_query_name='workstaterow')
+    workstate = models.ForeignKey(WorkState, on_delete=models.CASCADE, related_query_name='workstaterow')
     type = models.CharField('Тип строки делопроизводства', max_length=20)  # 0-income or 1-outcome
     key = models.CharField('Наименование', max_length=200)  # Первый столбец: Наименование строки
     date = models.DateField('Дата наименования', null=True)  # Второй столбец: Дата

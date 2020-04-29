@@ -2,6 +2,70 @@ from django.forms import ModelForm, Form
 from django.forms import DateField, CharField, ChoiceField, TextInput, IntegerField, BooleanField
 
 from .models_base import Leaf, Document, DocumentParse, DocumentFile, ServiceItem
+income_choices = [
+    (0, None),
+    (1, 'Запрос об уточнении перечня товаров и/или услуг'),
+    (2, 'Запрос формальной экспертизы'),
+    (3, 'Запрос экспертизы заявленного обозначения'),
+    (4, 'Напоминание о необходимости уплаты пошлин'),
+    (5, 'Письмо о высылке копий'),
+    (6, 'Письмо о пошлине'),
+    (7, 'Письмо о соответствии перечня товаров и/или услуг требованиям Кодекса'),
+    (8, 'Письмо о том, что пошлина не учтена'),
+    (9, 'Письмо об отказе в высылке копий'),
+    (10, 'Письмо об уточнении адреса'),
+    (11, 'Письмо об учете пошлины'),
+    (12, 'Письмо по вопросам делопроизводства'),
+    (13, 'Письмо произвольной формы'),
+    (14, 'Решение о признании заявки отозванной'),
+    (15, 'Решение о принятии заявки к рассмотрению'),
+    (16, 'Решение о регистрации'),
+    (17, 'Решение об изменении наименования заявителя'),
+    (18, 'Решение об отказе в регистрации'),
+    (19, 'Уведомление о представлении документов'),
+    (20, 'Уведомление о принятии к сведению заявления об отзыве'),
+    (21, 'Уведомление о результатах проверки пошлины'),
+    (22, 'Уведомление о результатах проверки соответствия'),
+    (23, 'Уведомление об отказе в  удовлетворении ходатайства'),
+    (24, 'Уведомление об отказе в совершении юр. действия'),
+    (25, 'Уведомление об отказе в удовлетворении просьбы'),
+    (26, 'Уведомление об удовлетворении просьбы'),
+    (27, 'Уведомление об удовлетворении ходатайства'),
+]
+
+outcome_choices = [
+    (0, None),
+    (1, 'Ходатайство о преобразовании заявки'),
+    (2, 'Возврат почтового отправления'),
+    (3, 'Доверенность'),
+    (4, 'Дополнительные материалы'),
+    (5, 'Досрочное прекращение доверенности'),
+    (6, 'Заявление о внесении изменений в документы заявки'),
+    (7, 'Заявление о внесении исправлений'),
+    (8, 'Заявление о внесении исправлений в документы заявки'),
+    (9, 'Заявление об изменении наименования заявителя'),
+    (10, 'Заявление об изменении сведений о заявителе в случае передачи или перехода права'),
+    (11, 'Комплект заявочной документации'),
+    (12, 'Копия первой заявки'),
+    (13, 'Корреспонденция, поступившая по факсу'),
+    (14, 'Корреспонденция, поступившая через личный кабинет и требующая представления оригинала документа'),
+    (15, 'Обращение'),
+    (16, 'Перевод документов'),
+    (17, 'Письмо для ответа'),
+    (18, 'Письмо для ответа на контроле дирекции'),
+    (19, 'Письмо, не требующее ответа'),
+    (20, 'Платежный документ'),
+    (21, 'Просьба заявителя об отзыве заявки'),
+    (22, 'Просьба о установлении выставочного приоритета'),
+    (23, 'Просьба об установлении конвенционного приоритета'),
+    (24, 'Просьба об установлении приоритета выделенной заявки'),
+    (25, 'Ходатайство о ведении переписки через личный кабинет'),
+    (26, 'Ходатайство о внесении изменений в адрес'),
+    (27, 'Ходатайство о возврате пошлины'),
+    (28, 'Ходатайство о восстановлении пропущенного срока'),
+    (29, 'Ходатайство о зачете пошлины'),
+    (30, 'Ходатайство о продлении установленного срока'),
+]
 
 
 class LeafSearchForm(Form):
@@ -226,39 +290,14 @@ class DocumentSearchForm(Form):
         }
     ))
 
-    # work_state_value = CharField(required=False, widget=TextInput(
+    # income_value = CharField(required=False, widget=TextInput(
     #     attrs={
     #         # 'filter_field': 'documentparse__serviceitem_set',
     #         'filter_method': '__icontains',
     #         # 'placeholder': 'comma separated'
     #     }
     # ))
-    #
-    # work_state_date_gte = DateField(required=False, widget=TextInput(
-    #     attrs={
-    #         # 'filter_field': 'documentparse__date_gos_reg',
-    #         'filter_method': '__gte',
-    #         'data-mask': "0000-00-00",
-    #         'placeholder': 'YYYY-MM-DD'
-    #     }
-    # ))
-    #
-    # work_state_date_lte = DateField(required=False, widget=TextInput(
-    #     attrs={
-    #         # 'filter_field': 'documentparse__date_gos_reg',
-    #         'filter_method': '__gte',
-    #         'data-mask': "0000-00-00",
-    #         'placeholder': 'YYYY-MM-DD'
-    #     }
-    # ))
-
-    income_value = CharField(required=False, widget=TextInput(
-        attrs={
-            # 'filter_field': 'documentparse__serviceitem_set',
-            'filter_method': '__icontains',
-            # 'placeholder': 'comma separated'
-        }
-    ))
+    income_value = ChoiceField(required=False, choices=income_choices, initial=None)
 
     income_date_gte = DateField(required=False, widget=TextInput(
         attrs={
@@ -278,13 +317,15 @@ class DocumentSearchForm(Form):
         }
     ))
 
-    outcome_value = CharField(required=False, widget=TextInput(
-        attrs={
-            # 'filter_field': 'documentparse__serviceitem_set',
-            'filter_method': '__icontains',
-            # 'placeholder': 'comma separated'
-        }
-    ))
+    # outcome_value = CharField(required=False, widget=TextInput(
+    #     attrs={
+    #         # 'filter_field': 'documentparse__serviceitem_set',
+    #         'filter_method': '__icontains',
+    #         # 'placeholder': 'comma separated'
+    #     }
+    # ))
+
+    outcome_value = ChoiceField(required=False, choices=outcome_choices, initial=None)
 
     outcome_date_gte = DateField(required=False, widget=TextInput(
         attrs={

@@ -11,7 +11,7 @@ from import_export.admin import ExportActionMixin, ExportActionModelAdmin, Expor
 from .django_admin_search import AdvancedSearchAdmin
 from .models_base import Leaf, Document, DocumentParse, DocumentFile, ServiceItem, document_parse_dict
 from .models import WorkState, WorkStateRow
-from .forms import LeafSearchForm, DocumentSearchForm, fields_dict
+from .forms import LeafSearchForm, DocumentSearchForm, fields_dict, income_choices, outcome_choices
 from accounts.models import UserQuery
 # from interface.models import OrderContact, OrderContactPerson
 from interface.models import ContactPerson, Company, OrderCompanyRel
@@ -168,8 +168,11 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
 
     def search_income_value(self, field, field_value, form_field, request, param_values):
         if field_value and field in param_values or 'income_date_gte' in param_values or 'income_date_lte' in param_values:
+            print(field_value)
             queries = WorkStateRow.objects.select_related('document').filter(type='income')
-            if field in param_values:
+            field_value = ([v[1] for v in income_choices if str(v[0]) == field_value] or [None])[0]
+            print(field_value)
+            if field_value and field in param_values:
                 queries = queries.filter(key__icontains=field_value)
             if 'income_date_gte' in param_values:
                 value = param_values['income_date_gte'][0]
@@ -185,7 +188,8 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
     def search_outcome_value(self, field, field_value, form_field, request, param_values):
         if field_value and field in param_values or 'outcome_date_gte' in param_values or 'outcome_date_lte' in param_values:
             queries = WorkStateRow.objects.select_related('document').filter(type='outcome')
-            if field in param_values:
+            field_value = ([v[1] for v in outcome_choices if str(v[0]) == field_value] or [None])[0]
+            if field_value and field in param_values:
                 queries = queries.filter(key__icontains=field_value)
             if 'outcome_date_gte' in param_values:
                 value = param_values['outcome_date_gte'][0]
@@ -246,7 +250,7 @@ class WorkStateRowInLine(admin.TabularInline):
 
 
 @admin.register(WorkState)
-class WorkStateAdmin(admin.ModelAdmin):
+class WorkStateAdmin(ExportActionMixin, admin.ModelAdmin):
     list_display = ('id', '__str__', 'document', 'document_parse')
     exclude = ('document', )
     fields = ('document_parse', ('income', 'outcome'))
@@ -312,7 +316,7 @@ def get_export_resource(model, fields, document_parse_dict):
     resource_class = resources.ModelResource
 
     # Некоторые столбцы неизбежно придется пропускать, так как они несут информативный характер
-    attrs = {'model': model, 'fields': tuple((f for f in fields if '_set' not in f))}
+    attrs = {'model': model, 'fields': tuple([f for f in fields if '_set' not in f])}
     Meta = type(str('Meta'), (object,), attrs)
 
     class_name = model.__name__ + str('Resource')
