@@ -36,8 +36,8 @@ class DocumentIzv(models.Model):
     service_items = models.CharField('Список МКТУ', max_length=2000, null=True, blank=True)  # Список классов МКТУ через запятую
 
     class Meta:
-        verbose_name = 'Извещание'
-        verbose_name_plural = 'Извещания'
+        verbose_name = 'Извещение'
+        verbose_name_plural = 'Извещения'
 
     def __str__(self):
         return self.izv_type
@@ -58,8 +58,8 @@ class DocumentIzvItem(models.Model):
     date = models.DateField(null=True, blank=True)  # Если есть дата, она будет распознана
 
     class Meta:
-        verbose_name = 'Элемент извещания'
-        verbose_name_plural = 'Элементы извещаний'
+        verbose_name = 'Элемент извещения'
+        verbose_name_plural = 'Элементы извещений'
 
     def __str__(self):
         return self.key
@@ -77,8 +77,8 @@ class IzvServiceItem(models.Model):
     text = models.TextField(max_length=30000)  # Текст класса
 
     class Meta:
-        verbose_name = 'МКТУ извещания'
-        verbose_name_plural = 'МКТУ извещаний'
+        verbose_name = 'МКТУ извещения'
+        verbose_name_plural = 'МКТУ извещений'
 
     def __str__(self):
         return str(self.number)

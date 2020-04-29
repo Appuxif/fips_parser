@@ -40,6 +40,7 @@ class OrdersParser(Parser):
 
         # Получение статуса
         status = page.find('tr', class_='Status').text
+        status = re.sub('(Статус|Статус:|Статус: )', '', status)
         status = ' '.join(status.split())
         document_parse['status'] = f"'{status}'"
 
@@ -208,5 +209,5 @@ if __name__ == '__main__':
     # p.parse_all_documents_in_threads()
 
 # python -c "from orders_parser import *; p = OrdersParser(ORDERS_URL, 'orders'); p.get_documents_list()"
-# python -c "from orders_parser import *; release_proxies(); p = OrdersParser(ORDERS_URL, 'orders'); p.parse_all_documents_in_threads(50)"
+# python -c "from orders_parser import *; release_proxies(); p = OrdersParser(ORDERS_URL, 'orders'); p.parse_all_documents_in_threads(20)"
 # python -c "from orders_parser import *; p = OrdersParser(ORDERS_URL, 'orders'); p.parse_all_documents_in_threads(50)"

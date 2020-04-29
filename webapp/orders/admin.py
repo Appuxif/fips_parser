@@ -238,13 +238,21 @@ class WorkStateRowInLine(admin.TabularInline):
     exclude = ['document']
     extra = 0
 
+    def has_add_permission(self, request, obj):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(WorkState)
 class WorkStateAdmin(admin.ModelAdmin):
     list_display = ('id', '__str__', 'document', 'document_parse')
-    exclude = ['document']
+    exclude = ('document', )
+    fields = ('document_parse', ('income', 'outcome'))
+    readonly_fields = ('document_parse', 'income', 'outcome')
     inlines = [WorkStateRowInLine]
-    select_related = ('document', 'document_parse')
+    # select_related = ('document', 'document_parse')
 
 
 class DocumentInLine(admin.StackedInline):
@@ -281,9 +289,18 @@ def documentparse_lookup(item, document_parse_dict):
         for k in keys:
             if object is None:
                 break
-            object = getattr(object, k, None)
+            # Только для отображения ссылок изображений
+            if k == 'links':
+                # object = '\n'.join([o.link for o in object.filter(name="image").first()])
+                object = object.filter(name="image").first()
+                if object:
+                    # <a href="{{ inline_admin_form.original.link }}" target="_blank"><img src="{{ inline_admin_form.original.link }}" alt="file" width="150px"></a>
+                    # object = f'{object.link}'
+                    object = f'<a href="{object.link}" target="_blank"><img src="{object.link}" alt="file" width="50px"></a>'
+            else:
+                object = getattr(object, k, None)
         str_type = str(type(object))
-        if str_type == "<class 'function'>" or str_type == "<class 'method'>":
+        if callable(object) or str_type == "<class 'function'>" or str_type == "<class 'method'>":
             return object()
         return object
     func.short_description = document_parse_dict['field__' + item]['string']

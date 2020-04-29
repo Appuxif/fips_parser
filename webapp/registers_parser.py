@@ -52,6 +52,7 @@ class RegistersParser(Parser):
 
         # Получение статуса
         status = page.find('tr', class_='Status').text
+        status = re.sub('(Статус|Статус:|Статус: )', '', status)
         status = ' '.join(status.split())
         document_parse['status'] = f"'{status}'"
 
