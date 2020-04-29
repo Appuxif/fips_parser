@@ -80,6 +80,16 @@ class WorkStateInLine(admin.TabularInline):
         return False
 
 
+class ServiceItemInLine(admin.TabularInline):
+    model = ServiceItem
+    fields = ('text', )
+    readonly_fields = fields
+    extra = 0
+
+    def has_add_permission(self, request, obj):
+        return False
+
+
 @admin.register(Document)
 class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
     change_list_template = 'admin/custom_change_list_document.html'
@@ -91,7 +101,7 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
 
     # ordering = ('documentparse__date_refreshed', )
     ordering = []
-    inlines = [DocumentParseInLine, DocumentFileInLine, WorkStateInLine,
+    inlines = [DocumentParseInLine, ServiceItemInLine, DocumentFileInLine, WorkStateInLine,
                # OrderContactInLine, OrderContactPersonInLine]
                # OrderContactPersonInLine]  # TODO: Удалить OrderContactPersonInLine
                CompanyInline]
@@ -161,10 +171,6 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
             values = field_value.split(',')
             if values:
                 return Q(serviceitem__number__in=values)
-                # queries = ServiceItem.objects.select_related('document').filter(number__in=values)
-                # ids = [q.document.id for q in queries]
-                # if ids:
-                #     return Q(id__in=ids)
         return Q()
 
     def search_income_value(self, field, field_value, form_field, request, param_values):
@@ -198,16 +204,6 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
         if field_value and field in param_values:
             return Q(workstaterow__type='outcome') & Q(workstaterow__date__lte=field_value)
         return Q()
-
-
-class ServiceItemInLine(admin.TabularInline):
-    model = ServiceItem
-    fields = ('text', )
-    readonly_fields = fields
-    extra = 0
-
-    def has_add_permission(self, request, obj):
-        return False
 
 
 @admin.register(DocumentParse)

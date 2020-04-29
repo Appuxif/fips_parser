@@ -81,6 +81,16 @@ class DocumentIzvInLine(admin.StackedInline):
         return False
 
 
+class ServiceItemInLine(admin.StackedInline):
+    model = ServiceItem
+    fields = ('text', )
+    readonly_fields = fields
+    extra = 0
+
+    def has_add_permission(self, request, obj):
+        return False
+
+
 @admin.register(Document)
 class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
     change_list_template = 'admin/custom_change_list_document.html'
@@ -92,7 +102,7 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
 
     # ordering = ('documentparse__date_refreshed', )
     ordering = []
-    inlines = [DocumentParseInLine, DocumentFileInLine, DocumentIzvInLine,
+    inlines = [DocumentParseInLine, ServiceItemInLine, DocumentFileInLine, DocumentIzvInLine,
                # RegisterContactInLine, RegisterContactPersonInLine]
                # RegisterContactPersonInLine, ContactPersonInline]  # TODO: Удалить RegisterContactPersonInLine
                CompanyInline]
@@ -160,10 +170,6 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
         if field_value and field in param_values:
             values = field_value.split(',')
             if values:
-                # queries = ServiceItem.objects.select_related('document').filter(number__in=values)
-                # ids = [q.document.id for q in queries]
-                # if ids:
-                #     return Q(id__in=ids)
                 return Q(serviceitem__number__in=values)
         return Q()
 
@@ -171,21 +177,12 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
         if field_value and field in param_values:
             values = field_value.split(',')
             if values:
-                queries = IzvServiceItem.objects.select_related('document').filter(number__in=values)
-                ids = [q.document.id for q in queries]
-                if ids:
-                    return Q(id__in=ids)
+                return Q(izvserviceitem__number__in=values)
+                # queries = IzvServiceItem.objects.select_related('document').filter(number__in=values)
+                # ids = [q.document.id for q in queries]
+                # if ids:
+                #     return Q(id__in=ids)
         return Q()
-
-
-class ServiceItemInLine(admin.StackedInline):
-    model = ServiceItem
-    fields = ('text', )
-    readonly_fields = fields
-    extra = 0
-
-    def has_add_permission(self, request, obj):
-        return False
 
 
 @admin.register(DocumentParse)
@@ -194,7 +191,8 @@ class DocumentParseAdmin(admin.ModelAdmin):
     # change_list_template = 'admin/custom_change_list_document.html'
     # search_form = DocumentParseSearchForm
 
-    list_display = ('id', 'order_number', 'order_register_number', 'date_refreshed', 'date_created', 'date_publish', 'date_exclusive')
+    list_display = ('id', 'order_number', 'order_register_number',
+                    'date_refreshed', 'date_created', 'date_publish', 'date_exclusive')
     exclude = ['document']
     inlines = [ServiceItemInLine, DocumentFileInLine, DocumentIzvInLine]
 

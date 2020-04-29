@@ -59,6 +59,10 @@ class Proxies(models.Model):
 #         verbose_name_plural = 'Контакты регистраций'
 
 
+def company_logo_path(instance, filename):
+    return 'company_{0}/logo.jpg'.format(instance.id)
+
+
 class Company(models.Model):
     name = models.CharField('Наименование компании', max_length=255, null=True, blank=True)
     name_latin = models.CharField('Наименование компании латинское', max_length=255, null=True, blank=True)
@@ -73,8 +77,10 @@ class Company(models.Model):
     register = models.ManyToManyField(RegisterDocument, related_query_name='person',
                                       blank=True, through='RegisterCompanyRel')
 
+    logo = models.FileField('Логотип компании', upload_to=company_logo_path, null=True, blank=True)
+
     def __str__(self):
-        return str(self.company_name)
+        return str(self.name)
 
     def get_absolute_url(self):
         return f'/admin/interface/company/{self.id}/change/'
@@ -119,6 +125,10 @@ class RegisterCompanyRel(models.Model):
         verbose_name_plural = 'Связанные Компании'
 
 
+def person_photo_path(instance, filename):
+    return 'company_{0}/person_{1}/photo.jpg'.format(instance.company.id, instance.id
+
+                                                     )
 class ContactPerson(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_query_name='person')
 
@@ -153,6 +163,9 @@ class ContactPerson(models.Model):
 
     rep_reg_number = models.CharField(max_length=20, null=True, blank=True)
     rep_correspondence_address = models.CharField(max_length=255, null=True, blank=True)  # ! #
+
+    photo = models.FileField('Персональное фото', upload_to=person_photo_path, null=True, blank=True)
+    bday_date = models.DateField('День рождения', null=True, blank=True)
 
 
     def __str__(self):
