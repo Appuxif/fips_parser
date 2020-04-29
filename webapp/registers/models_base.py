@@ -93,6 +93,9 @@ class ServiceItem(models.Model):
     class Meta:
         verbose_name = 'МКТУ элемент'
         verbose_name_plural = 'МКТУ элементы'
+        indexes = [
+            models.Index(fields=['number'])
+        ]
 
     def __str__(self):
         return str(self.number)

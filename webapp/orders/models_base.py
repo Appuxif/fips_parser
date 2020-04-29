@@ -86,14 +86,16 @@ class DocumentParse(models.Model):
 # Дополнительная таблица. Формирует "Классы МКТУ и перечень товаров и услуг"
 class ServiceItem(models.Model):
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_query_name='serviceitem')
-    document_parse = models.ForeignKey(DocumentParse, on_delete=models.CASCADE,
-                                       related_query_name='serviceitem')  # ID парсинга документа
+    document_parse = models.ForeignKey(DocumentParse, on_delete=models.CASCADE, related_query_name='serviceitem')
     number = models.CharField('Номер класса', max_length=5)  # Номер класса
     text = models.TextField(max_length=30000)  # Текст класса
 
     class Meta:
         verbose_name = 'МКТУ элемент'
         verbose_name_plural = 'МКТУ элементы'
+        indexes = [
+            models.Index(fields=['number'])
+        ]
 
     def __str__(self):
         return str(self.number)
