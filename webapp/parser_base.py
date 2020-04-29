@@ -702,18 +702,48 @@ def load_proxies_to_db_from_file(filename=None):
         print('Файл не найден')
 
 
-def parse_contacts_from_documentparse(document_parse):
-    applicant = {'company': {}, 'person': {}}
+def parse_person_address(applicant_string, item, person):
+    item_splitted = re.sub(r'(г\.)', '', item).strip()
+    item_splitted = item_splitted.split()
+    applicant_string_lower = applicant_string.lower()
+    # Ищем каждое слово среди списка городов
+    for c in item_splitted:
+        print('city', c)
+        if re.match(r'.*(ул\.|обл\.|\d).*', item) or person.get('city'):
+            print('пропущено', item)
+            continue
+        if c in cities:
+            person['city'] = c
+            # applicant['person']['state'] = regions[cities[c]]
+            # if cities[c]['region'] and cities[c]['region'].lower() in applicant_string_lower:
+            if cities[c]['region']:
+                person['state'] = cities[c]['region'] or 'NULL'
+            # if cities[c]['area'] and cities[c]['area'].lower() in applicant_string_lower:
+            if cities[c]['area']:
+                person['area'] = cities[c]['area'] or 'NULL'
+
+    # Ищем кадое слово среди списка стран
+    for c in item_splitted:
+        if person.get('country'):
+            break
+        if c in countries:
+            person['country'] = c
+
+
+def parse_applicant(document_parse, type):
+    applicant = None
     # Получаем наименование компании из поля document_parse['applicant'] или document_parse['copyright_holder']
     # Нужно искать компанию, либо Имя-Фамилию контакта
-    # applicant_string = document_parse.get('applicant') or document_parse.get('copyright_holder')
+    applicant_string = document_parse.get(type)
     # applicant_string = "'RU, ИП Фрольцов Александр Вячеславович, 127299, г. Москва, ул. Приорова, д.14а, кв. 79'"
     # applicant_string = "'BY, Общество с ограниченной ответственностью «ЮСВ-медицинские системы», Нет данных'"
     # applicant_string = "'RU, Общество с ограниченной ответственностью «РЕГИОН-К», 628200, Россия, Ханты-Мансийский автономный округ-Югра, район Кондинский, поселок городского типа Междуреченский, ул. Ворошилова, д. 10'"
-    applicant_string = "'CH, ГРИНМИ СА, рут де Пре-Буа 20, Сэж Консэй, 1215 Женева 15 Аэропорт, Швейцария'"
+    # applicant_string = "'CH, ГРИНМИ СА, рут де Пре-Буа 20, Сэж Консэй, 1215 Женева 15 Аэропорт, Швейцария'"
     print(applicant_string)
-    applicant_string_lower = applicant_string.lower()
     if applicant_string:
+        applicant = {'company': {}, 'person': {}}
+
+        # Находим код страны
         sign_char = re.match(r'.*(?P<sign>[A-Z]{2}).*', applicant_string)
         if sign_char:
             sign_char = sign_char.groupdict().get('sign') or 'NULL'
@@ -722,37 +752,21 @@ def parse_contacts_from_documentparse(document_parse):
             print('Код страны', sign_char)
 
         zip_code = re.match(r'.*(?P<zip>\d{6}).*', applicant_string) or \
-            re.match(r'.*(?P<zip>\d{5}).*', applicant_string) or \
-            re.match(r'.*(?P<zip>\d{4}).*', applicant_string)
+                   re.match(r'.*(?P<zip>\d{5}).*', applicant_string) or \
+                   re.match(r'.*(?P<zip>\d{4}).*', applicant_string)
         if zip_code:
             zip_code = zip_code.groupdict().get('zip') or 'NULL'
             applicant['person']['zip'] = zip_code
 
-        # Ищем известную организационную форму
+
         applicant_string_splitted = applicant_string[1:-1].split(', ')
         for item in applicant_string_splitted:
-            # Находим код страны
             print('item', item)
-            city = re.sub(r'(г\.)', '', item).strip()
-            city = city.split()
-            for c in city:
-                print('city', c)
-                if re.match(r'.*(ул\.|обл\.|\d).*', item) or applicant['person'].get('city'):
-                    print('пропущено', item)
-                    continue
-                if c in cities:
-                    applicant['person']['city'] = c
-                    # applicant['person']['state'] = regions[cities[c]]
-                    if cities[c]['region'] and cities[c]['region'].lower() in applicant_string_lower:
-                        applicant['person']['state'] = cities[c]['region'] or 'NULL'
-                    if cities[c]['area'] and cities[c]['area'].lower() in applicant_string_lower:
-                        applicant['person']['area'] = cities[c]['area'] or 'NULL'
-            for c in city:
-                if applicant['person'].get('country'):
-                    break
-                if c in countries:
-                    applicant['person']['country'] = c
 
+            # Парсим адрес из элементов
+            parse_person_address(applicant_string, item, applicant['person'])
+
+            # Ищем известную организационную форму
             # Если найдена форма - это название компании
             for form in forms:
                 if form in item:
@@ -769,12 +783,23 @@ def parse_contacts_from_documentparse(document_parse):
                 print('пропущено', item)
             else:
                 for isp in item_splitted:
-                    if not sur_found and isp in surnames:
+                    if isp in surnames:
+                        pass
+                    elif isp[:-1] in surnames:
+                        item = re.sub(isp, isp[:-1], item)
+                        isp = isp[:-1]
+                    elif isp[:-2] in surnames:
+                        item = re.sub(isp, isp[:-2], item)
+                        isp = isp[:-2]
+                    else:
+                        continue
+                    if not sur_found:
                         sur_found = True
-                        applicant['person']['full_name'] = re.sub('(ИП|Индивидуальный предприниматель)', '', item).strip()
+                        applicant['person']['full_name'] = re.sub('(ИП|Индивидуальный предприниматель)', '',
+                                                                  item).strip()
                         applicant['person']['last_name'] = isp
                         applicant_string = applicant_string.replace(item, '')
-                        splitted = applicant['person']['full_name'].split()
+                        splitted = applicant['person']['full_name'].replace('.', ' ').split()
                         if isp in splitted:
                             splitted.remove(isp)
                         first_name = splitted[:1]
@@ -789,9 +814,62 @@ def parse_contacts_from_documentparse(document_parse):
         applicant['person']['address'] = applicant_string
         if applicant['person'].get('country') is None:
             applicant['person']['country'] = 'Россия'
-    else:
-        print('Имя компании не получено')
-    print(applicant)
+
+    return applicant
+
+
+def parse_patent_atty(document_parse):
+    patent_atty = None
+    patent_atty_string = document_parse.get('patent_atty')
+    if patent_atty_string:
+        patent_atty = {'person': {}}
+        splitted = patent_atty_string.split(',')
+        # Парсинг имени
+        if len(splitted) >= 1:
+            patent_atty['person']['full_name'] = splitted[0]
+            names = splitted[0].split()
+            if len(names) >= 1:
+                patent_atty['person']['last_name'] = names[0]
+            if len(names) >= 2:
+                patent_atty['person']['first_name'] = names[1]
+            if len(names) >= 3:
+                patent_atty['person']['middle_name'] = names[2]
+        # Парсинг номера
+        if len(splitted) >= 2:
+            patent_atty['person']['rep_reg_number'] = splitted[1]
+
+        # Парсинг адреса
+        if len(splitted) >= 3:
+            patent_atty['person']['rep_correspondence_address'] = ','.join(splitted[2:])
+            # Парсим адрес из элементов
+            for item in splitted[2:]:
+                parse_person_address(patent_atty_string, item, patent_atty['person'])
+
+    return patent_atty
+
+
+def parse_correspondence_address(document_parse):
+    pass
+
+
+def parse_contacts_from_documentparse(document_parse):
+    # Парсинг заявителя
+    applicant = parse_applicant(document_parse, 'applicant')
+    print('applicant', applicant)
+
+    # Парсинг Правообладателя
+    copyright_holder = parse_applicant(document_parse, 'copyright_holder')
+    print('copyright_holder', copyright_holder)
+
+    # Парсинг патентного поверенного
+    patent_atty = parse_patent_atty(document_parse)
+    print('patent_atty', patent_atty)
+
+    # Парсинг адреса для переписки
+    # correspondence_address = parse_correspondence_address(document_parse)
+    correspondence_address = parse_applicant(document_parse, 'address')
+    print('correspondence_address', correspondence_address)
+
 
     # Ищем компанию в БД
 

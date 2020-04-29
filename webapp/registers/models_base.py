@@ -153,7 +153,7 @@ document_parse_dict = {
     'field__documentparse__service_items': {'string': 'Классы МКТУ', 'ordering': True, 'chosen': False},
     'field__documentparse__documentfile_set__count': {'string': 'К-во документов', 'ordering': False},
     'field__documentparse__documentfile_set__links': {'string': 'Изображение знака', 'ordering': False},
-    'field__documentparse__documentizv_set__count': {'string': 'К-во извещаний', 'ordering': False},
+    'field__documentparse__documentizv_set__count': {'string': 'К-во извещений', 'ordering': False},
     # 'field__documentparse__workstate__income': {'string': 'Вх. Корресп.', 'ordering': True, 'chosen': False},
     # 'field__documentparse__workstate__outcome': {'string': 'Исх. Корресп.', 'ordering': True, 'chosen': False},
 }
