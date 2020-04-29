@@ -183,7 +183,7 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
         #         return Q(id__in=ids)
         # return Q()
         if field_value and field in param_values:
-            return Q(workstaterow__type='intcome', workstaterow__key__icontains=field_value)
+            return Q(workstaterow__type='income') & Q(workstaterow__key__icontains=field_value)
         return Q()
 
     def search_outcome_value(self, field, field_value, form_field, request, param_values):
@@ -203,27 +203,27 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
         #         return Q(id__in=ids)
         # return Q()
         if field_value and field in param_values:
-            return Q(workstaterow__type='outcome', workstaterow__key__icontains=field_value)
+            return Q(workstaterow__type='outcome') & Q(workstaterow__key__icontains=field_value)
         return Q()
 
     def search_income_date_gte(self, field, field_value, form_field, request, param_values):
         if field_value and field in param_values:
-            return Q(workstaterow__type='income', workstaterow__date__gte=field_value)
+            return Q(workstaterow__type='income') & Q(workstaterow__date__gte=field_value)
         return Q()
 
     def search_income_date_lte(self, field, field_value, form_field, request, param_values):
         if field_value and field in param_values:
-            return Q(workstaterow__type='income', workstaterow__date__lte=field_value)
+            return Q(workstaterow__type='income') & Q(workstaterow__date__lte=field_value)
         return Q()
 
     def search_outcome_date_gte(self, field, field_value, form_field, request, param_values):
         if field_value and field in param_values:
-            return Q(workstaterow__type='outcome', workstaterow__date__gte=field_value)
+            return Q(workstaterow__type='outcome') & Q(workstaterow__date__gte=field_value)
         return Q()
 
     def search_outcome_date_lte(self, field, field_value, form_field, request, param_values):
         if field_value and field in param_values:
-            return Q(workstaterow__type='outcome', workstaterow__date__lte=field_value)
+            return Q(workstaterow__type='outcome') & Q(workstaterow__date__lte=field_value)
         return Q()
 
 
