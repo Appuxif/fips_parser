@@ -182,6 +182,7 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
         #     if ids:
         #         return Q(id__in=ids)
         # return Q()
+        field_value = ([v[1] for v in income_choices if str(v[0]) == field_value] or [None])[0]
         if field_value and field in param_values:
             return Q(workstaterow__type='income') & Q(workstaterow__key__icontains=field_value)
         return Q()
@@ -202,6 +203,7 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
         #     if ids:
         #         return Q(id__in=ids)
         # return Q()
+        field_value = ([v[1] for v in income_choices if str(v[0]) == field_value] or [None])[0]
         if field_value and field in param_values:
             return Q(workstaterow__type='outcome') & Q(workstaterow__key__icontains=field_value)
         return Q()
