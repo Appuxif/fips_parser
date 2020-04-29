@@ -28,7 +28,7 @@ proxy_list = ['http://52.15.172.134:7778']
 # with open('proxy.txt', 'r') as f:
 #     proxy_list = ['http://' + line.strip() for line in f.readlines()]
 # print(proxy_list)
-proxy = surnames = names = cities = regions = forms = None
+proxy = surnames = names = countries = cities = regions = forms = None
 
 
 # Подготавливаем список фамилий, городов и регионов для парсинга
@@ -43,30 +43,34 @@ def get_names():
     return get_surnames('names.txt')
 
 
-def get_cities():
-    with open('cities.txt', 'rb') as f:
+def get_cities(filename=None):
+    filename = filename or 'cities.txt'
+    with open(filename, 'rb') as f:
         s = f.read()
     s = s.decode().splitlines()
     r = {}
     for l in s:
-        l = l.split()
-        city = ' '.join(l[1:])
-        r[city] = l[0]
+        l = l.split(';')
+        r[l[0]] = {'area': l[1], 'region': l[2]}
     # print(r)
     return r
 
 
-def get_regions():
-    with open('regions.txt', 'rb') as f:
-        s = f.read()
-    s = s.decode().splitlines()
-    r = {}
-    for l in s:
-        l = l.split()
-        city = ' '.join(l[1:])
-        r[l[0]] = city
-    # print(r)
-    return r
+def get_countries():
+    return get_surnames('countries.txt')
+
+
+# def get_regions():
+#     with open('regions.txt', 'rb') as f:
+#         s = f.read()
+#     s = s.decode().splitlines()
+#     r = {}
+#     for l in s:
+#         l = l.split()
+#         city = ' '.join(l[1:])
+#         r[l[0]] = city
+#     # print(r)
+#     return r
 
 
 def get_forms():
@@ -702,53 +706,89 @@ def parse_contacts_from_documentparse(document_parse):
     applicant = {'company': {}, 'person': {}}
     # Получаем наименование компании из поля document_parse['applicant'] или document_parse['copyright_holder']
     # Нужно искать компанию, либо Имя-Фамилию контакта
-    applicant_string = document_parse.get('applicant') or document_parse.get('copyright_holder')
+    # applicant_string = document_parse.get('applicant') or document_parse.get('copyright_holder')
     # applicant_string = "'RU, ИП Фрольцов Александр Вячеславович, 127299, г. Москва, ул. Приорова, д.14а, кв. 79'"
+    # applicant_string = "'BY, Общество с ограниченной ответственностью «ЮСВ-медицинские системы», Нет данных'"
+    # applicant_string = "'RU, Общество с ограниченной ответственностью «РЕГИОН-К», 628200, Россия, Ханты-Мансийский автономный округ-Югра, район Кондинский, поселок городского типа Междуреченский, ул. Ворошилова, д. 10'"
+    applicant_string = "'CH, ГРИНМИ СА, рут де Пре-Буа 20, Сэж Консэй, 1215 Женева 15 Аэропорт, Швейцария'"
+    print(applicant_string)
+    applicant_string_lower = applicant_string.lower()
     if applicant_string:
+        sign_char = re.match(r'.*(?P<sign>[A-Z]{2}).*', applicant_string)
+        if sign_char:
+            sign_char = sign_char.groupdict().get('sign') or 'NULL'
+            applicant['company']['sign_char'] = sign_char
+            applicant_string = applicant_string.replace(sign_char, '')
+            print('Код страны', sign_char)
+
+        zip_code = re.match(r'.*(?P<zip>\d{6}).*', applicant_string) or \
+            re.match(r'.*(?P<zip>\d{5}).*', applicant_string) or \
+            re.match(r'.*(?P<zip>\d{4}).*', applicant_string)
+        if zip_code:
+            zip_code = zip_code.groupdict().get('zip') or 'NULL'
+            applicant['person']['zip'] = zip_code
+
         # Ищем известную организационную форму
         applicant_string_splitted = applicant_string[1:-1].split(', ')
         for item in applicant_string_splitted:
             # Находим код страны
-            print(item)
-            city = re.sub(r'(г|\.)', '', item).strip()
-            if re.match(r'^[A-Z]{2}$', item):
-                applicant['company']['sign_char'] = item
-                applicant_string = applicant_string.replace(item, '')
-                print('Код страны', item)
-            elif re.match(r'^\d{5,6}$', item):
-                applicant['person']['zip'] = item
-            elif city in cities:
-                applicant['person']['city'] = city
-                applicant['person']['state'] = regions[cities[city]]
+            print('item', item)
+            city = re.sub(r'(г\.)', '', item).strip()
+            city = city.split()
+            for c in city:
+                print('city', c)
+                if re.match(r'.*(ул\.|обл\.|\d).*', item) or applicant['person'].get('city'):
+                    print('пропущено', item)
+                    continue
+                if c in cities:
+                    applicant['person']['city'] = c
+                    # applicant['person']['state'] = regions[cities[c]]
+                    if cities[c]['region'] and cities[c]['region'].lower() in applicant_string_lower:
+                        applicant['person']['state'] = cities[c]['region'] or 'NULL'
+                    if cities[c]['area'] and cities[c]['area'].lower() in applicant_string_lower:
+                        applicant['person']['area'] = cities[c]['area'] or 'NULL'
+            for c in city:
+                if applicant['person'].get('country'):
+                    break
+                if c in countries:
+                    applicant['person']['country'] = c
+
+            # Если найдена форма - это название компании
+            for form in forms:
+                if form in item:
+                    applicant['company']['company_form'] = forms[form]
+                    applicant['company']['company_name'] = item
+                    applicant_string = applicant_string.replace(item, '')
+
+            # Если найдена фамилия - то это ФИО контакта
+            item_splitted = item.split()
+            sur_found = first_found = second_found = middle_found = False
+
+            # if re.match(r'.*(ул\.|г\.|обл\.|д\.|кв\.|\d).*', item):
+            if re.match(r'.*(ул\.|г\.|обл\.|\d).*', item):
+                print('пропущено', item)
             else:
-                # Если найдена форма - это название компании
-                for form in forms:
-                    if form in item:
-                        applicant['company']['company_form'] = forms[form]
-                        applicant['company']['company_name'] = item
+                for isp in item_splitted:
+                    if not sur_found and isp in surnames:
+                        sur_found = True
+                        applicant['person']['full_name'] = re.sub('(ИП|Индивидуальный предприниматель)', '', item).strip()
+                        applicant['person']['last_name'] = isp
                         applicant_string = applicant_string.replace(item, '')
+                        splitted = applicant['person']['full_name'].split()
+                        if isp in splitted:
+                            splitted.remove(isp)
+                        first_name = splitted[:1]
+                        middle_name = splitted[1:]
+                        applicant['person']['first_name'] = splitted[:1][0] if splitted[:1] else 'NULL'
+                        applicant['person']['middle_name'] = splitted[1:][0] if splitted[1:] else 'NULL'
 
-                # Если найдена фамилия - то это ФИО контакта
-                item_splitted = item.split()
-                sur_found = first_found = second_found = middle_found = False
-
-                if 'ул.' in item or 'г.' in item or 'обл.' in item:
-                    pass
-                else:
-                    for isp in item_splitted:
-                        if not sur_found and isp in surnames:
-                            sur_found = True
-                            applicant['person']['full_name'] = re.sub('(ИП|Индивидуальный предприниматель)', '', item).strip()
-                            applicant['person']['last_name'] = isp
-                            applicant_string = applicant_string.replace(item, '')
-                            splitted = applicant['person']['full_name'].split()
-                            if isp in splitted:
-                                splitted.remove(isp)
-                            first_name = splitted[:1]
-                            middle_name = splitted[1:]
-                            applicant['person']['first_name'] = splitted[:1][0] if splitted[:1] else 'NULL'
-                            applicant['person']['middle_name'] = splitted[1:][0] if splitted[1:] else 'NULL'
-        print(applicant_string.replace(',', '').replace("'", '').strip())
+        applicant_string_splitted = re.sub('[\'(){}]', '', applicant_string).strip().split(', ')
+        applicant_string = ', '.join([s for s in applicant_string_splitted if s])
+        # print(applicant_string)
+        applicant['company']['address'] = applicant_string
+        applicant['person']['address'] = applicant_string
+        if applicant['person'].get('country') is None:
+            applicant['person']['country'] = 'Россия'
     else:
         print('Имя компании не получено')
     print(applicant)

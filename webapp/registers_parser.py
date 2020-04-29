@@ -217,7 +217,7 @@ def parse_izvs(document, start_izvs):
                         number = line[0]
                         service_items.append(number)
                         text = ' '.join(line[1:])
-
+                        text = re.sub('[-\'{}]', '', text)
                         unique_field = izvs_list[izv_i]['unique_field']
                         izvs_list[izv_i]['serviceitem_values'].append(f"('{document['id']}', {unique_field}, '{number}', '{text}')")
                     if service_items:
@@ -278,8 +278,9 @@ def parse_izvs(document, start_izvs):
 def start_parse_all_documents():
     parser_base.surnames = get_surnames()
     parser_base.names = get_names()
+    parser_base.countries = get_countries()
     parser_base.cities = get_cities()
-    parser_base.regions = get_regions()
+    # parser_base.regions = get_regions()
     parser_base.forms = get_forms()
     p = RegistersParser(REGISTERS_URL, 'registers')
     # p.start_parse_all_documents()

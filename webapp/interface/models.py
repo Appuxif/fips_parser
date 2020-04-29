@@ -83,7 +83,7 @@ class Company(models.Model):
         verbose_name = 'Компания'
         verbose_name_plural = 'Компании'
         indexes = [
-            models.Index(fields=['company_form']),
+            models.Index(fields=['form']),
         ]
 
 

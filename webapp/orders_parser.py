@@ -1,4 +1,5 @@
 from parser_base import *
+import parser_base
 # proxy = surnames = names = cities = regions = None
 
 
@@ -187,11 +188,11 @@ def parse_workstate(page):
 
 def start_parse_all_documents():
     global surnames, names, cities, regions
-    surnames = get_surnames()
-    names = get_names()
-    cities = get_cities()
-    regions = get_regions()
-    forms = get_forms()
+    parser_base.surnames = get_surnames()
+    parser_base.names = get_names()
+    parser_base.cities = get_cities()
+    # regions = get_regions()
+    parser_base.forms = get_forms()
     p = OrdersParser(ORDERS_URL, 'orders')
     p.start_parse_all_documents()
 
