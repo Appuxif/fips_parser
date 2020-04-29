@@ -400,6 +400,14 @@ class DocumentSearchForm(Form):
         }
     ))
 
+    service_items_values = CharField(required=False, widget=TextInput(
+        attrs={
+            'filter_field': 'serviceitem__text',
+            'filter_method': '__icontains',
+            # 'placeholder': 'comma separated'
+        }
+    ))
+
     documentizv_izv_type = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'izv__izv_type',
@@ -606,6 +614,7 @@ fields_dict = {
     'document_exists': "Наличие документа",
     'document_parsed': "Документ спарсен",
     'service_items_list': "Классы МКТУ",
+    'service_items_values': "Классы МКТУ. Текст",
 
     'documentizv_izv_type': "Тип извещения",
     'documentizv_address': "Извещения. Адресс для переписки",
