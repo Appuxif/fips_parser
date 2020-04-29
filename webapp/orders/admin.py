@@ -160,49 +160,20 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
         if field_value and field in param_values:
             values = field_value.split(',')
             if values:
-                queries = ServiceItem.objects.select_related('document').filter(number__in=values)
-                ids = [q.document.id for q in queries]
-                if ids:
-                    return Q(id__in=ids)
+                return Q(serviceitem__number__in=values)
+                # queries = ServiceItem.objects.select_related('document').filter(number__in=values)
+                # ids = [q.document.id for q in queries]
+                # if ids:
+                #     return Q(id__in=ids)
         return Q()
 
     def search_income_value(self, field, field_value, form_field, request, param_values):
-        # if field_value and field in param_values or 'income_date_gte' in param_values or 'income_date_lte' in param_values:
-        #     queries = WorkStateRow.objects.select_related('document').filter(type='income')
-        #     field_value = ([v[1] for v in income_choices if str(v[0]) == field_value] or [None])[0]
-        #     if field_value and field in param_values:
-        #         queries = queries.filter(key__icontains=field_value)
-        #     if 'income_date_gte' in param_values:
-        #         value = param_values['income_date_gte'][0]
-        #         queries = queries.filter(date__gte=value)
-        #     if 'income_date_lte' in param_values:
-        #         value = param_values['income_date_lte'][0]
-        #         queries = queries.filter(date__lte=value)
-        #     ids = [q.document.id for q in queries]
-        #     if ids:
-        #         return Q(id__in=ids)
-        # return Q()
         field_value = ([v[1] for v in income_choices if str(v[0]) == field_value] or [None])[0]
         if field_value and field in param_values:
             return Q(workstaterow__type='income') & Q(workstaterow__key__icontains=field_value)
         return Q()
 
     def search_outcome_value(self, field, field_value, form_field, request, param_values):
-        # if field_value and field in param_values or 'outcome_date_gte' in param_values or 'outcome_date_lte' in param_values:
-        #     queries = WorkStateRow.objects.select_related('document').filter(type='outcome')
-        #     field_value = ([v[1] for v in outcome_choices if str(v[0]) == field_value] or [None])[0]
-        #     if field_value and field in param_values:
-        #         queries = queries.filter(key__icontains=field_value)
-        #     if 'outcome_date_gte' in param_values:
-        #         value = param_values['outcome_date_gte'][0]
-        #         queries = queries.filter(date__gte=value)
-        #     if 'outcome_date_lte' in param_values:
-        #         value = param_values['outcome_date_lte'][0]
-        #         queries = queries.filter(date__lte=value)
-        #     ids = [q.document.id for q in queries]
-        #     if ids:
-        #         return Q(id__in=ids)
-        # return Q()
         field_value = ([v[1] for v in income_choices if str(v[0]) == field_value] or [None])[0]
         if field_value and field in param_values:
             return Q(workstaterow__type='outcome') & Q(workstaterow__key__icontains=field_value)
