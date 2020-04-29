@@ -77,7 +77,7 @@ class Company(models.Model):
     register = models.ManyToManyField(RegisterDocument, related_query_name='person',
                                       blank=True, through='RegisterCompanyRel')
 
-    logo = models.FileField('Логотип компании', upload_to=company_logo_path, null=True, blank=True)
+    logo = models.ImageField('Логотип компании', upload_to=company_logo_path, null=True, blank=True)
 
     def __str__(self):
         return str(self.name)
@@ -164,7 +164,7 @@ class ContactPerson(models.Model):
     rep_reg_number = models.CharField(max_length=20, null=True, blank=True)
     rep_correspondence_address = models.CharField(max_length=255, null=True, blank=True)  # ! #
 
-    photo = models.FileField('Персональное фото', upload_to=person_photo_path, null=True, blank=True)
+    photo = models.ImageField('Персональное фото', upload_to=person_photo_path, null=True, blank=True)
     bday_date = models.DateField('День рождения', null=True, blank=True)
 
 
@@ -175,8 +175,8 @@ class ContactPerson(models.Model):
         return f'/admin/interface/contactperson/{self.id}/change/'
 
     class Meta:
-        verbose_name = 'Представитель заявки'
-        verbose_name_plural = 'Представители заявок'
+        verbose_name = 'Представитель компании'
+        verbose_name_plural = 'Представители компаний'
         indexes = [
             models.Index(fields=['id']),
             models.Index(fields=['email']),
