@@ -34,6 +34,7 @@ class ContactPersonInline(admin.StackedInline):
     model = ContactPerson
     extra = 0
     view_on_site = False
+    template = 'admin/edit_inline/stacked_file_person.html'
 
     # Чтобы выводить по два поля на ширину экрана
     def get_fieldsets(self, request, obj=None):
@@ -71,6 +72,8 @@ class RegisterCompanyInline(admin.StackedInline):
 class CompanyAdmin(admin.ModelAdmin):
     inlines = [ContactPersonInline, OrderCompanyInline, RegisterCompanyInline]
     exclude = ('order', 'register')
+    # Шаблон, на котором добавлено лого компании
+    change_form_template = 'admin/custom_change_form_company.html'
 
 
 # TODO: Для отладки. Потом удалить
