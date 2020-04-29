@@ -7,7 +7,7 @@ from .models_base import Leaf, Document, DocumentParse, DocumentFile, ServiceIte
 class LeafSearchForm(Form):
     name = CharField(required=False, widget=TextInput(
         attrs={
-            'filter_method': '__contains',
+            'filter_method': '__icontains',
         }
     ))
 
@@ -45,7 +45,7 @@ class DocumentSearchForm(Form):
         attrs={
             'filter_field': 'documentparse__order_number',
             'filter_method': '__lte',
-            # 'filter_method': '__contains',
+            # 'filter_method': '__icontains',
         }
     ))
 
@@ -81,28 +81,28 @@ class DocumentSearchForm(Form):
     applicant = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'documentparse__applicant',
-            'filter_method': '__contains',
+            'filter_method': '__icontains',
         }
     ))
 
     address = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'documentparse__address',
-            'filter_method': '__contains',
+            'filter_method': '__icontains',
         }
     ))
 
     copyright_holder = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'documentparse__copyright_holder',
-            'filter_method': '__contains',
+            'filter_method': '__icontains',
         }
     ))
 
     patent_atty = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'documentparse__patent_atty',
-            'filter_method': '__contains',
+            'filter_method': '__icontains',
         }
     ))
 

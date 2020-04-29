@@ -7,7 +7,7 @@ from .models_base import Leaf, Document, DocumentParse, DocumentFile, ServiceIte
 class LeafSearchForm(Form):
     name = CharField(required=False, widget=TextInput(
         attrs={
-            'filter_method': '__contains',
+            'filter_method': '__icontains',
         }
     ))
 
@@ -59,28 +59,28 @@ class DocumentParseSearchForm(Form):
     applicant = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'applicant',
-            'filter_method': '__contains',
+            'filter_method': '__icontains',
         }
     ))
 
     address = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'address',
-            'filter_method': '__contains',
+            'filter_method': '__icontains',
         }
     ))
 
     copyright_holder = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'copyright_holder',
-            'filter_method': '__contains',
+            'filter_method': '__icontains',
         }
     ))
 
     patent_atty = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'patent_atty',
-            'filter_method': '__contains',
+            'filter_method': '__icontains',
         }
     ))
 
@@ -227,7 +227,7 @@ class DocumentSearchForm(Form):
         attrs={
             'filter_field': 'documentparse__order_number',
             'filter_method': '__lte',
-            # 'filter_method': '__contains',
+            # 'filter_method': '__icontains',
         }
     ))
 
@@ -263,28 +263,28 @@ class DocumentSearchForm(Form):
     applicant = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'documentparse__applicant',
-            'filter_method': '__contains',
+            'filter_method': '__icontains',
         }
     ))
 
     address = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'documentparse__address',
-            'filter_method': '__contains',
+            'filter_method': '__icontains',
         }
     ))
 
     copyright_holder = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'documentparse__copyright_holder',
-            'filter_method': '__contains',
+            'filter_method': '__icontains',
         }
     ))
 
     patent_atty = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'documentparse__patent_atty',
-            'filter_method': '__contains',
+            'filter_method': '__icontains',
         }
     ))
 
@@ -403,84 +403,84 @@ class DocumentSearchForm(Form):
     documentizv_izv_type = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'izv__izv_type',
-            'filter_method': '__contains'
+            'filter_method': '__icontains'
         }
     ))
 
     documentizv_address = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'izv__address',
-            'filter_method': '__contains'
+            'filter_method': '__icontains'
         }
     ))
 
     documentizv_last_copyright_holder = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'izv__last_copyright_holder',
-            'filter_method': '__contains'
+            'filter_method': '__icontains'
         }
     ))
 
     documentizv_last_copyright_holder_name = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'izv__last_copyright_holder_name',
-            'filter_method': '__contains'
+            'filter_method': '__icontains'
         }
     ))
 
     documentizv_copyright_holder = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'izv__copyright_holder',
-            'filter_method': '__contains'
+            'filter_method': '__icontains'
         }
     ))
 
     documentizv_transferor = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'izv__transferor',
-            'filter_method': '__contains'
+            'filter_method': '__icontains'
         }
     ))
 
     documentizv_contract_type = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'izv__contract_type',
-            'filter_method': '__contains'
+            'filter_method': '__icontains'
         }
     ))
 
     documentizv_contract_terms = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'izv__contract_terms',
-            'filter_method': '__contains'
+            'filter_method': '__icontains'
         }
     ))
 
     documentizv_grantor = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'izv__grantor',
-            'filter_method': '__contains'
+            'filter_method': '__icontains'
         }
     ))
 
     documentizv_granted = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'izv__granted',
-            'filter_method': '__contains'
+            'filter_method': '__icontains'
         }
     ))
 
     documentizv_licensee = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'izv__licensee',
-            'filter_method': '__contains'
+            'filter_method': '__icontains'
         }
     ))
 
     documentizv_sublicensee = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'izv__sublicensee',
-            'filter_method': '__contains'
+            'filter_method': '__icontains'
         }
     ))
 
@@ -541,7 +541,7 @@ class DocumentSearchForm(Form):
     izvitem_key = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'izvitem__key',
-            'filter_method': '__contains'
+            'filter_method': '__icontains'
         }
     ))
 
