@@ -31,6 +31,9 @@ class WorkStateRow(models.Model):
     class Meta:
         verbose_name = 'Строка из делопроизводства'
         verbose_name_plural = 'Строки из делопроизводства'
+        indexes = [
+            models.Index(fields=['key'])
+        ]
 
     def __str__(self):
         return 'For ' + str(self.workstate.id)
