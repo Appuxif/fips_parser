@@ -24,14 +24,15 @@ class Processor:
     def __init__(self, verbose=True):
         self.load_parsers()
         self.verbose = verbose
-        self.vprint('Запущен процессор')
         self.listener = threading.Thread(target=self.listener_thread)
         self.listener.start()
+        self.vprint('Запущен процессор')
 
     def load_parsers(self, sleep_time=None):
         if sleep_time:
             sleep(sleep_time)
         self.parsers = {p['id']: p for p in DB().fetchall('SELECT * FROM interface_parsersetting')}
+        self.vprint('Загружены парсеры', self.parsers)
 
     def vprint(self, *args, **kwargs):
         if self.verbose:

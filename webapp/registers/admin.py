@@ -278,6 +278,7 @@ class LeafAdmin(admin.ModelAdmin):
         return f'{obj.document_set.count()}'
     documents.short_description = 'Количество документов'
 
+
 @admin.register(ParserHistory)
 class ParserHistoryAdmin(admin.ModelAdmin):
     pass
