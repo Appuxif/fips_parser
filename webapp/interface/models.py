@@ -176,3 +176,7 @@ class ParserSetting(models.Model):
 
     proxies_num = models.IntegerField('Количество используемых прокси')
     is_working = models.BooleanField('Парсер запущен')
+
+    def __str__(self):
+        type = 'orders' if self.type == 0 else 'registers'
+        return 'Настройки для ' + type

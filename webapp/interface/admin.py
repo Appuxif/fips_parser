@@ -7,7 +7,7 @@ from multiprocessing.connection import Client
 # Все контакты отображаются непосредственно в документе
 
 # from .models import OrderContact, OrderContactPerson, RegisterContact, RegisterContactPerson, ContactPerson, Company
-from .models import ContactPerson, Company, RegisterCompanyRel, OrderCompanyRel, ParserSetting
+from .models import ContactPerson, Company, RegisterCompanyRel, OrderCompanyRel, ParserSetting, Proxies
 # from orders.admin import CompanyInline as OrderCompanyInline
 # from registers.admin import CompanyInline as RegisterCompanyInline
 
@@ -92,6 +92,11 @@ class OrderCompanyRelAdmin(admin.ModelAdmin):
 # TODO: Для отладки. Потом удалить
 @admin.register(RegisterCompanyRel)
 class RegisterCompanyRelAdmin(admin.ModelAdmin):
+    pass
+
+# TODO: Для отладки. Потом удалить
+@admin.register(Proxies)
+class ProxiesAdmin(admin.ModelAdmin):
     pass
 
 

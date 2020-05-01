@@ -20,6 +20,7 @@ processes = {}
 class Processor:
     parsers_processes = {}
     parsers = {}
+    release_proxies = False
 
     def __init__(self, verbose=True):
         self.verbose = verbose
@@ -33,14 +34,28 @@ class Processor:
             sleep(sleep_time)
         self.parsers = {p['id']: p for p in DB().fetchall('SELECT * FROM interface_parsersetting')}
         self.vprint('Загружены парсеры', self.parsers)
+        self.release_proxies = True
 
     def vprint(self, *args, **kwargs):
         if self.verbose:
             print(*args, **kwargs)
 
+    def terminate_process(self, parser_id):
+        process = self.parsers_processes.pop(parser_id)
+        process.terminate()
+        self.vprint('Закрыт процесс', process)
+
+    def terminate_all_processes(self):
+        for parser_id, process in self.parsers_processes.items():
+            self.terminate_process(parser_id)
+
     # Основной процесс для запуска парсеров
     def go_processor(self):
         while True:
+            if self.release_proxies:
+                release_proxies()
+                self.terminate_all_processes()
+
             for parser_id, parser in self.parsers.items():
                 try:
                     self.process_parser(parser)
@@ -49,9 +64,8 @@ class Processor:
                     self.vprint('parser_processor Ошибка парсера', parser)
             for parser_id in self.parsers_processes:
                 if parser_id not in self.parsers:
-                    process = self.parsers_processes.pop(parser_id)
-                    process.terminate()
-                    self.vprint('Закрыт процесс', process)
+                    self.terminate_process(parser_id)
+
             sleep(5)
 
     # Обработка парсеров. Запуск и перезапуск
@@ -118,6 +132,5 @@ class Processor:
 
 
 if __name__ == '__main__':
-    release_proxies()
     processor = Processor()
     processor.go_processor()

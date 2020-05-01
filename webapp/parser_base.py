@@ -325,7 +325,8 @@ class Parser:
         proxies_in_use = []
         try:
             while True:
-                if self.get_workers(number)._queue.qsize() > 0:
+                # if self.get_workers(number)._queue.qsize() > 0:
+                if len(self.get_workers(number).tasks) >= number:
                     sleep(0.1)
                     continue
 
@@ -357,7 +358,7 @@ class Parser:
                         use_proxies(in_use)
                     proxies_in_use.append(in_use)
                 self._print('Запуск парсинга с прокси', proxy)
-                self.get_workers().add_task(self.start_parse_all_documents, (proxy,))
+                self.get_workers().add_task(self.start_parse_all_documents, (proxy,), proxy['host'])
 
             self.get_workers()._queue.join()
             self._lprint('Парсинг окончен')
