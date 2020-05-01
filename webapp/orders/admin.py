@@ -269,7 +269,8 @@ class LeafAdmin(AdvancedSearchAdmin):
 
 @admin.register(ParserHistory)
 class ParserHistoryAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('__str__', 'is_error', 'date_created')
+    exclude = ('document',)
 
 # Функции ################################################################
 

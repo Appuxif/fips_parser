@@ -281,4 +281,5 @@ class LeafAdmin(admin.ModelAdmin):
 
 @admin.register(ParserHistory)
 class ParserHistoryAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('__str__', 'is_error', 'date_created')
+    exclude = ('document',)
