@@ -171,8 +171,8 @@ class ParserSetting(models.Model):
     requests_period = models.IntegerField('Период запросов (сек)', default=3)
     requests_amount = models.IntegerField('Количество запросов за период', default=1)
 
-    number_gte = models.CharField('С номера', max_length=20)  # 2020706000
-    number_lte = models.CharField('По номер', max_length=20)  # 2020706099
+    number_gte = models.CharField('С номера', max_length=20, null=True, blank=True)  # 2020706000
+    number_lte = models.CharField('По номер', max_length=20, null=True, blank=True)  # 2020706099
 
     proxies_num = models.IntegerField('Количество используемых прокси')
     is_working = models.BooleanField('Парсер запущен')
