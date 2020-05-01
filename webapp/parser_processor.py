@@ -60,6 +60,7 @@ class Processor:
             if self.release_proxies:
                 release_proxies()
                 self.terminate_all_processes()
+                self.release_proxies = False
 
             for parser_id, parser in self.parsers.items():
                 try:
