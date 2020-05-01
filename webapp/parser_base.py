@@ -398,7 +398,6 @@ class Parser:
         print('rand_times', rand_times)  # TODO: DELETE ME
         rand_times = iter(rand_times)
         while self.start_parse_document(proxy, self.document_parse_query):
-
             documents_parsed += 1
             if monotonic() - timer > 30:
                 q = update_by_id_query('interface_proxies', {'id': f"'{proxy['id']}'",
@@ -419,8 +418,8 @@ class Parser:
                 sleep(1)
 
         release_proxies([f"'{proxy['id']}'"])
-        q = update_by_id_query('interface_proxies',{'id': f"'{proxy['id']}'",
-                                                    'documents_parsed': f"'{proxy['documents_parsed']}'"})
+        q = update_by_id_query('interface_proxies', {'id': f"'{proxy['id']}'",
+                                                    'documents_parsed': f"'{documents_parsed}'"})
         DB().executeone(q)
 
     # Берет из базы и парсит один непарсенный документ
