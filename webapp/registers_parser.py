@@ -281,7 +281,6 @@ def start_parse_all_documents():
     parser_base.names = get_names()
     parser_base.countries = get_countries()
     parser_base.cities = get_cities()
-    # parser_base.regions = get_regions()
     parser_base.forms = get_forms()
     p = RegistersParser(REGISTERS_URL, 'registers')
     # p.start_parse_all_documents()

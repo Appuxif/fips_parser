@@ -1,6 +1,7 @@
 import itertools
 import os.path
 import re
+import traceback
 from datetime import datetime, timedelta, date
 
 import requests
@@ -127,6 +128,7 @@ class Parser:
         self.dbdocument_izv = self.name + '_documentizv'
         self.dbdocument_izvitem = self.name + '_documentizvitem'
         self.dbdocument_izvserviceitem = self.name + '_izvserviceitem'
+        self.dbparserhistory = self.name + '_parserhistory'
 
     def _print(self, *args, **kwargs):
         if self.verbosity:
@@ -321,46 +323,36 @@ class Parser:
         try:
             while True:
                 if self.get_workers(number)._queue.qsize() > 0:
-                    sleep(1)
+                    sleep(0.1)
                     continue
 
                 if not self.proxies:
                     self._lprint('Поиск прокси в БД')
+                    today = date.today()
                     with self.get_workers().lock:
-                        # proxies = DB().fetchall(f"SELECT * FROM interface_proxies "
-                        #                         f"WHERE is_banned = FALSE AND is_working = TRUE AND in_use = FALSE "
-                        #                         f"LIMIT {number}")
                         proxy = DB().fetchone(f"SELECT * FROM interface_proxies "
                                               f"WHERE is_banned = FALSE AND is_working = TRUE AND in_use = FALSE "
+                                              f"AND (documents_parsed < 900 AND date_last_used = '{today}' "
+                                              f"OR date_last_used != '{today}')"
                                               f"LIMIT 1")
                     if proxy is None:
-                        self._lprint('Нет доступных прокси. Ждем окончания потоков или закрытия программы')
-                        break
+                        # self._lprint('Нет доступных прокси. Ждем окончания потоков или закрытия программы')
+                        self._lprint('Нет доступных прокси. Ждем')
+                        sleep(30)
+                        continue
+                        # break
                         # in_use = [f"'{p['id']}'" for p in proxies]
+
+                    proxy = dict(proxy)
+                    print(proxy['date_last_used'], today)  # TODO: Delete me
+                    if proxy['date_last_used'] != today:
+                        proxy['documents_parsed'] = 0
+
                     in_use = [f"'{proxy['id']}'"]
                     # proxies_in_use.extend(in_use)
                     with self.get_workers().lock:
                         use_proxies(in_use)
                     proxies_in_use.append(in_use)
-
-                    # if not proxies:
-                    #     self._lprint('Нет доступных прокси. Ждем окончания потоков или закрытия программы')
-                    #     break
-                    # self.proxies = [dict(proxy) for proxy in proxies]
-                    # proxies = iter(self.proxies)
-                    # stop_iteration = False
-
-                # if stop_iteration:
-                #     continue
-
-                # try:
-                #     proxy = next(proxies)
-                # except StopIteration:
-                #     stop_iteration = True
-                #     continue
-
-                # self._print('Запуск парсинга с прокси', proxy)
-                proxy = dict(proxy)
                 self._print('Запуск парсинга с прокси', proxy)
                 self.get_workers().add_task(self.start_parse_all_documents, (proxy,))
 
@@ -373,11 +365,18 @@ class Parser:
 
     # Начинает новый парсинг информации со страницы с документом из списка документов
     def start_parse_all_documents(self, proxy=None):
+        documents_parsed = proxy['documents_parsed'] if proxy else 0
+        timer = monotonic()
         while self.start_parse_document(proxy):
-            timer = monotonic()
-            while monotonic() - timer < 3:
-                sleep(0.1)
-        # self.proxies.remove(proxy)
+            documents_parsed += 1
+            sleep(3)
+            if monotonic() - timer > 30:
+                q = update_by_id_query('interface_proxies',
+                                       {'id': f"'{proxy['id']}'", 'documents_parsed': f"'{proxy['documents_parsed']}'"})
+                DB().executeone(q)
+            if documents_parsed > 900:
+                break
+
         release_proxies([f"'{proxy['id']}'"])
 
     # Берет из базы и парсит один непарсенный документ
@@ -399,7 +398,34 @@ class Parser:
         if document_obj is None:
             return False
 
-        return self.parse_one_document(dict(document_obj), proxy)
+        # Если возникают какие-то неучтенные ошибки, то ошибка логируется, в БД создается запись о
+        # результате парсинга с ошибкой, записывается путь до файла с логами ошибки
+        # Далее документ считается спарсенным и парсер переходит к следующему документу
+        try:
+            result = self.parse_one_document(dict(document_obj), proxy)
+        except:
+            result = True
+            # Логирование ошибки в файл
+            now = datetime.now()
+            now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+            filename = self.name + '_' + str(document_obj['number']) + '_' + now_str + '.txt'
+            error_filename = os.path.join('.', 'media', 'logs', filename)
+            error_link = '/media/logs/' + filename
+            with open(error_filename, 'w') as f:
+                traceback.print_exc(file=f)
+
+            # Запись результата парсинга в БД и отметка документа спарсенным
+            with self.get_workers().lock:
+                DB().executeone(f"UPDATE {self.dbdocument} SET document_parsed = TRUE, "
+                                f"date_parsed = '{date.today()}' "
+                                f"WHERE id = '{document_obj['id']}'")
+                DB().executeone(f"INSERT INTO {self.dbparserhistory} "
+                                f"(document_id, date_created, is_error, error_log_file, message) "
+                                f"VALUES ('{document_obj['id']}', '{now}', TRUE, '{error_link}', '')")
+        finally:
+            self.documents_in_parsing.remove(f"'{document_obj['id']}'")
+
+        return result
 
     # Парсит одну страницу документа
     def parse_one_document(self, document_obj, proxy=None):
@@ -414,20 +440,22 @@ class Parser:
             elif 'socks5' in proxy['scheme']:
                 proxies = {'socks5': s}
 
-        try:
-            self._print(document_obj['number'], 'Парсинг документа', document_obj['url'], proxies)
+        self._print(document_obj['number'], 'Парсинг документа', document_obj['url'], proxies)
 
-            filepath = os.path.join('.', 'media', self.name, str(document_obj['number']))
-            filename = os.path.join(filepath, 'page.html')
-            url = document_obj['url']
-            session = requests.Session()
+        filepath = os.path.join('.', 'media', self.name, str(document_obj['number']))
+        filename = os.path.join(filepath, 'page.html')
+        url = document_obj['url']
+        existence = True
+        with requests.Session() as session:
             session.headers.update({'User-Agent': get_random_useragent()})
-            text = ''
-            page_content = None
-            existence = True
 
-            # Загружаем страницу и проверяем на ошибки
-            if not os.path.exists(filename):
+            # Либо парсим локальный файл # TODO: Для отладки
+            if os.path.exists(filename):
+                self._print(document_obj['number'], 'Парсим локальный файл')
+                with open(filename, 'rb') as f:
+                    page_content = f.read()
+            # Либо загружаем страницу и проверяем на ошибки
+            else:
                 counter = 0
                 while True:
                     try:
@@ -438,7 +466,7 @@ class Parser:
                         with self.get_workers().lock:
 
                             DB().executeone(f"UPDATE interface_proxies SET is_working = FALSE, "
-                                            f"status = '{'Ошибка прокси ' + err[200:]}'"
+                                            f"status = '{'Ошибка прокси ' + err[:200]}'"
                                             f"WHERE id = '{proxy['id']}'")
                         return False
 
@@ -488,24 +516,19 @@ class Parser:
                         return False
                     self._print(document_obj['number'], 'sleep')
                     sleep(3)
-            else:
-                self._print(document_obj['number'], 'Парсим локальный файл')  # TODO: Для отладки
-                with open(filename, 'rb') as f:
-                    page_content = f.read()
 
-            if not existence:
-                with self.get_workers().lock:
-                    DB().executeone(f"UPDATE {self.dbdocument} SET document_exists = FALSE WHERE id = '{document_obj['id']}'")
-                return True
-            else:
+            if existence:
                 with self.get_workers().lock:
                     DB().executeone(
-                        f"UPDATE {self.dbdocument} SET downloaded_page = '{filename}' WHERE id = '{document_obj['id']}'")
+                        f"UPDATE {self.dbdocument} SET downloaded_page = '{filename}' WHERE id = '{document_obj['id']}'"
+                    )
                 self.parse_document_page(page_content, document_obj, session, proxies)
-                return True
-        finally:
-            self.documents_in_parsing.remove(f"'{document_obj['id']}'")
-            session.close()
+            else:
+                with self.get_workers().lock:
+                    DB().executeone(f"UPDATE {self.dbdocument} SET document_parsed = TRUE, "
+                                    f"date_parsed = '{date.today()}', document_exists = FALSE "
+                                    f"WHERE id = '{document_obj['id']}'")
+            return True
 
     # Парсит полученную страницу
     def parse_document_page(self, page_content, document, session, proxies):
@@ -703,31 +726,69 @@ def load_proxies_to_db_from_file(filename=None):
 
 
 def parse_person_address(applicant_string, item, person):
-    item_splitted = re.sub(r'(г\.)', '', item).strip()
+    item_splitted = re.sub(r'(ГОРОД|город|г\.)', '', item, re.IGNORECASE).strip()
     item_splitted = item_splitted.split()
     applicant_string_lower = applicant_string.lower()
     # Ищем каждое слово среди списка городов
-    for c in item_splitted:
-        print('city', c)
-        if re.match(r'.*(ул\.|обл\.|\d).*', item) or person.get('city'):
-            print('пропущено', item)
-            continue
-        if c in cities:
-            person['city'] = c
-            # applicant['person']['state'] = regions[cities[c]]
-            # if cities[c]['region'] and cities[c]['region'].lower() in applicant_string_lower:
-            if cities[c]['region']:
-                person['state'] = cities[c]['region'] or 'NULL'
-            # if cities[c]['area'] and cities[c]['area'].lower() in applicant_string_lower:
-            if cities[c]['area']:
-                person['area'] = cities[c]['area'] or 'NULL'
 
-    # Ищем кадое слово среди списка стран
+    # Ищем город
+    if re.match(r'.*(город|г\.).*', item, re.IGNORECASE):
+        person['city'] = re.sub(r'(город |г\.)', '', item, flags=re.IGNORECASE).strip()
+
+    # Ищем край или область
+    if re.match(r'.*(край|область|обл).*', item, re.IGNORECASE):
+        person['state'] = item.strip()
+
+    # Ищем район
+    if re.match(r'.*(район).*', item, re.IGNORECASE):
+        person['area'] = item.strip()
+
     for c in item_splitted:
-        if person.get('country'):
-            break
-        if c in countries:
-            person['country'] = c
+        # print('city', c)
+        c = c.capitalize()
+
+        if re.match(r'.*(поселок|проспект|пркт|улица|ул\.|край|область|обл\.|\d).*', item, re.IGNORECASE) or person.get('city'):
+            # print('пропущено', item)
+            continue
+
+        # Еще раз пробегаемся по заготовленным городам
+        if c in cities:
+            if person.get('city') is None:
+                person['city'] = c
+
+            # Край/область
+            if person.get('state') is None and cities[c]['region']:
+                if cities[c]['region'].lower() in applicant_string_lower:
+                    person['state'] = cities[c]['region'] or 'NULL'
+                else:
+                    pass
+            # Район
+            if person.get('area') is None and cities[c]['area']:
+                if cities[c]['area'].lower() in applicant_string_lower:
+                    person['area'] = cities[c]['area'] or 'NULL'
+                else:
+                    pass
+
+    # Поиск по странам
+    if item in countries:
+        person['country'] = item
+    else:
+        # Ищем кадое слово среди списка стран
+        for c in item_splitted:
+            if person.get('country'):
+                break
+            if c in countries:
+                person['country'] = c
+
+
+def parse_zip_code(applicant_string, person):
+    zip_code = re.match(r'.*(?P<zip>\d{6}).*', applicant_string) or \
+               re.match(r'.*(?P<zip>\d{5}).*', applicant_string) or \
+               re.match(r'.*(?P<zip>\d{4}).*', applicant_string)
+
+    if zip_code:
+        zip_code = zip_code.groupdict().get('zip') or 'NULL'
+        person['zip'] = zip_code
 
 
 def parse_applicant(document_parse, type):
@@ -735,85 +796,101 @@ def parse_applicant(document_parse, type):
     # Получаем наименование компании из поля document_parse['applicant'] или document_parse['copyright_holder']
     # Нужно искать компанию, либо Имя-Фамилию контакта
     applicant_string = document_parse.get(type)
-    # applicant_string = "'RU, ИП Фрольцов Александр Вячеславович, 127299, г. Москва, ул. Приорова, д.14а, кв. 79'"
-    # applicant_string = "'BY, Общество с ограниченной ответственностью «ЮСВ-медицинские системы», Нет данных'"
-    # applicant_string = "'RU, Общество с ограниченной ответственностью «РЕГИОН-К», 628200, Россия, Ханты-Мансийский автономный округ-Югра, район Кондинский, поселок городского типа Междуреченский, ул. Ворошилова, д. 10'"
-    # applicant_string = "'CH, ГРИНМИ СА, рут де Пре-Буа 20, Сэж Консэй, 1215 Женева 15 Аэропорт, Швейцария'"
-    print(applicant_string)
+
     if applicant_string:
         applicant = {'company': {}, 'person': {}}
+        applicant_string_splitted = applicant_string[1:-1].split(', ')
 
         # Находим код страны
-        sign_char = re.match(r'.*(?P<sign>[A-Z]{2}).*', applicant_string)
+        sign_char = re.match(r'.*(?P<sign>[A-Z]{2}).*', applicant_string_splitted[0]) or \
+                    re.match(r'.*(?P<sign>[A-Z]{2}).*', applicant_string_splitted[-1])
         if sign_char:
             sign_char = sign_char.groupdict().get('sign') or 'NULL'
             applicant['company']['sign_char'] = sign_char
             applicant_string = applicant_string.replace(sign_char, '')
-            print('Код страны', sign_char)
+            # print('Код страны', sign_char)
 
-        zip_code = re.match(r'.*(?P<zip>\d{6}).*', applicant_string) or \
-                   re.match(r'.*(?P<zip>\d{5}).*', applicant_string) or \
-                   re.match(r'.*(?P<zip>\d{4}).*', applicant_string)
-        if zip_code:
-            zip_code = zip_code.groupdict().get('zip') or 'NULL'
-            applicant['person']['zip'] = zip_code
+        parse_zip_code(applicant_string, applicant['person'])
 
-
-        applicant_string_splitted = applicant_string[1:-1].split(', ')
         for item in applicant_string_splitted:
-            print('item', item)
-
-            # Парсим адрес из элементов
-            parse_person_address(applicant_string, item, applicant['person'])
+            # print('item', item)
 
             # Ищем известную организационную форму
             # Если найдена форма - это название компании
-            for form in forms:
-                if form in item:
-                    applicant['company']['company_form'] = forms[form]
-                    applicant['company']['company_name'] = item
-                    applicant_string = applicant_string.replace(item, '')
+            if applicant['company'].get('company_name') is None:
+                for form in forms:
+
+                    if form in item:
+                        applicant['company']['company_form'] = forms[form]
+                        applicant['company']['company_name'] = re.sub(r'(^|\s)' + form + r'($|\s)', '', item).strip()
+                        applicant_string = applicant_string.replace(item, '')
+                        if not applicant['company']['company_name']:
+                            applicant['company']['company_name'] = applicant_string_splitted[1].strip()
+                            applicant_string = applicant_string.replace(applicant_string_splitted[1], '')
+                        item = ''
+
+            # Парсим адрес из элементов
+            parse_person_address(applicant_string, item, applicant['person'])
 
             # Если найдена фамилия - то это ФИО контакта
             item_splitted = item.split()
             sur_found = first_found = second_found = middle_found = False
 
             # if re.match(r'.*(ул\.|г\.|обл\.|д\.|кв\.|\d).*', item):
-            if re.match(r'.*(ул\.|г\.|обл\.|\d).*', item):
-                print('пропущено', item)
-            else:
-                for isp in item_splitted:
-                    if isp in surnames:
-                        pass
-                    elif isp[:-1] in surnames:
-                        item = re.sub(isp, isp[:-1], item)
-                        isp = isp[:-1]
-                    elif isp[:-2] in surnames:
-                        item = re.sub(isp, isp[:-2], item)
-                        isp = isp[:-2]
-                    else:
-                        continue
-                    if not sur_found:
-                        sur_found = True
-                        applicant['person']['full_name'] = re.sub('(ИП|Индивидуальный предприниматель)', '',
-                                                                  item).strip()
-                        applicant['person']['last_name'] = isp
-                        applicant_string = applicant_string.replace(item, '')
-                        splitted = applicant['person']['full_name'].replace('.', ' ').split()
-                        if isp in splitted:
-                            splitted.remove(isp)
-                        first_name = splitted[:1]
-                        middle_name = splitted[1:]
-                        applicant['person']['first_name'] = splitted[:1][0] if splitted[:1] else 'NULL'
-                        applicant['person']['middle_name'] = splitted[1:][0] if splitted[1:] else 'NULL'
+            if re.match(r'.*(федерация|пркт|проспект|улица|ул\.|город|г\.|область|обл\.|\d).*', item.lower()):
+                # print('пропущено', item)
+                continue
+
+            # Парсинг ФИО
+            for isp in item_splitted:
+                isp = isp.capitalize()
+                if isp in cities:
+                    continue
+                if isp in countries:
+                    continue
+                if isp in surnames:
+                    pass
+                elif isp[-1] == 'у' and isp[:-1] in surnames:
+                    item = re.sub(isp, isp[:-1], item)
+                    isp = isp[:-1]
+                elif isp[-2:] == 'ой' and isp[:-2] in surnames:
+                    item = re.sub(isp, isp[:-2], item)
+                    isp = isp[:-2] + 'а'
+                else:
+                    continue
+                if not sur_found:
+                    sur_found = True
+                    applicant['person']['full_name'] = re.sub('(ИП|Индивидуальный предприниматель)', '',
+                                                              item).strip().title()
+                    applicant['person']['last_name'] = isp
+                    applicant_string = applicant_string.replace(item, '')
+                    splitted = applicant['person']['full_name'].replace('.', ' ').split()
+                    if isp in splitted:
+                        splitted.remove(isp)
+                    first_name = splitted[:1]
+                    middle_name = splitted[1:]
+                    applicant['person']['first_name'] = splitted[:1][0] if splitted[:1] else 'NULL'
+                    applicant['person']['middle_name'] = splitted[1:][0] if splitted[1:] else 'NULL'
 
         applicant_string_splitted = re.sub('[\'(){}]', '', applicant_string).strip().split(', ')
         applicant_string = ', '.join([s for s in applicant_string_splitted if s])
         # print(applicant_string)
         applicant['company']['address'] = applicant_string
         applicant['person']['address'] = applicant_string
-        if applicant['person'].get('country') is None:
+        if applicant['person'].get('country') is None and applicant['company']['sign_char'] == 'RU':
             applicant['person']['country'] = 'Россия'
+
+        # Попытка разобрать иностранный адрес
+        if applicant['person'].get('city') is None and applicant['company']['sign_char'] != 'RU':
+            splitted = applicant['person']['address'].split(', ')
+            if applicant['person'].get('country') is None:
+                applicant['person']['country'] = splitted[-1]
+
+            if len(splitted) > 2:
+                if re.match(r'.*(\d{3,}).*', splitted[-2]):
+                    applicant['person']['city'] = splitted[-3]
+                else:
+                    applicant['person']['city'] = splitted[-2]
 
     return applicant
 
@@ -823,7 +900,9 @@ def parse_patent_atty(document_parse):
     patent_atty_string = document_parse.get('patent_atty')
     if patent_atty_string:
         patent_atty = {'person': {}}
-        splitted = patent_atty_string.split(',')
+
+        parse_zip_code(patent_atty_string, patent_atty['person'])
+        splitted = patent_atty_string[1:-1].split(',')
         # Парсинг имени
         if len(splitted) >= 1:
             patent_atty['person']['full_name'] = splitted[0]
@@ -836,11 +915,11 @@ def parse_patent_atty(document_parse):
                 patent_atty['person']['middle_name'] = names[2]
         # Парсинг номера
         if len(splitted) >= 2:
-            patent_atty['person']['rep_reg_number'] = splitted[1]
+            patent_atty['person']['rep_reg_number'] = splitted[1].strip()
 
         # Парсинг адреса
         if len(splitted) >= 3:
-            patent_atty['person']['rep_correspondence_address'] = ','.join(splitted[2:])
+            patent_atty['person']['rep_correspondence_address'] = ','.join(splitted[2:]).strip()
             # Парсим адрес из элементов
             for item in splitted[2:]:
                 parse_person_address(patent_atty_string, item, patent_atty['person'])
@@ -880,10 +959,18 @@ def parse_contacts_from_documentparse(document_parse):
 
 
 if __name__ == '__main__':
-    print('get_surnames()\n', get_surnames())
-    print('get_names()\n', get_names())
-    print('get_cities()\n', get_cities())
-    print('get_regions()\n', get_regions())
+    surnames = get_surnames()
+    names = get_names()
+    countries = get_countries()
+    cities = get_cities()
+    forms = get_forms()
+    document_parse = {'copyright_holder': "'Унус Сед Лео Лимитед, с/о ШРМ Трастис (БВИ) Лимитед, Тринити Чемберс, П.О. Бокс 4301 Род Таун, Тортола, Британские Виргинские острова VG1110 (VG)'"}
+    copyright_holder = parse_applicant(document_parse, 'copyright_holder')
+    print('copyright_holder', copyright_holder)
+    # print('get_surnames()\n', get_surnames())
+    # print('get_names()\n', get_names())
+    # print('get_cities()\n', get_cities())
+    # print('get_regions()\n', get_regions())
     # p = Parser(REGISTERS_URL, 'registers')
     # p = Parser(URL1, 'orders')
     # p.get_orders()
