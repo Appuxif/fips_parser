@@ -1,2 +1,1 @@
-cd /var/www/fips_parser/webapp
-bash /var/www/fips_parser/venv/bin/python -c "from orders_parser import *; p = OrdersParser(ORDERS_URL, 'orders'); p.check_new_documents()"
+cd /var/www/fips_parser/webapp && /var/www/fips_parser/venv/bin/python -c "from orders_parser import *; p = OrdersParser(ORDERS_URL, 'orders'); p.check_new_documents()"
