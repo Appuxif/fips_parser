@@ -88,8 +88,8 @@ class OrdersParser(Parser):
         queries.append(order_query)
 
         # Получаем контакты из спарсенной информации
-        parse_contacts_from_documentparse(self, document, document_parse)
-        return
+        # parse_contacts_from_documentparse(self, document, document_parse)
+        # return
 
         # Сохраняем или обновляем парсинг документа
         with self.get_workers().lock:

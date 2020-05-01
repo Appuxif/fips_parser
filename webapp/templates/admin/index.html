@@ -59,7 +59,7 @@
         {% load last_documents %}
         {% get_last_documents %}
         <h2>Прогресс парсера</h2>
-        <h3>Последние заявки</h3>
+        <h3>Недавние заявки <br>{{ orders_percent }}</h3>
         <ul class="actionlist">
         {% for item in last_orders %}
             <li>
@@ -67,7 +67,7 @@
             </li>
         {% endfor %}
         </ul>
-        <h3>Последние регистрации</h3>
+        <h3>Недавние регистрации<br>{{ registers_percent }}</h3>
         <ul class="actionlist">
         {% for item in last_registers %}
             <li>
