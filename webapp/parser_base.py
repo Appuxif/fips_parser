@@ -333,12 +333,23 @@ class Parser:
                 if not self.proxies:
                     self._lprint('Поиск прокси в БД')
                     today = date.today()
+                    query = f"SELECT * FROM interface_proxies " \
+                            f"WHERE is_banned = FALSE AND is_working = TRUE AND in_use = FALSE " \
+                            f"AND (documents_parsed < 990 AND date_last_used = '{today}' " \
+                            f"OR date_last_used != '{today}')" \
+                            f"LIMIT 1"
                     with self.get_workers().lock:
-                        proxy = DB().fetchone(f"SELECT * FROM interface_proxies "
-                                              f"WHERE is_banned = FALSE AND is_working = TRUE AND in_use = FALSE "
-                                              f"AND (documents_parsed < 990 AND date_last_used = '{today}' "
-                                              f"OR date_last_used != '{today}')"
-                                              f"LIMIT 1")
+                        db = DB()
+                        try:
+                            db.c.execute(query)
+                            proxy = db.c.fetchone()
+                            if proxy:
+                                q = f"UPDATE interface_proxies SET in_use = TRUE WHERE id = '{proxy['id']}'"
+                                db.c.execute(q)
+                                db.conn.commit()
+                        finally:
+                            db.c.close()
+                            db.conn.close()
                     if proxy is None:
                         # self._lprint('Нет доступных прокси. Ждем окончания потоков или закрытия программы')
                         self._lprint('Нет доступных прокси. Ждем')
