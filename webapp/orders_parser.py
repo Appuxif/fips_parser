@@ -213,6 +213,8 @@ if __name__ == '__main__':
     # p.start_parse_all_documents()
     # p.parse_all_documents_in_threads()
 
+
+# python -c "from orders_parser import *; p = OrdersParser(ORDERS_URL, 'orders'); p.check_new_documents()"
 # python -c "from orders_parser import *; p = OrdersParser(ORDERS_URL, 'orders'); p.get_documents_list()"
 # python -c "from orders_parser import *; release_proxies(); p = OrdersParser(ORDERS_URL, 'orders'); p.parse_all_documents_in_threads(20)"
 # python -c "from orders_parser import *; p = OrdersParser(ORDERS_URL, 'orders'); p.parse_all_documents_in_threads(50)"

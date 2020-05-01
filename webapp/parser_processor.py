@@ -8,7 +8,6 @@ import os
 
 import sys
 from time import sleep
-from typing import re
 
 from registers_parser import RegistersParser, REGISTERS_URL, start_parse_all_documents as start_registers_parser
 from orders_parser import OrdersParser, ORDERS_URL, start_parse_all_documents as start_orders_parser, release_proxies
@@ -33,7 +32,9 @@ class Processor:
         if sleep_time:
             sleep(sleep_time)
         self.parsers = {p['id']: p for p in DB().fetchall('SELECT * FROM interface_parsersetting')}
-        self.vprint('Загружены парсеры', self.parsers)
+        self.vprint('Загружены парсеры')
+        for parser_id, parser in self.parsers.items():
+            self.vprint(parser)
         self.release_proxies = True
 
     def vprint(self, *args, **kwargs):

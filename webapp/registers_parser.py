@@ -302,4 +302,5 @@ if __name__ == '__main__':
     # p.start_parse_all_documents()
     # p.parse_all_documents_in_threads(5)
 
+# python -c "from registers_parser import *; p = RegistersParser(REGISTERS_URL, 'registers'); p.check_new_documents()"
 # python -c "from registers_parser import *; release_proxies(); p = RegistersParser(REGISTERS_URL, 'registers'); p.parse_all_documents_in_threads(50)"

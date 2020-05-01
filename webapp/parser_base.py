@@ -326,7 +326,7 @@ class Parser:
         try:
             while True:
                 # if self.get_workers(number)._queue.qsize() > 0:
-                if len(self.get_workers(number).tasks) >= number:
+                if len(self.get_workers(number).tasks) >= number - 1:
                     sleep(0.1)
                     continue
 
