@@ -382,13 +382,13 @@ class Parser:
     # Начинает новый парсинг информации со страницы с документом из списка документов
     def start_parse_all_documents(self, proxy=None):
         documents_parsed = proxy['documents_parsed'] if proxy else 0
-        timer = monotonic()
+        timer = 0
         rand_times = iter(self.get_rand_times())
         while self.start_parse_document(proxy, self.document_parse_query):
             documents_parsed += 1
             if monotonic() - timer > 30:
                 q = update_by_id_query('interface_proxies',
-                                       {'id': f"'{proxy['id']}'", 'documents_parsed': f"'{proxy['documents_parsed']}'"})
+                                       {'id': f"'{proxy['id']}'", 'documents_parsed': f"'{documents_parsed}'"})
                 DB().executeone(q)
             if documents_parsed > 990:
                 break
@@ -435,7 +435,10 @@ class Parser:
             now = datetime.now()
             now_str = now.strftime('%Y-%m-%d %H:%M:%S')
             filename = self.name + '_' + str(document_obj['number']) + '_' + now_str + '.txt'
-            error_filename = os.path.join('.', 'media', 'logs', filename)
+            filepath = os.path.join('.', 'media', 'logs')
+            if not os.path.exists(filepath):
+                os.makedirs(filepath)
+            error_filename = os.path.join(filepath, filename)
             error_link = '/media/logs/' + filename
             with open(error_filename, 'w') as f:
                 traceback.print_exc(file=f)

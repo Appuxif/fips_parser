@@ -46,7 +46,12 @@ class Processor:
         self.vprint('Закрыт процесс', process)
 
     def terminate_all_processes(self):
-        for parser_id, process in self.parsers_processes.items():
+        while self.parsers_processes:
+        # for parser_id, process in self.parsers_processes.items():
+            ids = list(self.parsers_processes.keys())
+            if not ids:
+                break
+            parser_id = ids[0]
             self.terminate_process(parser_id)
 
     # Основной процесс для запуска парсеров

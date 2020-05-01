@@ -179,4 +179,4 @@ class ParserSetting(models.Model):
 
     def __str__(self):
         type = 'orders' if self.type == 0 else 'registers'
-        return 'Настройки для ' + type
+        return 'Настройки для ' + type + ' ' + str(self.id)
