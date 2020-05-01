@@ -48,3 +48,4 @@ class ParserHistory(models.Model):
 
     def __str__(self):
         return 'History ' + str(self.workstate.id)
+

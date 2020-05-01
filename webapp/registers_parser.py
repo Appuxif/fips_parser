@@ -150,8 +150,8 @@ class RegistersParser(Parser):
         queries.append(order_query)
 
         # Получаем контакты из спарсенной информации
-        parse_contacts_from_documentparse(document_parse)
-        return
+        # parse_contacts_from_documentparse(document_parse)
+        # return
         # Сохраняем или обновляем парсинг документа
         with self.get_workers().lock:
             if document_parse.get('id') is None:
@@ -276,15 +276,20 @@ def parse_izvs(document, start_izvs):
     return izvs_list[:-1]
 
 
-def start_parse_all_documents():
+def start_parse_all_documents(threads=1, query=None, requests_period=3, requests_amount=1):
     parser_base.surnames = get_surnames()
     parser_base.names = get_names()
     parser_base.countries = get_countries()
     parser_base.cities = get_cities()
     parser_base.forms = get_forms()
     p = RegistersParser(REGISTERS_URL, 'registers')
+    p.document_parse_query = query
+    p.requests_period = requests_period
+    p.requests_amount = requests_amount
+
+    p.parse_all_documents_in_threads(threads)
     # p.start_parse_all_documents()
-    p.start_parse_document()
+    # p.start_parse_document()
 
 
 if __name__ == '__main__':

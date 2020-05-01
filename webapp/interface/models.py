@@ -149,3 +149,30 @@ class ContactPerson(models.Model):
             models.Index(fields=['email']),
             models.Index(fields=['full_name'])
         ]
+
+
+# Таблица с настройками парсера. Парсеров всего два: orders и registers
+class ParserSetting(models.Model):
+    type_choices = [
+        (0, 'orders'),
+        (1, 'registers')
+    ]
+    type = models.SmallIntegerField('Тип парсера', choices=type_choices)  # orders или registers
+
+    source_choices = [
+        (0, 'fips.ru'),
+        (1, 'new.fips.ru')
+    ]
+    source = models.SmallIntegerField(choices=source_choices)
+
+    # date_gte = models.DateField('С даты')
+    # date_lte = models.DateField('По дату')
+
+    requests_period = models.IntegerField('Период запросов (сек)', default=3)
+    requests_amount = models.IntegerField('Количество запросов за период', default=1)
+
+    number_gte = models.CharField('С номера', max_length=20)  # 2020706000
+    number_lte = models.CharField('По номер', max_length=20)  # 2020706099
+
+    proxies_num = models.IntegerField('Количество используемых прокси')
+    is_working = models.BooleanField('Парсер запущен')

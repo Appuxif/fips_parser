@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, date
 import requests
 import json
 from time import sleep, monotonic
-from random import choice
+from random import choice, randint, shuffle
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus, unquote_plus
 from multiprocessing import Pool
@@ -113,6 +113,9 @@ class Parser:
     workers2 = None
     proxies = []
     proxy_ids = []
+    document_parse_query = None  # Для кастомизации запроса документа из БД
+    requests_amount = 1
+    requests_period = 3
 
     def __init__(self, url, name='default', verbosity=True):
         self.name = name
@@ -332,7 +335,7 @@ class Parser:
                     with self.get_workers().lock:
                         proxy = DB().fetchone(f"SELECT * FROM interface_proxies "
                                               f"WHERE is_banned = FALSE AND is_working = TRUE AND in_use = FALSE "
-                                              f"AND (documents_parsed < 900 AND date_last_used = '{today}' "
+                                              f"AND (documents_parsed < 990 AND date_last_used = '{today}' "
                                               f"OR date_last_used != '{today}')"
                                               f"LIMIT 1")
                     if proxy is None:
@@ -363,21 +366,43 @@ class Parser:
                 with self.get_workers().lock:
                     release_proxies(proxies_in_use)
 
+    def get_rand_times(self):
+        d = self.requests_period/self.requests_amount
+        if d < 3:
+            d = 3
+        s = [d]*self.requests_amount
+        for i in range(0, int(len(s) / 2)):
+            r = randint(0, int(s[i]) - 3)
+            s[i] = s[i] - r
+            s[len(s) - 1 - i] = s[len(s) - 1 - i] + r
+        shuffle(s)
+        return s
+
     # Начинает новый парсинг информации со страницы с документом из списка документов
     def start_parse_all_documents(self, proxy=None):
         documents_parsed = proxy['documents_parsed'] if proxy else 0
         timer = monotonic()
-        while self.start_parse_document(proxy):
+        rand_times = iter(self.get_rand_times())
+        while self.start_parse_document(proxy, self.document_parse_query):
             documents_parsed += 1
-            sleep(3)
             if monotonic() - timer > 30:
                 q = update_by_id_query('interface_proxies',
                                        {'id': f"'{proxy['id']}'", 'documents_parsed': f"'{proxy['documents_parsed']}'"})
                 DB().executeone(q)
-            if documents_parsed > 900:
+            if documents_parsed > 990:
                 break
+            try:
+                t = next(rand_times)
+            except StopIteration:
+                rand_times = iter(self.get_rand_times())
+                t = next(rand_times)
+
+            sleep(t)
 
         release_proxies([f"'{proxy['id']}'"])
+        q = update_by_id_query('interface_proxies',
+                               {'id': f"'{proxy['id']}'", 'documents_parsed': f"'{proxy['documents_parsed']}'"})
+        DB().executeone(q)
 
     # Берет из базы и парсит один непарсенный документ
     def start_parse_document(self, proxy=None, query=None):
@@ -388,9 +413,9 @@ class Parser:
                 # Берем все документы, для которых не принято решение и сортируем по дате парсинга
                 query = f'SELECT id, url, number FROM {self.dbdocument} ' \
                         'WHERE document_exists = TRUE AND order_done = FALSE '
-                if len(self.documents_in_parsing) > 0:
-                    query += f'AND id NOT IN ({", ".join(self.documents_in_parsing)}) '
-                query += 'ORDER BY date_parsed, number DESC LIMIT 1'
+            if len(self.documents_in_parsing) > 0:
+                query += f'AND id NOT IN ({", ".join(self.documents_in_parsing)}) '
+            query += 'ORDER BY date_parsed, number DESC LIMIT 1'
             document_obj = DB().fetchone(query)
             self.documents_in_parsing.append(f"'{document_obj['id']}'")
 

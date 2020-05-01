@@ -1,10 +1,13 @@
-from django.contrib import admin
+import traceback
 
+import sys
+from django.contrib import admin
+from multiprocessing.connection import Client
 
 # Все контакты отображаются непосредственно в документе
 
 # from .models import OrderContact, OrderContactPerson, RegisterContact, RegisterContactPerson, ContactPerson, Company
-from .models import ContactPerson, Company, RegisterCompanyRel, OrderCompanyRel
+from .models import ContactPerson, Company, RegisterCompanyRel, OrderCompanyRel, ParserSetting
 # from orders.admin import CompanyInline as OrderCompanyInline
 # from registers.admin import CompanyInline as RegisterCompanyInline
 
@@ -90,3 +93,20 @@ class OrderCompanyRelAdmin(admin.ModelAdmin):
 @admin.register(RegisterCompanyRel)
 class RegisterCompanyRelAdmin(admin.ModelAdmin):
     pass
+
+
+# Для управления парсером. Отправляет запрос на обновление конфига парсеров процессу парсингов
+@admin.register(ParserSetting)
+class ParserSettingAdmin(admin.ModelAdmin):
+
+    def save_model(self, request, obj, form, change):
+        try:
+            socket_path = '/var/www/fips_parser/processor.sock'
+            with Client(socket_path) as conn:
+                conn.send('self.load_parsers(5)')
+        except FileNotFoundError:
+            print('save_model Сокет не найден')
+        except:
+            print('save_model Ошибка подключения')
+            traceback.print_exc(file=sys.stdout)
+        return super(ParserSettingAdmin, self).save_model(request, obj, form, change)

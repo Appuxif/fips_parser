@@ -90,6 +90,7 @@ class OrdersParser(Parser):
         # Получаем контакты из спарсенной информации
         # parse_contacts_from_documentparse(document_parse)
         # return
+
         # Сохраняем или обновляем парсинг документа
         with self.get_workers().lock:
             if document_parse.get('id') is None:
@@ -187,15 +188,19 @@ def parse_workstate(page):
     return work_state, obj_list
 
 
-def start_parse_all_documents():
-    global surnames, names, cities, regions
+def start_parse_all_documents(threads=1, query=None, requests_period=3, requests_amount=1):
     parser_base.surnames = get_surnames()
     parser_base.names = get_names()
+    parser_base.countries = get_countries()
     parser_base.cities = get_cities()
-    # regions = get_regions()
     parser_base.forms = get_forms()
     p = OrdersParser(ORDERS_URL, 'orders')
-    p.start_parse_all_documents()
+    p.document_parse_query = query
+    p.requests_period = requests_period
+    p.requests_amount = requests_amount
+
+    p.parse_all_documents_in_threads(threads)
+    # p.start_parse_all_documents()
 
 
 if __name__ == '__main__':
