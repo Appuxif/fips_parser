@@ -384,6 +384,7 @@ class Parser:
         documents_parsed = proxy['documents_parsed'] if proxy else 0
         timer = 0
         rand_times = iter(self.get_rand_times())
+        print('rand_times', rand_times)
         while self.start_parse_document(proxy, self.document_parse_query):
             documents_parsed += 1
             if monotonic() - timer > 30:
@@ -398,7 +399,9 @@ class Parser:
                 rand_times = iter(self.get_rand_times())
                 t = next(rand_times)
 
-            sleep(t)
+            timer2 = monotonic()
+            while monotonic() - timer2 < t + 1:
+                sleep(1)
 
         release_proxies([f"'{proxy['id']}'"])
         q = update_by_id_query('interface_proxies',
