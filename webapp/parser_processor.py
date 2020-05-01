@@ -22,10 +22,10 @@ class Processor:
     parsers = {}
 
     def __init__(self, verbose=True):
-        self.load_parsers()
         self.verbose = verbose
-        self.listener = threading.Thread(target=self.listener_thread)
+        self.listener = threading.Thread(target=self.listener_thread, daemon=True)
         self.listener.start()
+        self.load_parsers()
         self.vprint('Запущен процессор')
 
     def load_parsers(self, sleep_time=None):
