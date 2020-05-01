@@ -10,9 +10,9 @@ class LastDocumentsNode(template.Node):
     def __init__(self):
         self.orders_count = OrdersDocument.objects.count()
         self.registers_count = RegistersDocument.objects.count()
-        self.orders = OrdersDocument.objects.filter(document_parsed=True).order_by('-id')
+        self.orders = OrdersDocument.objects.filter(document_parsed=True).order_by('-date_parsed')
         self.orders_parsed = self.orders.count()
-        self.registers = RegistersDocument.objects.filter(document_parsed=True).order_by('-id')
+        self.registers = RegistersDocument.objects.filter(document_parsed=True).order_by('-date_parsed')
         self.registers_parsed = self.registers.count()
 
     def __repr__(self):
