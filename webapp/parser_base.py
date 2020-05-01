@@ -467,7 +467,8 @@ class Parser:
             # Запись результата парсинга в БД и отметка документа спарсенным
             with self.get_workers().lock:
                 DB().executeone(f"UPDATE {self.dbdocument} SET document_parsed = TRUE, "
-                                f"date_parsed = '{date.today()}' "
+                                # f"date_parsed = '{date.today()}' "
+                                f"date_parsed = '{datetime.now()}' "
                                 f"WHERE id = '{document_obj['id']}'")
                 DB().executeone(f"INSERT INTO {self.dbparserhistory} "
                                 f"(document_id, date_created, is_error, error_log_file, message) "
@@ -577,7 +578,8 @@ class Parser:
             else:
                 with self.get_workers().lock:
                     DB().executeone(f"UPDATE {self.dbdocument} SET document_parsed = TRUE, "
-                                    f"date_parsed = '{date.today()}', document_exists = FALSE "
+                                    # f"date_parsed = '{date.today()}', document_exists = FALSE "
+                                    f"date_parsed = '{datetime.now()}', document_exists = FALSE "
                                     f"WHERE id = '{document_obj['id']}'")
             return True
 
