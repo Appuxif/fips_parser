@@ -394,16 +394,20 @@ class Parser:
     def start_parse_all_documents(self, proxy=None):
         documents_parsed = proxy['documents_parsed'] if proxy else 0
         timer = 0
-        rand_times = iter(self.get_rand_times())
-        print('rand_times', rand_times)
+        rand_times = self.get_rand_times()
+        print('rand_times', rand_times)  # TODO: DELETE ME
+        rand_times = iter(rand_times)
         while self.start_parse_document(proxy, self.document_parse_query):
+
             documents_parsed += 1
             if monotonic() - timer > 30:
-                q = update_by_id_query('interface_proxies',
-                                       {'id': f"'{proxy['id']}'", 'documents_parsed': f"'{documents_parsed}'"})
+                q = update_by_id_query('interface_proxies', {'id': f"'{proxy['id']}'",
+                                                             'documents_parsed': f"'{documents_parsed}'"})
                 DB().executeone(q)
+
             if documents_parsed > 990:
                 break
+
             try:
                 t = next(rand_times)
             except StopIteration:
@@ -415,8 +419,8 @@ class Parser:
                 sleep(1)
 
         release_proxies([f"'{proxy['id']}'"])
-        q = update_by_id_query('interface_proxies',
-                               {'id': f"'{proxy['id']}'", 'documents_parsed': f"'{proxy['documents_parsed']}'"})
+        q = update_by_id_query('interface_proxies',{'id': f"'{proxy['id']}'",
+                                                    'documents_parsed': f"'{proxy['documents_parsed']}'"})
         DB().executeone(q)
 
     # Берет из базы и парсит один непарсенный документ
@@ -483,7 +487,8 @@ class Parser:
             elif 'socks5' in proxy['scheme']:
                 proxies = {'socks5': s}
 
-        self._print(document_obj['number'], 'Парсинг документа', document_obj['url'], proxies)
+        self._print(document_obj['number'], 'Парсинг документа', document_obj['url'],
+                    proxies, proxy['documents_parsed'])
 
         filepath = os.path.join('.', 'media', self.name, str(document_obj['number']))
         filename = os.path.join(filepath, 'page.html')

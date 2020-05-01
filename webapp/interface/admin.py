@@ -97,12 +97,13 @@ class RegisterCompanyRelAdmin(admin.ModelAdmin):
 # TODO: Для отладки. Потом удалить
 @admin.register(Proxies)
 class ProxiesAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('__str__', 'is_banned', 'is_working', 'in_use', 'date_last_used', 'documents_parsed', 'status')
 
 
 # Для управления парсером. Отправляет запрос на обновление конфига парсеров процессу парсингов
 @admin.register(ParserSetting)
 class ParserSettingAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'number_gte', 'number_lte', 'proxies_num', 'is_working')
 
     def save_model(self, request, obj, form, change):
         try:
