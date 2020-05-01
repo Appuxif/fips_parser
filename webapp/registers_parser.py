@@ -142,7 +142,8 @@ class RegistersParser(Parser):
             )
 
         # Отмечаем, что документ был спарсен
-        order_query = f"UPDATE {self.dbdocument} SET document_parsed = TRUE, date_parsed = '{date.today()}' "
+        order_query = f"# UPDATE {self.dbdocument} SET document_parsed = TRUE, date_parsed = '{date.today()}' "
+        order_query = f"UPDATE {self.dbdocument} SET document_parsed = TRUE, date_parsed = NOW() "
         status_lower = status.lower()
         if 'прекратил действие' in status_lower:
             order_query += ', order_done = TRUE '

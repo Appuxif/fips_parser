@@ -79,7 +79,8 @@ class OrdersParser(Parser):
 
         # Отмечаем, что документ был спарсен
         # Если два года не обновлялось, то можно считать закрытой, страница будет доступна на диске
-        order_query = f"UPDATE {self.dbdocument} SET document_parsed = TRUE, date_parsed = '{date.today()}' "
+        order_query = f"# UPDATE {self.dbdocument} SET document_parsed = TRUE, date_parsed = '{date.today()}' "
+        order_query = f"UPDATE {self.dbdocument} SET document_parsed = TRUE, date_parsed = NOW() "
         status_lower = status.lower()
         if d.days > 730 or work_state.get('reg_decision') is not None or 'принято решение' in status_lower or\
                 'регистрация товарного знака' in status_lower:
