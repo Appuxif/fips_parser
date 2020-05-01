@@ -41,7 +41,7 @@ class Processor:
     # Основной процесс для запуска парсеров
     def go_processor(self):
         while True:
-            for parser in self.parsers:
+            for parser_id, parser in self.parsers.items():
                 try:
                     self.process_parser(parser)
                 except:
