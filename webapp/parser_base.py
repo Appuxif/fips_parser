@@ -450,7 +450,7 @@ class Parser:
             result = True
             # Логирование ошибки в файл
             now = datetime.now()
-            now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+            now_str = now.strftime('%Y-%m-%d_%H-%M-%S')
             filename = self.name + '_' + str(document_obj['number']) + '_' + now_str + '.txt'
             filepath = os.path.join('.', 'media', 'logs')
             if not os.path.exists(filepath):
