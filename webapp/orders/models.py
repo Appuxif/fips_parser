@@ -47,5 +47,5 @@ class ParserHistory(models.Model):
     message = models.TextField(max_length=2000, null=True, blank=True)
 
     def __str__(self):
-        return 'History ' + str(self.workstate.id)
+        return 'History ' + str(self.document.id)
 

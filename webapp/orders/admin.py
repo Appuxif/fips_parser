@@ -10,7 +10,7 @@ from import_export.admin import ExportActionMixin, ExportActionModelAdmin, Expor
 
 from .django_admin_search import AdvancedSearchAdmin
 from .models_base import Leaf, Document, DocumentParse, DocumentFile, ServiceItem, document_parse_dict
-from .models import WorkState, WorkStateRow
+from .models import WorkState, WorkStateRow, ParserHistory
 from .forms import LeafSearchForm, DocumentSearchForm, fields_dict, income_choices, outcome_choices
 from accounts.models import UserQuery
 # from interface.models import OrderContact, OrderContactPerson
@@ -266,6 +266,10 @@ class LeafAdmin(AdvancedSearchAdmin):
         return f'{obj.document_set.count()}'
     documents.short_description = 'Количество документов'
 
+
+@admin.register(ParserHistory)
+class ParserHistoryAdmin(admin.ModelAdmin):
+    pass
 
 # Функции ################################################################
 

@@ -82,3 +82,14 @@ class IzvServiceItem(models.Model):
 
     def __str__(self):
         return str(self.number)
+
+
+class ParserHistory(models.Model):
+    document = models.ForeignKey(Document, on_delete=models.CASCADE)
+    date_created = models.DateTimeField(auto_now_add=True)
+    is_error = models.BooleanField(default=False, blank=True)
+    error_log_file = models.CharField(max_length=50, null=True, blank=True)
+    message = models.TextField(max_length=2000, null=True, blank=True)
+
+    def __str__(self):
+        return 'History ' + str(self.document.id)

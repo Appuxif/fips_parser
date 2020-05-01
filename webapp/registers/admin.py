@@ -9,7 +9,7 @@ from import_export.admin import ExportActionMixin, ExportActionModelAdmin, Expor
 from orders.django_admin_search import AdvancedSearchAdmin
 from orders.admin import process_buttons, get_export_resource, documentparse_lookup
 from .models_base import Leaf, Document, DocumentParse, DocumentFile, ServiceItem, document_parse_dict
-from .models import IzvServiceItem, DocumentIzvItem, DocumentIzv
+from .models import IzvServiceItem, DocumentIzvItem, DocumentIzv, ParserHistory
 from .forms import LeafSearchForm, DocumentSearchForm, DocumentParseSearchForm, fields_dict
 from accounts.models import UserQuery
 # from interface.models import RegisterContact, RegisterContactPerson
@@ -277,3 +277,7 @@ class LeafAdmin(admin.ModelAdmin):
     def documents(self, obj):
         return f'{obj.document_set.count()}'
     documents.short_description = 'Количество документов'
+
+@admin.register(ParserHistory)
+class ParserHistoryAdmin(admin.ModelAdmin):
+    pass
