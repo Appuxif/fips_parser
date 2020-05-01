@@ -93,3 +93,8 @@ class ParserHistory(models.Model):
 
     def __str__(self):
         return 'History ' + str(self.document.id)
+
+    def get_absolute_url(self):
+        if self.is_error:
+            return str(self.error_log_file)
+        return None

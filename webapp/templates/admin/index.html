@@ -55,6 +55,27 @@
 
 {% block sidebar %}
 <div id="content-related">
+    <div class="module">
+        {% load last_documents %}
+        {% get_last_documents %}
+        <h2>Прогресс парсера</h2>
+        <h3>Последние заявки</h3>
+        <ul class="actionlist">
+        {% for item in last_orders %}
+            <li>
+                <a href="{{ item.get_absolute_url }}">{{ item.number }}</a>
+            </li>
+        {% endfor %}
+        </ul>
+        <h3>Последние регистрации</h3>
+        <ul class="actionlist">
+        {% for item in last_registers %}
+            <li>
+                <a href="{{ item.get_absolute_url }}">{{ item.number }}</a>
+            </li>
+        {% endfor %}
+        </ul>
+    </div>
     <div class="module" id="recent-actions-module">
         <h2>{% trans 'Recent actions' %}</h2>
         <h3>{% trans 'My actions' %}</h3>

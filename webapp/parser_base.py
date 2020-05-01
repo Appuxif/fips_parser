@@ -8,6 +8,8 @@ import requests
 import json
 from time import sleep, monotonic
 from random import choice, randint, shuffle
+
+import sys
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus, unquote_plus
 from multiprocessing import Pool
@@ -459,6 +461,8 @@ class Parser:
             error_link = '/media/logs/' + filename
             with open(error_filename, 'w') as f:
                 traceback.print_exc(file=f)
+            traceback.print_exc(file=sys.stdout)
+            print('Ошибка залогирована', error_filename)
 
             # Запись результата парсинга в БД и отметка документа спарсенным
             with self.get_workers().lock:
@@ -487,7 +491,7 @@ class Parser:
                 proxies = {'socks5': s}
 
         self._print(document_obj['number'], 'Парсинг документа', document_obj['url'],
-                    proxies, proxy['documents_parsed'])
+                    proxies, proxy['documents_parsed'] if proxy else None)
 
         filepath = os.path.join('.', 'media', self.name, str(document_obj['number']))
         filename = os.path.join(filepath, 'page.html')
@@ -864,15 +868,15 @@ def parse_applicant(document_parse, type):
 
             # Ищем известную организационную форму
             # Если найдена форма - это название компании
-            if applicant['company'].get('company_name') is None:
+            if applicant['company'].get('name') is None:
                 for form in forms:
 
                     if form in item:
-                        applicant['company']['company_form'] = forms[form]
-                        applicant['company']['company_name'] = re.sub(r'(^|\s)' + form + r'($|\s)', '', item).strip()
+                        applicant['company']['form'] = forms[form]
+                        applicant['company']['name'] = re.sub(r'(^|\s)' + form + r'($|\s)', '', item).strip()
                         applicant_string = applicant_string.replace(item, '')
-                        if not applicant['company']['company_name']:
-                            applicant['company']['company_name'] = applicant_string_splitted[1].strip()
+                        if not applicant['company']['name']:
+                            applicant['company']['name'] = applicant_string_splitted[1].strip()
                             applicant_string = applicant_string.replace(applicant_string_splitted[1], '')
                         item = ''
 
@@ -924,11 +928,11 @@ def parse_applicant(document_parse, type):
         # print(applicant_string)
         applicant['company']['address'] = applicant_string
         applicant['person']['address'] = applicant_string
-        if applicant['person'].get('country') is None and applicant['company']['sign_char'] == 'RU':
+        if applicant['person'].get('country') is None and applicant['company'].get('sign_char', 'RU') == 'RU':
             applicant['person']['country'] = 'Россия'
 
         # Попытка разобрать иностранный адрес
-        if applicant['person'].get('city') is None and applicant['company']['sign_char'] != 'RU':
+        if applicant['person'].get('city') is None and applicant['company'].get('sign_char', 'RU') != 'RU':
             splitted = applicant['person']['address'].split(', ')
             if applicant['person'].get('country') is None:
                 applicant['person']['country'] = splitted[-1]
@@ -978,7 +982,43 @@ def parse_correspondence_address(document_parse):
     pass
 
 
-def parse_contacts_from_documentparse(document_parse):
+def get_company_from_db(self, document, document_person):
+    company = document_person.get('company')
+    name = company.get('name', '')
+    if name:
+        # Поиск компании по имени в БД
+        with self.get_workers().lock:
+            company_ = DB().fetchone(f"SELECT id FROM interface_company WHERE name = '{name}'")
+        print(company_)  # TODO: deleteme
+
+        # Если компании нет, то создаем новую запись
+        if company_ is None:
+            # Предварительно подготовить поля для внесения в БД
+            company['name'] = f"'{company['name']}'" if company.get('name') else 'NULL'
+            company['form'] = f"'{company['form']}'" if company.get('form') else 'NULL'
+            company['address'] = f"'{company['address']}'" if company.get('address') else 'NULL'
+            company['sign_char'] = f"'{company['sign_char']}'" if company.get('sign_char') else 'NULL'
+            with self.get_workers().lock:
+                company['id'] = DB().add_row(f"interface_company", company)
+
+            # Дополнительная таблица связей между компанией и документами
+            if self.name == 'orders':
+                rel_table = 'interface_ordercompanyrel'
+                rel_obj = {'company_id': f"'{company['id']}'", 'order_id': f"'{document['id']}'"}
+            else:
+                rel_table = 'interface_registercompanyrel'
+                rel_obj = {'company_id': f"'{company['id']}'", 'register_id': f"'{document['id']}'"}
+            # TODO: Этот запрос можно отправить общей кучей.
+            with self.get_workers().lock:
+                DB().add_row(rel_table, rel_obj)
+        # Если компания нашлась, то просто передаем ID
+        else:
+            company['id'] = company_['id']
+        return company
+    return None
+
+
+def parse_contacts_from_documentparse(self, document, document_parse):
     # Парсинг заявителя
     applicant = parse_applicant(document_parse, 'applicant')
     print('applicant', applicant)
@@ -996,11 +1036,10 @@ def parse_contacts_from_documentparse(document_parse):
     correspondence_address = parse_applicant(document_parse, 'address')
     print('correspondence_address', correspondence_address)
 
-
     # Ищем компанию в БД
+    document_person = applicant or copyright_holder or {}
+    company = get_company_from_db(self, document, document_person)
 
-    # Если компания найдена, то работаем с найденной
-    # Если компания не найдена, то создаем новую компанию в БД
     # Если компания не спарсилась, запись все равно нужно создать в виде Company for document document_parse['number']
     pass
 

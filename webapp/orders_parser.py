@@ -88,7 +88,7 @@ class OrdersParser(Parser):
         queries.append(order_query)
 
         # Получаем контакты из спарсенной информации
-        parse_contacts_from_documentparse(document_parse)
+        parse_contacts_from_documentparse(self, document, document_parse)
         return
 
         # Сохраняем или обновляем парсинг документа
@@ -203,13 +203,31 @@ def start_parse_all_documents(threads=1, query=None, requests_period=3, requests
     # p.start_parse_all_documents()
 
 
-if __name__ == '__main__':
-    # start_parse_all_documents()
-    release_proxies()
+def test_start_parse_all_documents(threads=1, query=None, requests_period=3, requests_amount=1):
+    parser_base.surnames = get_surnames()
+    parser_base.names = get_names()
+    parser_base.countries = get_countries()
+    parser_base.cities = get_cities()
+    parser_base.forms = get_forms()
     p = OrdersParser(ORDERS_URL, 'orders')
+    p.document_parse_query = query
+    p.requests_period = requests_period
+    p.requests_amount = requests_amount
+
+    # p.parse_all_documents_in_threads(threads)
+    query = f'SELECT id, url, number FROM {p.dbdocument} ' \
+            'WHERE document_exists = TRUE AND order_done = FALSE AND number < 2018722404 '
+    p.start_parse_document(query=query)
+
+
+if __name__ == '__main__':
+    test_start_parse_all_documents()
+    # start_parse_all_documents()
+    # release_proxies()
+    # p = OrdersParser(ORDERS_URL, 'orders')
     # p.check_new_documents()
     # p.get_documents_list()
-    p.start_parse_document()
+    # p.start_parse_document()
     # p.start_parse_all_documents()
     # p.parse_all_documents_in_threads()
 
