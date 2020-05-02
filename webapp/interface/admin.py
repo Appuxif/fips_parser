@@ -55,7 +55,7 @@ class ContactPersonInline(admin.StackedInline):
 class OrderCompanyInline(admin.StackedInline):
     model = OrderCompanyRel
     extra = 0
-    readonly_fields = ('company', 'order')
+    readonly_fields = ('company', 'document')
 
     def has_add_permission(self, request, obj):
         return False
@@ -64,7 +64,7 @@ class OrderCompanyInline(admin.StackedInline):
 class RegisterCompanyInline(admin.StackedInline):
     model = RegisterCompanyRel
     extra = 0
-    readonly_fields = ('company', 'register')
+    readonly_fields = ('company', 'document')
 
     def has_add_permission(self, request, obj):
         return False

@@ -62,7 +62,7 @@ class CompanyInline(admin.StackedInline):
     # Такой же есть в interface\admin.py
     model = RegisterCompanyRel
     extra = 0
-    readonly_fields = ('company', 'register')
+    readonly_fields = ('company', 'document')
 
     def view_on_site(self, obj):
         return f'/admin/interface/company/{obj.id}/change/'

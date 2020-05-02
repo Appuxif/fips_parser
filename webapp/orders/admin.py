@@ -53,7 +53,7 @@ class CompanyInline(admin.StackedInline):
     model = OrderCompanyRel
     # model = Document.company_set.rel.through
     extra = 0
-    readonly_fields = ('company', 'order')
+    readonly_fields = ('company', 'document')
 
     def view_on_site(self, obj):
         return f'/admin/interface/company/{obj.id}/change/'
