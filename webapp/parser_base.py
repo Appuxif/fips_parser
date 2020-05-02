@@ -361,7 +361,6 @@ class Parser:
                         # in_use = [f"'{p['id']}'" for p in proxies]
 
                     proxy = dict(proxy)
-                    print(proxy['date_last_used'], today)  # TODO: Delete me
                     if proxy['date_last_used'] != today:
                         proxy['documents_parsed'] = 0
 
@@ -397,7 +396,6 @@ class Parser:
         documents_parsed = proxy['documents_parsed'] if proxy else 0
         timer = 0
         rand_times = self.get_rand_times()
-        print('rand_times', rand_times)  # TODO: DELETE ME
         rand_times = iter(rand_times)
         while self.start_parse_document(proxy, self.document_parse_query):
             documents_parsed += 1
@@ -465,14 +463,15 @@ class Parser:
             print('Ошибка залогирована', error_filename)
 
             # Запись результата парсинга в БД и отметка документа спарсенным
-            with self.get_workers().lock:
-                DB().executeone(f"UPDATE {self.dbdocument} SET document_parsed = TRUE, "
-                                # f"date_parsed = '{date.today()}' "
-                                f"date_parsed = NOW() "
-                                f"WHERE id = '{document_obj['id']}'")
-                DB().executeone(f"INSERT INTO {self.dbparserhistory} "
-                                f"(document_id, date_created, is_error, error_log_file, message) "
-                                f"VALUES ('{document_obj['id']}', '{now}', TRUE, '{error_link}', '')")
+            # TODO: Вернуть как было
+            # with self.get_workers().lock:
+            #     DB().executeone(f"UPDATE {self.dbdocument} SET document_parsed = TRUE, "
+            #                     # f"date_parsed = '{date.today()}' "
+            #                     f"date_parsed = NOW() "
+            #                     f"WHERE id = '{document_obj['id']}'")
+            #     DB().executeone(f"INSERT INTO {self.dbparserhistory} "
+            #                     f"(document_id, date_created, is_error, error_log_file, message) "
+            #                     f"VALUES ('{document_obj['id']}', '{now}', TRUE, '{error_link}', '')")
         finally:
             self.documents_in_parsing.remove(f"'{document_obj['id']}'")
 
@@ -929,13 +928,13 @@ def parse_applicant(document_parse, type):
         applicant_string = ', '.join([s for s in applicant_string_splitted if s])
         # print(applicant_string)
         applicant['company']['address'] = applicant_string
-        applicant['person']['address'] = applicant_string
+        applicant['person']['office_address'] = applicant_string
         if applicant['person'].get('country') is None and applicant['company'].get('sign_char', 'RU') == 'RU':
             applicant['person']['country'] = 'Россия'
 
         # Попытка разобрать иностранный адрес
         if applicant['person'].get('city') is None and applicant['company'].get('sign_char', 'RU') != 'RU':
-            splitted = applicant['person']['address'].split(', ')
+            splitted = applicant['person']['office_address'].split(', ')
             if applicant['person'].get('country') is None:
                 applicant['person']['country'] = splitted[-1]
 
@@ -973,7 +972,7 @@ def parse_patent_atty(document_parse):
         # Парсинг адреса
         if len(splitted) >= 3:
             # patent_atty['person']['rep_correspondence_address'] = ','.join(splitted[2:]).strip()
-            patent_atty['person']['address'] = ','.join(splitted[2:]).strip()
+            patent_atty['person']['office_address'] = ','.join(splitted[2:]).strip()
             # Парсим адрес из элементов
             for item in splitted[2:]:
                 parse_person_address(patent_atty_string, item, patent_atty['person'])
@@ -993,12 +992,12 @@ def get_or_create_company(self, document, document_person):
     # Поиск компании по имени в БД
     with self.get_workers().lock:
         company_ = DB().fetchone(f"SELECT id FROM interface_company WHERE name = '{name}' AND form = '{form}'")
-    print(company_)  # TODO: deleteme
+    print('Найденная компания', company_)  # TODO: deleteme
 
     # Если компании нет, то создаем новую запись
     if company_ is None:
         # Предварительно подготовить поля для внесения в БД
-        company['name'] = f"'{company['name']}'" if company.get('name') else 'NULL'
+        company['name'] = f"'{name}'"
         company['form'] = f"'{company['form']}'" if company.get('form') else 'NULL'
         company['address'] = f"'{company['address']}'" if company.get('address') else 'NULL'
         company['sign_char'] = f"'{company['sign_char']}'" if company.get('sign_char') else 'NULL'
@@ -1033,7 +1032,7 @@ def get_or_create_person(self, document, document_person, company):
         # Поиск контакта для данной компании по имени в БД
         with self.get_workers().lock:
             person_ = DB().fetchone(f"SELECT id FROM interface_contactperson WHERE full_name = '{full_name}'")
-        print(person_)  # TODO: deleteme
+        print('Найденный контакт', person_)  # TODO: deleteme
 
         # Если контакта нет, то создаем новую запись
         if person_ is None:
@@ -1042,7 +1041,7 @@ def get_or_create_person(self, document, document_person, company):
             person['first_name'] = f"'{person['first_name']}'" if person.get('first_name') else 'NULL'
             person['middle_name'] = f"'{person['middle_name']}'" if person.get('middle_name') else 'NULL'
             person['last_name'] = f"'{person['last_name']}'" if person.get('last_name') else 'NULL'
-            person['office_address'] = f"'{person['address']}'" if person.get('address') else 'NULL'
+            person['office_address'] = f"'{person['office_address']}'" if person.get('office_address') else 'NULL'
             person['rep_correspondence_address'] = f"'{person['rep_correspondence_address']}'" if person.get('rep_correspondence_address') else 'NULL'
             person['city'] = f"'{person['city']}'" if person.get('city') else 'NULL'
             person['zip'] = f"'{person['zip']}'" if person.get('zip') else 'NULL'
@@ -1095,9 +1094,9 @@ def parse_contacts_from_documentparse(self, document, document_parse):
     # Парсинг патентного поверенного
     patent_atty = parse_patent_atty(document_parse)
     if patent_atty:
-        patent_atty['person']['rep_correspondence_address'] = document_parse['address']
+        patent_atty['person']['rep_correspondence_address'] = document_parse['address'][1:-1]
     else:
-        document_person['person']['rep_correspondence_address'] = document_parse['address']
+        document_person['person']['rep_correspondence_address'] = document_parse['address'][1:-1]
 
     print('patent_atty', patent_atty)
 

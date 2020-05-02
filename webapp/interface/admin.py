@@ -87,12 +87,12 @@ class ContactPersonAdmin(admin.ModelAdmin):
 # TODO: Для отладки. Потом удалить
 @admin.register(OrderCompanyRel)
 class OrderCompanyRelAdmin(admin.ModelAdmin):
-    pass
+    exclude = ('document', )
 
 # TODO: Для отладки. Потом удалить
 @admin.register(RegisterCompanyRel)
 class RegisterCompanyRelAdmin(admin.ModelAdmin):
-    pass
+    exclude = ('document', )
 
 # TODO: Для отладки. Потом удалить
 @admin.register(Proxies)

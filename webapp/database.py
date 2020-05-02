@@ -41,9 +41,9 @@ class DB:
             try:
                 self.c.execute(query)
             except Exception as err:
-                traceback.print_exc(file=sys.stdout)
+                # traceback.print_exc(file=sys.stdout)
                 print(query)
-                return
+                raise Exception(err)
             self.conn.commit()
             return self.c.lastrowid
         finally:
@@ -58,9 +58,9 @@ class DB:
                 try:
                     self.c.execute(query)
                 except Exception as err:
-                    traceback.print_exc(file=sys.stdout)
+                    # traceback.print_exc(file=sys.stdout)
                     print(query)
-                    return
+                    raise Exception(err)
             self.conn.commit()
             return self.c.lastrowid
         finally:
