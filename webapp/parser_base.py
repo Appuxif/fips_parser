@@ -789,7 +789,7 @@ def parse_person_address(applicant_string, item, person):
         person['city'] = re.sub(r'(город |г\.)', '', item, flags=re.IGNORECASE).strip()
 
     # Ищем край или область
-    if re.match(r'.*(край|область|обл).*', item, re.IGNORECASE):
+    if re.match(r'.*(край|область|обл|республика).*', item, re.IGNORECASE):
         person['state'] = item.strip()
 
     # Ищем район
@@ -845,7 +845,7 @@ def parse_zip_code(applicant_string, person):
 
 
 def parse_applicant(document_parse, type):
-    applicant = None
+    applicant = {}
     # Получаем наименование компании из поля document_parse['applicant'] или document_parse['copyright_holder']
     # Нужно искать компанию, либо Имя-Фамилию контакта
     applicant_string = document_parse.get(type)
@@ -890,7 +890,7 @@ def parse_applicant(document_parse, type):
             sur_found = first_found = second_found = middle_found = False
 
             # if re.match(r'.*(ул\.|г\.|обл\.|д\.|кв\.|\d).*', item):
-            if re.match(r'.*(федерация|пркт|проспект|улица|ул\.|город|г\.|область|обл\.|\d).*', item.lower()):
+            if re.match(r'.*(федерация|корпус|пркт|проспект|улица|ул\.|город|г\.|область|обл\.|\d).*', item.lower()):
                 # print('пропущено', item)
                 continue
 
@@ -949,7 +949,7 @@ def parse_applicant(document_parse, type):
 
 
 def parse_patent_atty(document_parse):
-    patent_atty = None
+    patent_atty = {}
     patent_atty_string = document_parse.get('patent_atty')
     if patent_atty_string:
         patent_atty = {'person': {}}
@@ -972,7 +972,8 @@ def parse_patent_atty(document_parse):
 
         # Парсинг адреса
         if len(splitted) >= 3:
-            patent_atty['person']['rep_correspondence_address'] = ','.join(splitted[2:]).strip()
+            # patent_atty['person']['rep_correspondence_address'] = ','.join(splitted[2:]).strip()
+            patent_atty['person']['address'] = ','.join(splitted[2:]).strip()
             # Парсим адрес из элементов
             for item in splitted[2:]:
                 parse_person_address(patent_atty_string, item, patent_atty['person'])
@@ -984,39 +985,100 @@ def parse_correspondence_address(document_parse):
     pass
 
 
-def get_company_from_db(self, document, document_person):
-    company = document_person.get('company')
-    name = company.get('name', '')
-    if name:
-        # Поиск компании по имени в БД
+def get_or_create_company(self, document, document_person):
+    company = document_person.get('company', {})
+    name = company.get('name', f"Company for {self.name} {document['number']}")
+    form = company.get('form', '')
+    # if name:
+    # Поиск компании по имени в БД
+    with self.get_workers().lock:
+        company_ = DB().fetchone(f"SELECT id FROM interface_company WHERE name = '{name}' AND form = '{form}'")
+    print(company_)  # TODO: deleteme
+
+    # Если компании нет, то создаем новую запись
+    if company_ is None:
+        # Предварительно подготовить поля для внесения в БД
+        company['name'] = f"'{company['name']}'" if company.get('name') else 'NULL'
+        company['form'] = f"'{company['form']}'" if company.get('form') else 'NULL'
+        company['address'] = f"'{company['address']}'" if company.get('address') else 'NULL'
+        company['sign_char'] = f"'{company['sign_char']}'" if company.get('sign_char') else 'NULL'
         with self.get_workers().lock:
-            company_ = DB().fetchone(f"SELECT id FROM interface_company WHERE name = '{name}'")
-        print(company_)  # TODO: deleteme
+            company['id'] = DB().add_row(f"interface_company", company)
+    # Если компания нашлась, то просто передаем ID
+    else:
+        company['id'] = company_['id']
 
-        # Если компании нет, то создаем новую запись
-        if company_ is None:
+    # Проверяем дополнительную таблицу связей между компанией и документами
+    rel_obj = {'company_id': f"'{company['id']}'", 'document_id': f"'{document['id']}'"}
+    rel_table = 'interface_ordercompanyrel' if self.name == 'orders' else 'interface_registercompanyrel'
+
+    with self.get_workers().lock:
+        rel_ = DB().fetchone(f"SELECT id FROM {rel_table} "
+                             f"WHERE company_id = '{company['id']}' AND document_id = '{document['id']}'")
+    if rel_ is None:
+        # TODO: Этот запрос можно отправить общей кучей.
+        with self.get_workers().lock:
+            rel_obj['id'] = DB().add_row(rel_table, rel_obj)
+    else:
+        rel_obj['id'] = rel_['id']
+
+    return company
+    # return None
+
+
+def get_or_create_person(self, document, document_person, company):
+    person = document_person.get('person', {})
+    full_name = person.get('full_name', '')
+    if full_name:
+        # Поиск контакта для данной компании по имени в БД
+        with self.get_workers().lock:
+            person_ = DB().fetchone(f"SELECT id FROM interface_contactperson WHERE full_name = '{full_name}'")
+        print(person_)  # TODO: deleteme
+
+        # Если контакта нет, то создаем новую запись
+        if person_ is None:
             # Предварительно подготовить поля для внесения в БД
-            company['name'] = f"'{company['name']}'" if company.get('name') else 'NULL'
-            company['form'] = f"'{company['form']}'" if company.get('form') else 'NULL'
-            company['address'] = f"'{company['address']}'" if company.get('address') else 'NULL'
-            company['sign_char'] = f"'{company['sign_char']}'" if company.get('sign_char') else 'NULL'
-            with self.get_workers().lock:
-                company['id'] = DB().add_row(f"interface_company", company)
-
-            # Дополнительная таблица связей между компанией и документами
-            if self.name == 'orders':
-                rel_table = 'interface_ordercompanyrel'
-                rel_obj = {'company_id': f"'{company['id']}'", 'order_id': f"'{document['id']}'"}
+            person['full_name'] = f"'{person['full_name']}'" if person.get('full_name') else 'NULL'
+            person['first_name'] = f"'{person['first_name']}'" if person.get('first_name') else 'NULL'
+            person['middle_name'] = f"'{person['middle_name']}'" if person.get('middle_name') else 'NULL'
+            person['last_name'] = f"'{person['last_name']}'" if person.get('last_name') else 'NULL'
+            person['office_address'] = f"'{person['address']}'" if person.get('address') else 'NULL'
+            person['rep_correspondence_address'] = f"'{person['rep_correspondence_address']}'" if person.get('rep_correspondence_address') else 'NULL'
+            person['city'] = f"'{person['city']}'" if person.get('city') else 'NULL'
+            person['zip'] = f"'{person['zip']}'" if person.get('zip') else 'NULL'
+            person['area'] = f"'{person['area']}'" if person.get('area') else 'NULL'
+            person['state'] = f"'{person['state']}'" if person.get('state') else 'NULL'
+            person['country'] = f"'{person['country']}'" if person.get('country') else 'NULL'
+            if person.get('rep_reg_number'):
+                person['rep_reg_number'] = f"'{person['rep_reg_number']}'"
+                person['category'] = "'REPRESENTATIVE'"
             else:
-                rel_table = 'interface_registercompanyrel'
-                rel_obj = {'company_id': f"'{company['id']}'", 'register_id': f"'{document['id']}'"}
+                person['category'] = "'DEFAULT'"
+            person['company_id'] = f"'{company['id']}'"
+            person['email_verified'] = 'FALSE'
+            person['email_correct'] = 'TRUE'
+
+            with self.get_workers().lock:
+                person['id'] = DB().add_row(f"interface_contactperson", person)
+        # Если контакт нашелся, то просто передаем ID
+        else:
+            person['id'] = person_['id']
+
+        # Проверяем дополнительную таблицу связей между компанией и документами
+        rel_obj = {'company_id': f"'{company['id']}'", 'document_id': f"'{document['id']}'"}
+        rel_table = 'interface_ordercompanyrel' if self.name == 'orders' else 'interface_registercompanyrel'
+
+        with self.get_workers().lock:
+            rel_ = DB().fetchone(f"SELECT id FROM {rel_table} "
+                                 f"WHERE company_id = '{company['id']}' AND document_id = '{document['id']}'")
+        if rel_ is None:
             # TODO: Этот запрос можно отправить общей кучей.
             with self.get_workers().lock:
-                DB().add_row(rel_table, rel_obj)
-        # Если компания нашлась, то просто передаем ID
+                rel_obj['id'] = DB().add_row(rel_table, rel_obj)
         else:
-            company['id'] = company_['id']
-        return company
+            rel_obj['id'] = rel_['id']
+
+        return person
     return None
 
 
@@ -1029,8 +1091,14 @@ def parse_contacts_from_documentparse(self, document, document_parse):
     copyright_holder = parse_applicant(document_parse, 'copyright_holder')
     print('copyright_holder', copyright_holder)
 
+    document_person = applicant or copyright_holder or {}
     # Парсинг патентного поверенного
     patent_atty = parse_patent_atty(document_parse)
+    if patent_atty:
+        patent_atty['person']['rep_correspondence_address'] = document_parse['address']
+    else:
+        document_person['person']['rep_correspondence_address'] = document_parse['address']
+
     print('patent_atty', patent_atty)
 
     # Парсинг адреса для переписки
@@ -1039,11 +1107,14 @@ def parse_contacts_from_documentparse(self, document, document_parse):
     print('correspondence_address', correspondence_address)
 
     # Ищем компанию в БД
-    document_person = applicant or copyright_holder or {}
-    company = get_company_from_db(self, document, document_person)
+    company = get_or_create_company(self, document, document_person)
+    person = get_or_create_person(self, document, document_person, company)
 
-    # Если компания не спарсилась, запись все равно нужно создать в виде Company for document document_parse['number']
-    pass
+    # Ищем компаниб в БД для патентного поверенного
+    pat_company = get_or_create_company(self, document, correspondence_address)
+    # pat_person = get_or_create_person(self, document, correspondence_address, pat_company)
+    pat_person2 = get_or_create_person(self, document, patent_atty, pat_company)
+
 
 
 if __name__ == '__main__':

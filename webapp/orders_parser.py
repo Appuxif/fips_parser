@@ -78,19 +78,18 @@ class OrdersParser(Parser):
         work_state, work_state_rows = parse_workstate(page)
 
         # Отмечаем, что документ был спарсен
-        # Если два года не обновлялось, то можно считать закрытой, страница будет доступна на диске
         # order_query = f"UPDATE {self.dbdocument} SET document_parsed = TRUE, date_parsed = '{date.today()}' "
         order_query = f"UPDATE {self.dbdocument} SET document_parsed = TRUE, date_parsed = NOW() "
         status_lower = status.lower()
-        if d.days > 730 or work_state.get('reg_decision') is not None or 'принято решение' in status_lower or\
-                'регистрация товарного знака' in status_lower:
+        # Если два года не обновлялось, то можно считать закрытой, страница будет доступна на диске
+        if d.days > 730 or 'принято решение' in status_lower or 'регистрация товарного знака' in status_lower:
             order_query += ', order_done = TRUE '
         order_query += f"WHERE id = '{document['id']}'"
         queries.append(order_query)
 
         # Получаем контакты из спарсенной информации
-        # parse_contacts_from_documentparse(self, document, document_parse)
-        # return
+        parse_contacts_from_documentparse(self, document, document_parse)
+        return
 
         # Сохраняем или обновляем парсинг документа
         with self.get_workers().lock:

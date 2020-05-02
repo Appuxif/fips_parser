@@ -61,13 +61,13 @@ class Company(models.Model):
 
 class OrderCompanyRel(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
-    order = models.ForeignKey(OrderDocument, on_delete=models.CASCADE, null=True)
+    document = models.ForeignKey(OrderDocument, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return str(self.id)
 
     def get_absolute_url(self):
-        return f'/admin/orders/document/{self.order.id}/change/'
+        return f'/admin/orders/document/{self.document.id}/change/'
 
     class Meta:
         verbose_name = 'Связанная Компания'
@@ -76,14 +76,14 @@ class OrderCompanyRel(models.Model):
 
 class RegisterCompanyRel(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
-    register = models.ForeignKey(RegisterDocument, on_delete=models.CASCADE, null=True)
+    document = models.ForeignKey(RegisterDocument, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         # return str(self.register) + ' - ' + str(self.company)
         return str(self.id)
 
     def get_absolute_url(self):
-        return f'/admin/registers/document/{self.register.id}/change/'
+        return f'/admin/registers/document/{self.document.id}/change/'
 
     class Meta:
         verbose_name = 'Связанная Компания'
