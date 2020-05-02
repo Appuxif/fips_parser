@@ -463,15 +463,14 @@ class Parser:
             print('Ошибка залогирована', error_filename)
 
             # Запись результата парсинга в БД и отметка документа спарсенным
-            # TODO: Вернуть как было
-            # with self.get_workers().lock:
-            #     DB().executeone(f"UPDATE {self.dbdocument} SET document_parsed = TRUE, "
-            #                     # f"date_parsed = '{date.today()}' "
-            #                     f"date_parsed = NOW() "
-            #                     f"WHERE id = '{document_obj['id']}'")
-            #     DB().executeone(f"INSERT INTO {self.dbparserhistory} "
-            #                     f"(document_id, date_created, is_error, error_log_file, message) "
-            #                     f"VALUES ('{document_obj['id']}', '{now}', TRUE, '{error_link}', '')")
+            with self.get_workers().lock:
+                DB().executeone(f"UPDATE {self.dbdocument} SET document_parsed = TRUE, "
+                                # f"date_parsed = '{date.today()}' "
+                                f"date_parsed = NOW() "
+                                f"WHERE id = '{document_obj['id']}'")
+                DB().executeone(f"INSERT INTO {self.dbparserhistory} "
+                                f"(document_id, date_created, is_error, error_log_file, message) "
+                                f"VALUES ('{document_obj['id']}', '{now}', TRUE, '{error_link}', '')")
         finally:
             self.documents_in_parsing.remove(f"'{document_obj['id']}'")
 
