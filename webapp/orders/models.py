@@ -52,5 +52,5 @@ class ParserHistory(models.Model):
     def get_absolute_url(self):
         if self.is_error:
             return str(self.error_log_file)
-        return None
+        return f'/admin/orders/parserhistory/{self.id}/change/'
 

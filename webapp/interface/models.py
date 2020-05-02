@@ -30,13 +30,13 @@ def company_logo_path(instance, filename):
 
 
 class Company(models.Model):
+    form = models.CharField(max_length=50, null=True, blank=True)  # ! # Организационная форма ООО
     name = models.CharField('Наименование компании', max_length=255, blank=True)
     name_latin = models.CharField('Наименование компании латинское', max_length=255, null=True, blank=True)
     address = models.CharField('Адрес компании', max_length=255, null=True, blank=True)
     address_latin = models.CharField('Адрес компании латинский', max_length=255, null=True, blank=True)
     sign_char = models.CharField('Код страны', max_length=5, null=True, blank=True)
     web = models.CharField(max_length=100, null=True, blank=True)
-    form = models.CharField(max_length=50, null=True, blank=True)  # ! # Организационная форма ООО
 
     order = models.ManyToManyField(OrderDocument, related_query_name='person',
                                    blank=True, through='OrderCompanyRel')
@@ -95,45 +95,50 @@ def person_photo_path(instance, filename):
 
 
 class ContactPerson(models.Model):
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_query_name='person')
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_query_name='person', verbose_name='Компания')  ##
 
-    category = models.CharField(max_length=50, default='DEFAULT')  # DEFAULT или REPRESENTATIVE (поверенный)
+    category = models.CharField('Категория', max_length=50, default='DEFAULT')  # DEFAULT или REPRESENTATIVE (поверенный) ##
 
-    email = models.CharField('Электронная почта', max_length=255, null=True, blank=True)  #
-    email_verified = models.BooleanField('Почта верифицирована', default=False)
-    email_correct = models.BooleanField('Почта корректна', default=True)
+    email = models.CharField('Электронная почта', max_length=255, null=True, blank=True)  # ##
+    email_verified = models.BooleanField('Почта верифицирована', default=False)  ##
+    email_correct = models.BooleanField('Почта корректна', default=True)  ##
 
-    full_name = models.CharField('Полное имя', max_length=255, null=True, blank=True)  #
-    first_name = models.CharField('Имя', max_length=50, null=True, blank=True)
-    middle_name = models.CharField('Отчество', max_length=50, null=True, blank=True)
-    last_name = models.CharField('Фамилия', max_length=50, null=True, blank=True)
-    nick_name = models.CharField('Никнейм', max_length=50, null=True, blank=True)
-    gender = models.CharField('Пол', max_length=10, null=True, blank=True)
-    job_title = models.CharField('Должность', max_length=50, null=True, blank=True)
+    full_name = models.CharField('Полное имя', max_length=255, null=True, blank=True)  # ##
+    first_name = models.CharField('Имя', max_length=50, null=True, blank=True)  ##
+    middle_name = models.CharField('Отчество', max_length=50, null=True, blank=True)  ##
+    last_name = models.CharField('Фамилия', max_length=50, null=True, blank=True)  ##
+    nick_name = models.CharField('Никнейм', max_length=50, null=True, blank=True)  ##
+    gender_choices = [
+        (0, '-'),
+        (1, 'М'),
+        (2, 'Ж')
+    ]
+    gender = models.SmallIntegerField('Пол', choices=gender_choices, default=0)  ##
+    job_title = models.CharField('Должность', max_length=50, null=True, blank=True)  ##
 
     # company_name = models.CharField('Наименование комании', max_length=100, null=True, blank=True)  # #
     # company_form = models.CharField(max_length=50, null=True, blank=True)  # ! # Организационная форма ООО
     # company_web = models.CharField(max_length=100, null=True, blank=True)
 
-    personal_web = models.CharField(max_length=150, null=True, blank=True)
-    office_address = models.CharField(max_length=100, null=True, blank=True)  # ! #
-    home_phone = models.CharField('Домашний телефон', max_length=25, null=True, blank=True)
-    office_phone = models.CharField('Оффисный телефон', max_length=25, null=True, blank=True)
-    mobile_phone = models.CharField('Мобильный телефон', max_length=25, null=True, blank=True)
-    messenger_id = models.CharField(max_length=25, null=True, blank=True)
-    messenger_type = models.CharField(max_length=25, null=True, blank=True)
-    fax = models.CharField(max_length=25, null=True, blank=True)
-    city = models.CharField('Город', max_length=255, null=True, blank=True)  # ! #
-    zip = models.IntegerField('Индекс', null=True, blank=True)  # ! #
-    area = models.CharField(max_length=255, null=True, blank=True)  # ! #
-    state = models.CharField(max_length=255, null=True, blank=True)  # ! #
-    country = models.CharField(max_length=255, null=True, blank=True)  # ! #
+    personal_web = models.CharField('Персональный сайт', max_length=150, null=True, blank=True)  ##
+    office_address = models.CharField('Адрес офиса', max_length=255, null=True, blank=True)  # ! #  ##
+    home_phone = models.CharField('Домашний телефон', max_length=25, null=True, blank=True)  ##
+    office_phone = models.CharField('Оффисный телефон', max_length=25, null=True, blank=True)  ##
+    mobile_phone = models.CharField('Мобильный телефон', max_length=25, null=True, blank=True)  ##
+    messenger_id = models.CharField('ID в мессенджере', max_length=25, null=True, blank=True)  ##
+    messenger_type = models.CharField('Мессенджер', max_length=25, null=True, blank=True)  ##
+    fax = models.CharField('Факс', max_length=25, null=True, blank=True)  ##
+    city = models.CharField('Город', max_length=255, null=True, blank=True)  # ! #  ##
+    zip = models.IntegerField('Индекс', null=True, blank=True)  # ! #  ##
+    area = models.CharField('Район', max_length=255, null=True, blank=True)  # ! #  ##
+    state = models.CharField('Область', max_length=255, null=True, blank=True)  # ! #  ##
+    country = models.CharField('Страна', max_length=255, null=True, blank=True)  # ! #  ##
 
-    rep_reg_number = models.CharField(max_length=255, null=True, blank=True)
-    rep_correspondence_address = models.CharField(max_length=255, null=True, blank=True)  # ! #
+    rep_reg_number = models.CharField('Рег номер поверенного', max_length=255, null=True, blank=True)  ##
+    rep_correspondence_address = models.CharField('Адрес для корреспонденции поверенного', max_length=255, null=True, blank=True)  # ! #  ##
 
-    photo = models.ImageField('Персональное фото', upload_to=person_photo_path, null=True, blank=True)
-    bday_date = models.DateField('День рождения', null=True, blank=True)
+    photo = models.ImageField('Персональное фото', upload_to=person_photo_path, null=True, blank=True)  ##
+    bday_date = models.DateField('День рождения', null=True, blank=True)  ##
 
     def __str__(self):
         return 'Контакт ' + str(self.id) + ' компании ' + str(self.company)

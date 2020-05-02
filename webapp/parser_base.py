@@ -118,6 +118,7 @@ class Parser:
     document_parse_query = None  # Для кастомизации запроса документа из БД
     requests_amount = 1
     requests_period = 3
+    parser_source = 'new.fips.ru'
 
     def __init__(self, url, name='default', verbosity=True):
         self.name = name
@@ -441,11 +442,16 @@ class Parser:
         if document_obj is None:
             return False
 
+        # Если is_error == TRUE или message не пустой, то результат парсинга логируется в БД
+        history = {'message': '', 'is_error': 'FALSE',
+                   'document_id': f"'{document_obj['id']}'",
+                   'date_created': 'NOW()', }
+
         # Если возникают какие-то неучтенные ошибки, то ошибка логируется, в БД создается запись о
         # результате парсинга с ошибкой, записывается путь до файла с логами ошибки
         # Далее документ считается спарсенным и парсер переходит к следующему документу
         try:
-            result = self.parse_one_document(dict(document_obj), proxy)
+            result = self.parse_one_document(dict(document_obj), history, proxy)
         except:
             result = True
             # Логирование ошибки в файл
@@ -460,7 +466,8 @@ class Parser:
             with open(error_filename, 'w') as f:
                 traceback.print_exc(file=f)
             traceback.print_exc(file=sys.stdout)
-            print('Ошибка залогирована', error_filename)
+            self._print('Ошибка для', document_obj['number'],' залогирована', error_filename)
+            history['error_log_file'] = f"'{error_link}'"
 
             # Запись результата парсинга в БД и отметка документа спарсенным
             with self.get_workers().lock:
@@ -468,16 +475,24 @@ class Parser:
                                 # f"date_parsed = '{date.today()}' "
                                 f"date_parsed = NOW() "
                                 f"WHERE id = '{document_obj['id']}'")
-                DB().executeone(f"INSERT INTO {self.dbparserhistory} "
-                                f"(document_id, date_created, is_error, error_log_file, message) "
-                                f"VALUES ('{document_obj['id']}', '{now}', TRUE, '{error_link}', '')")
         finally:
             self.documents_in_parsing.remove(f"'{document_obj['id']}'")
+            if history['message']:
+                history['message'] = history['message'].replace("'", '"')
+                history['message'] = f"'{history['message']}'"
+            if history['is_error'] == 'TRUE' or history['message']:
+                self._print('Лог парсинга для', document_obj['number'], ' сохранен в БД\n')
+                self._print(history)
+                with self.get_workers().lock:
+                    DB().add_row(self.dbparserhistory, history)
+                    # DB().executeone(f"INSERT INTO {self.dbparserhistory} "
+                    #                 f"(document_id, date_created, is_error, error_log_file, message) "
+                    #                 f"VALUES ('{document_obj['id']}', '{now}', TRUE, '{error_link}', '')")
 
         return result
 
     # Парсит одну страницу документа
-    def parse_one_document(self, document_obj, proxy=None):
+    def parse_one_document(self, document_obj, history, proxy=None):
         proxies = None
         if proxy:
             s = [proxy['scheme'], '']
@@ -488,6 +503,12 @@ class Parser:
                 proxies = {'https': s}
             elif 'socks5' in proxy['scheme']:
                 proxies = {'socks5': s}
+
+        # Замена домена, если надо
+        if self.parser_source == 'fips.ru':
+            document_obj['url'] = document_obj['url'].replace('new.fips.ru', 'fips.ru')
+        elif 'new.fips.ru' not in document_obj['url']:
+            document_obj['url'] = document_obj['url'].replace('fips.ru', 'new.fips.ru')
 
         self._print(document_obj['number'], 'Парсинг документа', document_obj['url'],
                     proxies, proxy['documents_parsed'] if proxy else None)
@@ -510,17 +531,24 @@ class Parser:
                 while True:
                     try:
                         r = session.get(url, proxies=proxies, timeout=10)
+                    except requests.exceptions.ReadTimeout:
+                        self._print(document_obj['number'], 'Нет ответа от сервера!')
+                        sleep(5)
+                        return True
                     except (requests.exceptions.ProxyError, requests.exceptions.ConnectTimeout) as err:
                         self._print(document_obj['number'], 'Ошибка прокси', str(err), type(err))
                         err = str(err).replace("'", '"')
                         with self.get_workers().lock:
-
+                            history['message'] += f'Ошибка прокси {proxy["id"]}\n'
                             DB().executeone(f"UPDATE interface_proxies SET is_working = FALSE, "
                                             f"status = '{'Ошибка прокси ' + err[:200]}'"
                                             f"WHERE id = '{proxy['id']}'")
                         return False
-
-                    if r.status_code != 200:
+                    if r.status_code == 502:
+                        self._lprint(document_obj['number'], 'ошибка сервера', r.status_code, r.reason, url)
+                        sleep(5)
+                        return True
+                    elif r.status_code != 200:
                         self._lprint(document_obj['number'], 'parse_orders', r.status_code, r.reason, url)
                         return False
                         # existence = True
@@ -533,6 +561,7 @@ class Parser:
                     elif 'Превышен допустимый предел' in text:
                         self._print(document_obj['number'], text, url)
                         with self.get_workers().lock:
+                            history['message'] += f'Превышен предел прокси {proxy["id"]}\n'
                             DB().executeone(f"UPDATE interface_proxies SET is_working = FALSE, "
                                             f"status = '{text}'"
                                             f"WHERE id = '{proxy['id']}'")
@@ -541,6 +570,7 @@ class Parser:
                     elif 'Вы заблокированы' in text:
                         self._print(text, 'Поток закрыт')
                         with self.get_workers().lock:
+                            history['message'] += f'Блокировка прокси {proxy["id"]}\n'
                             DB().executeone(f"UPDATE interface_proxies SET is_banned = TRUE, "
                                             f"status = '{text}'"
                                             f"WHERE id = '{proxy['id']}'")
@@ -562,6 +592,7 @@ class Parser:
 
                     counter += 1
                     if counter > 3:
+                        history['message'] += f'counter exceeded\n'
                         self._lprint(document_obj['number'], 'counter exceeded', url)
                         return False
                     self._print(document_obj['number'], 'sleep')
@@ -572,7 +603,7 @@ class Parser:
                     DB().executeone(
                         f"UPDATE {self.dbdocument} SET downloaded_page = '{filename}' WHERE id = '{document_obj['id']}'"
                     )
-                self.parse_document_page(page_content, document_obj, session, proxies)
+                self.parse_document_page(page_content, document_obj, session, proxies, history)
             else:
                 with self.get_workers().lock:
                     DB().executeone(f"UPDATE {self.dbdocument} SET document_parsed = TRUE, "
@@ -710,7 +741,8 @@ def parse_main_info(page, document, document_info, document_parse, service_items
 
         # Сохраняем неучтенные объекты
         else:
-            document_info['unresolved'] = document_info.get('unresolved', '') + ' '.join(child_text.split()) + '\n'
+            if len(child_text.replace(',', '').strip()) > 10:
+                document_info['unresolved'] = document_info.get('unresolved', '') + ' '.join(child_text.split()) + '\n'
 
     return message, documentfile_values, serviceitem_values
 
@@ -824,7 +856,7 @@ def parse_person_address(applicant_string, item, person):
     if item in countries:
         person['country'] = item
     else:
-        # Ищем кадое слово среди списка стран
+        # Ищем каждое слово среди списка стран
         for c in item_splitted:
             if person.get('country'):
                 break
@@ -888,40 +920,49 @@ def parse_applicant(document_parse, type):
             sur_found = first_found = second_found = middle_found = False
 
             # if re.match(r'.*(ул\.|г\.|обл\.|д\.|кв\.|\d).*', item):
-            if re.match(r'.*(федерация|корпус|пркт|проспект|улица|ул\.|город|г\.|область|обл\.|\d).*', item.lower()):
+            if re.match(r'.*(федерация|республика|корпус|пркт|проспект|улица|ул\.|город|г\.|область|обл\.|\d).*', item.lower()):
                 # print('пропущено', item)
                 continue
 
             # Парсинг ФИО
             for isp in item_splitted:
-                isp = isp.capitalize()
-                if isp in cities:
-                    continue
-                if isp in countries:
-                    continue
-                if isp in surnames:
-                    pass
-                elif isp[-1] == 'у' and isp[:-1] in surnames:
-                    item = re.sub(isp, isp[:-1], item)
-                    isp = isp[:-1]
-                elif isp[-2:] == 'ой' and isp[:-2] in surnames:
-                    item = re.sub(isp, isp[:-2], item)
-                    isp = isp[:-2] + 'а'
-                else:
-                    continue
-                if not sur_found:
-                    sur_found = True
+                if not sur_found and not first_found:
+                    isp = isp.capitalize()
+                    if isp in cities or isp in countries:
+                        continue
+                    if isp in surnames:
+                        applicant_string = applicant_string.replace(item, '')
+                        sur_found = True
+                    elif isp[-1] == 'у' and isp[:-1] in surnames:
+                        applicant_string = applicant_string.replace(item, '')
+                        item = re.sub(isp, isp[:-1], item)
+                        isp = isp[:-1]
+                        sur_found = True
+                    elif isp[-2:] == 'ой' and isp[:-2] in surnames:
+                        applicant_string = applicant_string.replace(item, '')
+                        item = re.sub(isp, isp[:-2], item)
+                        isp = isp[:-2] + 'а'
+                        sur_found = True
+                    elif isp in names:
+                        first_found = True
+                    else:
+                        continue
                     applicant['person']['full_name'] = re.sub('(ИП|Индивидуальный предприниматель)', '',
                                                               item).strip().title()
-                    applicant['person']['last_name'] = isp
-                    applicant_string = applicant_string.replace(item, '')
-                    splitted = applicant['person']['full_name'].replace('.', ' ').split()
-                    if isp in splitted:
-                        splitted.remove(isp)
-                    first_name = splitted[:1]
-                    middle_name = splitted[1:]
-                    applicant['person']['first_name'] = splitted[:1][0] if splitted[:1] else 'NULL'
-                    applicant['person']['middle_name'] = splitted[1:][0] if splitted[1:] else 'NULL'
+                    if sur_found:
+                        applicant['person']['last_name'] = isp
+                        splitted = applicant['person']['full_name'].replace('.', ' ').split()
+                        if isp in splitted:
+                            splitted.remove(isp)
+                        applicant['person']['first_name'] = splitted[:1][0] if splitted[:1] else None
+                        applicant['person']['middle_name'] = splitted[1:][0] if splitted[1:] else None
+                    elif first_found:
+                        applicant['person']['first_name'] = isp
+                        splitted = applicant['person']['full_name'].replace('.', ' ').split()
+                        if isp in splitted:
+                            splitted.remove(isp)
+                        applicant['person']['last_name'] = splitted[:1][0] if splitted[:1] else None
+                        applicant['person']['middle_name'] = splitted[1:][0] if splitted[1:] else None
 
         applicant_string_splitted = re.sub('[\'(){}]', '', applicant_string).strip().split(', ')
         applicant_string = ', '.join([s for s in applicant_string_splitted if s])
@@ -983,15 +1024,21 @@ def parse_correspondence_address(document_parse):
     pass
 
 
-def get_or_create_company(self, document, document_person):
+def get_or_create_company(self, document, document_person, save_anyway=True):
     company = document_person.get('company', {})
-    name = company.get('name', f"Company for {self.name} {document['number']}")
+    name = company.get('name')
+    if name is None and save_anyway:
+        name = f"Company for {self.name} {document['number']}"
+    elif name is None and not save_anyway:
+        return {}
     form = company.get('form', '')
     # if name:
     # Поиск компании по имени в БД
+    q = f"SELECT id FROM interface_company WHERE name = '{name}'"
+    if form:
+        q += f" AND form = '{form}'"
     with self.get_workers().lock:
-        company_ = DB().fetchone(f"SELECT id FROM interface_company WHERE name = '{name}' AND form = '{form}'")
-    print('Найденная компания', company_)  # TODO: deleteme
+        company_ = DB().fetchone(q)
 
     # Если компании нет, то создаем новую запись
     if company_ is None:
@@ -1029,9 +1076,12 @@ def get_or_create_person(self, document, document_person, company):
     full_name = person.get('full_name', '')
     if full_name:
         # Поиск контакта для данной компании по имени в БД
+        if person.get('rep_reg_number'):  # rep_reg_number - уникальный номер патентного поверенного
+            q = f"SELECT id FROM interface_contactperson WHERE rep_reg_number = '{person['rep_reg_number']}'"
+        else:
+            q = f"SELECT id FROM interface_contactperson WHERE full_name = '{full_name}'"
         with self.get_workers().lock:
-            person_ = DB().fetchone(f"SELECT id FROM interface_contactperson WHERE full_name = '{full_name}'")
-        print('Найденный контакт', person_)  # TODO: deleteme
+            person_ = DB().fetchone(q)
 
         # Если контакта нет, то создаем новую запись
         if person_ is None:
@@ -1080,7 +1130,7 @@ def get_or_create_person(self, document, document_person, company):
     return None
 
 
-def parse_contacts_from_documentparse(self, document, document_parse):
+def parse_contacts_from_documentparse(self, document, document_parse, history):
     # Парсинг заявителя
     applicant = parse_applicant(document_parse, 'applicant')
     print('applicant', applicant)
@@ -1106,13 +1156,27 @@ def parse_contacts_from_documentparse(self, document, document_parse):
 
     # Ищем компанию в БД
     company = get_or_create_company(self, document, document_person)
+    print('company', company)
+    if not company.get('name') or 'Company for' in company.get('name', ''):
+        history['message'] += 'Имя компании не найдено\n'
     person = get_or_create_person(self, document, document_person, company)
+    print('person', person)
 
-    # Ищем компаниб в БД для патентного поверенного
-    pat_company = get_or_create_company(self, document, correspondence_address)
-    # pat_person = get_or_create_person(self, document, correspondence_address, pat_company)
-    pat_person2 = get_or_create_person(self, document, patent_atty, pat_company)
-
+    # Ищем компанию в БД для патентного поверенного
+    pat_company = get_or_create_company(self, document, correspondence_address, False)
+    print('pat_company', pat_company)
+    # Если патентная компания не определена, то
+    # регистрируем патентного поверенного в команию заявителя или правообладателя
+    if pat_company:
+        pat_person_company = pat_company
+    else:
+        history['message'] += 'Имя патентной компании не найдено\n'
+        pat_person_company = company
+    if patent_atty:
+        pat_person = get_or_create_person(self, document, patent_atty, pat_person_company)
+    else:
+        pat_person = get_or_create_person(self, document, correspondence_address, pat_person_company)
+    print('pat_person', pat_person)
 
 
 if __name__ == '__main__':

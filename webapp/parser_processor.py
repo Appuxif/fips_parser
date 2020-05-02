@@ -106,7 +106,8 @@ class Processor:
             query += f"AND number <= {parser['number_lte']} "
         process = mp.Process(
             target=target,
-            args=(parser['proxies_num'], query, parser['requests_period'], parser['requests_amount']),
+            args=(parser['proxies_num'], query, parser['requests_period'],
+                  parser['requests_amount'], parser['source']),
             daemon=True
         )
         process.start()

@@ -56,7 +56,7 @@ class CompanyInline(admin.StackedInline):
     readonly_fields = ('company', 'document')
 
     def view_on_site(self, obj):
-        return f'/admin/interface/company/{obj.id}/change/'
+        return f'/admin/interface/company/{obj.company_id}/change/'
 
     # def has_add_permission(self, request, obj):
     #     return False

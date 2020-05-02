@@ -17,7 +17,7 @@ class RegistersParser(Parser):
     #     return super(RegistersParser, self).start_parse_document(proxy, query)
 
     # Парсит полученную страницу
-    def parse_document_page(self, page_content, document, session, proxies):
+    def parse_document_page(self, page_content, document, session, proxies, history):
         page = BeautifulSoup(page_content, 'html.parser')  # Объект страницы для парсинга
 
         with self.get_workers().lock:
@@ -78,6 +78,8 @@ class RegistersParser(Parser):
             parse_main_info(page, document, document_info, document_parse, service_items, session, proxies, self.name, start_izvs)
 
         if message:
+            if 'ошибка' in message.lower():
+                history['message'] += message + '\n'
             self._lprint(document['number'], message)
         if document_info.get('unresolved'):
             self._print(document['number'], 'unresolved', document_info['unresolved'])
@@ -96,6 +98,11 @@ class RegistersParser(Parser):
             # Проверка по типу извещения и по дате публикации - такая вот уникальная строчка
             if izv.get('izv_type') is None or izv.get('date_publish') is None:
                 continue
+
+            # TODO: Проработать парсинг контактов из извещения
+            # Получаем контакты из спарсенной информации с извещения
+            parse_contacts_from_documentparse(self, document, izv)
+
             parsed_unique = izv['izv_type'][1:-1] + '-' + izv['date_publish'].replace("'", '')
             print(parsed_unique)
             if parsed_unique in izv_unique_list:
@@ -127,6 +134,7 @@ class RegistersParser(Parser):
         message, values = parse_facsimile(page, document, session, proxies, self.name)
         documentfile_item.extend(values)
         if message:
+            history['message'] += message + '\n'
             self._lprint(document['number'], message)
 
         if documentfile_item:
@@ -151,8 +159,8 @@ class RegistersParser(Parser):
         queries.append(order_query)
 
         # Получаем контакты из спарсенной информации
-        # parse_contacts_from_documentparse(document_parse)
-        # return
+        parse_contacts_from_documentparse(self, document, document_parse, history)
+
         # Сохраняем или обновляем парсинг документа
         with self.get_workers().lock:
             if document_parse.get('id') is None:
@@ -277,7 +285,7 @@ def parse_izvs(document, start_izvs):
     return izvs_list[:-1]
 
 
-def start_parse_all_documents(threads=1, query=None, requests_period=3, requests_amount=1):
+def start_parse_all_documents(threads=1, query=None, requests_period=3, requests_amount=1, source=1):
     parser_base.surnames = get_surnames()
     parser_base.names = get_names()
     parser_base.countries = get_countries()
@@ -287,6 +295,7 @@ def start_parse_all_documents(threads=1, query=None, requests_period=3, requests
     p.document_parse_query = query
     p.requests_period = requests_period
     p.requests_amount = requests_amount
+    p.parser_source = 'new.fips.ru' if source == 1 else 'fips.ru'
 
     p.parse_all_documents_in_threads(threads)
     # p.start_parse_all_documents()
@@ -303,5 +312,6 @@ if __name__ == '__main__':
     # p.start_parse_all_documents()
     # p.parse_all_documents_in_threads(5)
 
+# python -c "from registers_parser import *; p = RegistersParser(REGISTERS_URL, 'registers'); p.get_documents_list()"
 # python -c "from registers_parser import *; p = RegistersParser(REGISTERS_URL, 'registers'); p.check_new_documents()"
 # python -c "from registers_parser import *; release_proxies(); p = RegistersParser(REGISTERS_URL, 'registers'); p.parse_all_documents_in_threads(50)"

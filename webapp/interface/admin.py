@@ -8,6 +8,8 @@ from multiprocessing.connection import Client
 
 # from .models import OrderContact, OrderContactPerson, RegisterContact, RegisterContactPerson, ContactPerson, Company
 from .models import ContactPerson, Company, RegisterCompanyRel, OrderCompanyRel, ParserSetting, Proxies
+
+
 # from orders.admin import CompanyInline as OrderCompanyInline
 # from registers.admin import CompanyInline as RegisterCompanyInline
 
@@ -38,18 +40,33 @@ class ContactPersonInline(admin.StackedInline):
     extra = 0
     view_on_site = False
     template = 'admin/edit_inline/stacked_file_person.html'
+    fieldsets = [
+        (None, {'fields': ('category', ('company', 'job_title'), 'photo',)}),
+        (None, {'fields': ('full_name', ('last_name', 'first_name', 'middle_name'),
+                           ('gender',), 'bday_date'),
+                'description': 'Личные данные'}),
+        (None, {'fields': (('email', 'email_verified', 'email_correct'),
+                           ('messenger_type', 'messenger_id', 'nick_name'),
+                           ('mobile_phone', 'office_phone', 'home_phone', 'fax'),
+                           'personal_web',),
+                'description': 'Контактные данные'}),
+        (None, {'fields': ('office_address', 'zip', ('country', 'state'),
+                           ('area', 'city'), ('rep_correspondence_address', 'rep_reg_number')),
+                'description': 'Адресные данные'}),
+    ]
+    readonly_fields = ('company',)
 
     # Чтобы выводить по два поля на ширину экрана
-    def get_fieldsets(self, request, obj=None):
-        old_fields = self.get_fields(request, obj)
-        len_old_fields = len(old_fields)
-        fields = []
-        for i in range(0, len_old_fields, 2):
-            fields.append(
-                (None, {'fields': (old_fields[i:i+2], )})
-            )
-
-        return fields
+    # def get_fieldsets(self, request, obj=None):
+    #     old_fields = self.get_fields(request, obj)
+    #     len_old_fields = len(old_fields)
+    #     fields = []
+    #     for i in range(0, len_old_fields, 2):
+    #         fields.append(
+    #             (None, {'fields': (old_fields[i:i+2], )})
+    #         )
+    #
+    #     return fields
 
 
 class OrderCompanyInline(admin.StackedInline):
@@ -84,15 +101,18 @@ class CompanyAdmin(admin.ModelAdmin):
 class ContactPersonAdmin(admin.ModelAdmin):
     pass
 
+
 # TODO: Для отладки. Потом удалить
 @admin.register(OrderCompanyRel)
 class OrderCompanyRelAdmin(admin.ModelAdmin):
-    readonly_fields = ('document', )
+    readonly_fields = ('document',)
+
 
 # TODO: Для отладки. Потом удалить
 @admin.register(RegisterCompanyRel)
 class RegisterCompanyRelAdmin(admin.ModelAdmin):
     readonly_fields = ('document',)
+
 
 # TODO: Для отладки. Потом удалить
 @admin.register(Proxies)
