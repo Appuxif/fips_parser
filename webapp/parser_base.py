@@ -354,7 +354,8 @@ class Parser:
                             db.c.execute(query)
                             proxy = db.c.fetchone()
                             if proxy:
-                                q = f"UPDATE interface_proxies SET in_use = TRUE WHERE id = '{proxy['id']}'"
+                                q = f"UPDATE interface_proxies " \
+                                    f"SET in_use = TRUE, date_last_used = '{today}' WHERE id = '{proxy['id']}'"
                                 db.c.execute(q)
                                 db.conn.commit()
                         finally:
