@@ -70,8 +70,8 @@ class OrderCompanyRel(models.Model):
         return f'/admin/orders/document/{self.document.id}/change/'
 
     class Meta:
-        verbose_name = 'Связанная Компания'
-        verbose_name_plural = 'Связанные Компании'
+        verbose_name = 'Связанная Компания (Заявки)'
+        verbose_name_plural = 'Связанные Компании (Заявки)'
 
 
 class RegisterCompanyRel(models.Model):
@@ -86,8 +86,8 @@ class RegisterCompanyRel(models.Model):
         return f'/admin/registers/document/{self.document.id}/change/'
 
     class Meta:
-        verbose_name = 'Связанная Компания'
-        verbose_name_plural = 'Связанные Компании'
+        verbose_name = 'Связанная Компания (Регистрации)'
+        verbose_name_plural = 'Связанные Компании (Регистрации)'
 
 
 def person_photo_path(instance, filename):

@@ -41,7 +41,7 @@ class ContactPersonInline(admin.StackedInline):
     view_on_site = False
     template = 'admin/edit_inline/stacked_file_person.html'
     fieldsets = [
-        (None, {'fields': ('category', ('company', 'job_title'), 'photo',)}),
+        (None, {'fields': ('category', ('job_title'), 'photo',)}),
         (None, {'fields': ('full_name', ('last_name', 'first_name', 'middle_name'),
                            ('gender',), 'bday_date'),
                 'description': 'Личные данные'}),
@@ -54,7 +54,7 @@ class ContactPersonInline(admin.StackedInline):
                            ('area', 'city'), ('rep_correspondence_address', 'rep_reg_number')),
                 'description': 'Адресные данные'}),
     ]
-    readonly_fields = ('company',)
+    # readonly_fields = ('company',)
 
     # Чтобы выводить по два поля на ширину экрана
     # def get_fieldsets(self, request, obj=None):
@@ -94,6 +94,7 @@ class CompanyAdmin(admin.ModelAdmin):
     exclude = ('order', 'register')
     # Шаблон, на котором добавлено лого компании
     change_form_template = 'admin/custom_change_form_company.html'
+    list_display = ('__str__', 'sign_char', 'form', 'name', 'address')
 
 
 # TODO: Для отладки. Потом удалить

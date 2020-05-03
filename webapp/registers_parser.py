@@ -40,7 +40,7 @@ class RegistersParser(Parser):
                     f"SELECT id, number, text FROM {self.dbdocument_izvserviceitem} "
                     f"WHERE document_id = '{document['id']}'")
 
-            izv_unique_list = [izv['izv_type'] + '-' + (izv['date_publish'] or 'NULL') for izv in izv_exists_list]
+            izv_unique_list = [izv['izv_type'] + '-' + (str(izv['date_publish']) or 'NULL') for izv in izv_exists_list]
             service_items = [str(item['number']) for item in service_items]
         else:
             document_parse = {
@@ -91,8 +91,8 @@ class RegistersParser(Parser):
         documentizvitem_values = []
 
         # Подготовка запросов в БД, если были собраны извещения
-        if izvs_parsed_list:
-            print(izv_unique_list)
+        # if izvs_parsed_list:
+        #     print(izv_unique_list)
         for izv in izvs_parsed_list:
 
             # Проверка по типу извещения и по дате публикации - такая вот уникальная строчка
@@ -101,17 +101,17 @@ class RegistersParser(Parser):
 
             # TODO: Проработать парсинг контактов из извещения
             # Получаем контакты из спарсенной информации с извещения
-            parse_contacts_from_documentparse(self, document, izv)
+            parse_contacts_from_izv(self, document, izv, history)
 
             parsed_unique = izv['izv_type'][1:-1] + '-' + izv['date_publish'].replace("'", '')
-            print(parsed_unique)
+            # print(parsed_unique)
             if parsed_unique in izv_unique_list:
                 # print('continued')
                 continue
             izvs_serviceitem_values.extend(izv.pop('serviceitem_values'))
             documentizvitem_values.extend(izv.pop('documentizvitem_values'))
-
-            self._print(document['number'], 'info:', izv.get('info', 'No info'))
+            if 'info' in izv:
+                self._print(document['number'], 'info:', izv.get('info', 'No info'))
             izv['document_id'] = f"'{document['id']}'"
             izv['document_parse_id'] = '{0}'
             queries.append(insert_into_query(self.dbdocument_izv, izv))
@@ -199,7 +199,7 @@ def parse_izvs(document, start_izvs):
                                   'documentizvitem_values': []})
                 title_parsed = False
             elif sib.name == 'p':
-                sib_text = ' '.join(getattr(sib, 'text', '').split())
+                sib_text = ' '.join(getattr(sib, 'text', '').replace("'", '').split())
 
                 if not title_parsed:
                     title_parsed = True
@@ -285,6 +285,51 @@ def parse_izvs(document, start_izvs):
     return izvs_list[:-1]
 
 
+# Парсинг компаний и представителей в полученных данных извещений документа
+def parse_contacts_from_izv(self, document, izv, history):
+    # Парсинг Правообладателя
+    copyright_holder = parse_applicant(izv, 'copyright_holder')
+    if copyright_holder:
+        print('izv copyright_holder', copyright_holder, '\n')
+        company = get_or_create_company(self, document, copyright_holder, False)
+        person = get_or_create_person(self, document, copyright_holder, company)
+
+    # Парсинг предыдущего правообладателя
+    last_copyright_holder = parse_applicant(izv, 'last_copyright_holder')
+    if last_copyright_holder:
+        print('izv last_copyright_holder', last_copyright_holder, '\n')
+        company = get_or_create_company(self, document, last_copyright_holder, False)
+        person = get_or_create_person(self, document, last_copyright_holder, company)
+
+    # Парсинг предыдущего правообладателя 2
+    last_copyright_holder_name = parse_applicant(izv, 'last_copyright_holder_name')
+    if last_copyright_holder_name:
+        print('izv last_copyright_holder_name', last_copyright_holder_name, '\n')
+        company = get_or_create_company(self, document, last_copyright_holder_name, False)
+        person = get_or_create_person(self, document, last_copyright_holder_name, company)
+
+    # Парсинг предоставляющего право
+    grantor = parse_applicant(izv, 'grantor')
+    if grantor:
+        print('izv grantor', grantor, '\n')
+        company = get_or_create_company(self, document, grantor, False)
+        person = get_or_create_person(self, document, grantor, company)
+
+    # Парсинг принимающего право
+    granted = parse_applicant(izv, 'granted')
+    if granted:
+        print('izv granted', granted, '\n')
+        company = get_or_create_company(self, document, granted, False)
+        person = get_or_create_person(self, document, granted, company)
+
+    # Парсинг адреса для переписки
+    correspondence_address = parse_applicant(izv, 'address')
+    if correspondence_address:
+        print('izv correspondence_address', correspondence_address, '\n')
+        company = get_or_create_company(self, document, correspondence_address, False)
+        person = get_or_create_person(self, document, correspondence_address, company)
+
+
 def start_parse_all_documents(threads=1, query=None, requests_period=3, requests_amount=1, source=1):
     parser_base.surnames = get_surnames()
     parser_base.names = get_names()
@@ -296,14 +341,28 @@ def start_parse_all_documents(threads=1, query=None, requests_period=3, requests
     p.requests_period = requests_period
     p.requests_amount = requests_amount
     p.parser_source = 'new.fips.ru' if source == 1 else 'fips.ru'
-
+    p.document_parse_query = query
     p.parse_all_documents_in_threads(threads)
-    # p.start_parse_all_documents()
-    # p.start_parse_document()
+
+
+def test_start_parse_all_documents(threads=1, query=None, requests_period=3, requests_amount=1, source=1):
+    parser_base.surnames = get_surnames()
+    parser_base.names = get_names()
+    parser_base.countries = get_countries()
+    parser_base.cities = get_cities()
+    parser_base.forms = get_forms()
+    p = RegistersParser(REGISTERS_URL, 'registers')
+    p.document_parse_query = query
+    p.requests_period = requests_period
+    p.requests_amount = requests_amount
+    p.parser_source = 'new.fips.ru' if source == 1 else 'fips.ru'
+
+    p.start_parse_document()
 
 
 if __name__ == '__main__':
-    start_parse_all_documents()
+    test_start_parse_all_documents()
+    # start_parse_all_documents()
     # release_proxies()
     # p = RegistersParser(REGISTERS_URL, 'registers')
     # p.check_new_documents()

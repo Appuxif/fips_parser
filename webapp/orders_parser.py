@@ -207,7 +207,7 @@ def start_parse_all_documents(threads=1, query=None, requests_period=3, requests
     # p.start_parse_all_documents()
 
 
-def test_start_parse_all_documents(threads=1, query=None, requests_period=3, requests_amount=1):
+def test_start_parse_all_documents(threads=1, query=None, requests_period=3, requests_amount=1, source=1):
     parser_base.surnames = get_surnames()
     parser_base.names = get_names()
     parser_base.countries = get_countries()
@@ -217,11 +217,14 @@ def test_start_parse_all_documents(threads=1, query=None, requests_period=3, req
     p.document_parse_query = query
     p.requests_period = requests_period
     p.requests_amount = requests_amount
+    p.parser_source = 'new.fips.ru' if source == 1 else 'fips.ru'
 
     # p.parse_all_documents_in_threads(threads)
     query = f'SELECT id, url, number FROM {p.dbdocument} ' \
             'WHERE document_exists = TRUE AND order_done = FALSE AND number < 2018722404 '
-    p.start_parse_document(query=query)
+
+    p.document_parse_query = query
+    p.start_parse_document()
 
 
 if __name__ == '__main__':

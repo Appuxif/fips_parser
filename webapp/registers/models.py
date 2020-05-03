@@ -92,9 +92,9 @@ class ParserHistory(models.Model):
     message = models.TextField(max_length=2000, null=True, blank=True)
 
     def __str__(self):
-        return 'History ' + str(self.document.id)
+        return 'History ' + str(self.document.number)
 
     def get_absolute_url(self):
         if self.is_error:
             return str(self.error_log_file)
-        return None
+        return f'/admin/registers/parserhistory/{self.id}/change/'
