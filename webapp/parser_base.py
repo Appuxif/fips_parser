@@ -1178,8 +1178,8 @@ def parse_contacts_from_documentparse(self, document, document_parse, history):
     company = get_or_create_company(self, document, document_person)
     # print('company', company)
 
-    if not company.get('name') or 'Company for' in company.get('name', ''):
-        history['message'] += 'Имя компании не найдено\n'
+    # if not company.get('name') or 'Company for' in company.get('name', ''):
+        # history['message'] += 'Имя компании не найдено\n'
     person = get_or_create_person(self, document, document_person, company)
     # print('person', person)
 
