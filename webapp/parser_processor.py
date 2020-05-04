@@ -20,6 +20,7 @@ class Processor:
     parsers_processes = {}
     parsers = {}
     release_proxies = False
+    loading_parsers = False
 
     def __init__(self, verbose=True):
         self.verbose = verbose
@@ -29,6 +30,10 @@ class Processor:
         self.vprint('Запущен процессор')
 
     def load_parsers(self, sleep_time=None):
+        if self.loading_parsers:
+            return
+
+        self.loading_parsers = True
         if sleep_time:
             sleep(sleep_time)
         self.parsers = {p['id']: p for p in DB().fetchall('SELECT * FROM interface_parsersetting')}
@@ -36,6 +41,7 @@ class Processor:
         for parser_id, parser in self.parsers.items():
             self.vprint(parser)
         self.release_proxies = True
+        self.loading_parsers = False
 
     def vprint(self, *args, **kwargs):
         if self.verbose:
