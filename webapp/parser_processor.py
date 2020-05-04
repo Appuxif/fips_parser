@@ -107,7 +107,7 @@ class Processor:
         process = mp.Process(
             target=target,
             args=(parser['proxies_num'], query, parser['requests_period'],
-                  parser['requests_amount'], parser['source']),
+                  parser['requests_amount'], parser['source'], parser['documents_parsed']),
             daemon=True
         )
         process.start()

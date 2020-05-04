@@ -126,6 +126,7 @@ class Parser:
     document_parse_query = None  # Для кастомизации запроса документа из БД
     # number_gte = None
     # number_lte = None
+    documents_parsed = 990  # Количество документов на один прокси
 
     def __init__(self, url, name='default', verbosity=True):
         self.name = name
@@ -345,7 +346,7 @@ class Parser:
                     today = date.today()
                     query = f"SELECT * FROM interface_proxies " \
                             f"WHERE is_banned = FALSE AND is_working = TRUE AND in_use = FALSE " \
-                            f"AND (documents_parsed < 990 AND date_last_used = '{today}' " \
+                            f"AND (documents_parsed < {self.documents_parsed} AND date_last_used = '{today}' " \
                             f"OR date_last_used != '{today}')" \
                             f"LIMIT 1"
                     with self.get_workers().lock:
@@ -355,7 +356,8 @@ class Parser:
                             proxy = db.c.fetchone()
                             if proxy:
                                 q = f"UPDATE interface_proxies " \
-                                    f"SET in_use = TRUE, date_last_used = '{today}' WHERE id = '{proxy['id']}'"
+                                    f"SET in_use = TRUE, date_last_used = '{today}', status = NULL " \
+                                    f"WHERE id = '{proxy['id']}'"
                                 db.c.execute(q)
                                 db.conn.commit()
                         finally:
@@ -372,11 +374,12 @@ class Parser:
                     proxy = dict(proxy)
                     if proxy['date_last_used'] != today:
                         proxy['documents_parsed'] = 0
+                        proxy['date_last_used'] = 'NOW()'
 
                     in_use = [f"'{proxy['id']}'"]
                     # proxies_in_use.extend(in_use)
-                    with self.get_workers().lock:
-                        use_proxies(in_use)
+                    # with self.get_workers().lock:
+                    #     use_proxies(in_use)
                     proxies_in_use.append(in_use)
                 self._print('Запуск парсинга с прокси', proxy)
                 self.get_workers().add_task(self.start_parse_all_documents, (proxy,), proxy['host'])
@@ -402,19 +405,27 @@ class Parser:
 
     # Начинает новый парсинг информации со страницы с документом из списка документов
     def start_parse_all_documents(self, proxy=None):
-        documents_parsed = proxy['documents_parsed'] if proxy else 0
+        # documents_parsed = proxy['documents_parsed'] if proxy else 0
         timer = 0
         rand_times = self.get_rand_times()
         rand_times = iter(rand_times)
         while self.start_parse_document(proxy):
-            documents_parsed += 1
-            if monotonic() - timer > 30:
-                q = update_by_id_query('interface_proxies', {'id': f"'{proxy['id']}'",
-                                                             'documents_parsed': f"'{documents_parsed}'"})
-                DB().executeone(q)
+            if proxy:
+                proxy['documents_parsed'] += 1
+                if monotonic() - timer > 30:
+                    # q = update_by_id_query('interface_proxies', {'id': f"'{proxy['id']}'",
+                    #                                              'documents_parsed': f"'{documents_parsed}'",
+                    #                                              'date_last_used'})
+                    # DB().executeone(q)
+                    proxy_to_db = {'id': f"'{proxy['id']}'", 'date_last_used': 'NOW()',
+                                   'documents_parsed': f"'{proxy['documents_parsed']}'",
+                                   'in_use': f"'{proxy['in_use']}'", 'is_working': f"'{proxy['is_working']}'",
+                                   'is_banned': f"'{proxy['is_banned']}'", 'status': f"'{proxy['status']}'"}
+                    DB().update_row('interface_proxies', proxy_to_db)
+                    timer = monotonic()
 
-            if documents_parsed > 990:
-                break
+                if proxy['documents_parsed'] > self.documents_parsed:
+                    break
 
             try:
                 t = next(rand_times)
@@ -426,10 +437,16 @@ class Parser:
             while monotonic() - timer2 < t + 1:
                 sleep(1)
 
-        release_proxies([f"'{proxy['id']}'"])
-        q = update_by_id_query('interface_proxies', {'id': f"'{proxy['id']}'",
-                                                    'documents_parsed': f"'{documents_parsed}'"})
-        DB().executeone(q)
+        # release_proxies([f"'{proxy['id']}'"])
+        # q = update_by_id_query('interface_proxies', {'id': f"'{proxy['id']}'",
+        #                                             'documents_parsed': f"'{documents_parsed}'"})
+        # DB().executeone(q)
+        proxy['in_use'] = 'FALSE'
+        proxy_to_db = {'id': f"'{proxy['id']}'", 'date_last_used': 'NOW()',
+                       'documents_parsed': f"'{proxy['documents_parsed']}'",
+                       'in_use': proxy['in_use'], 'is_working': proxy['is_working'],
+                       'is_banned': proxy['is_banned'], 'status': f"'{proxy['status']}'"}
+        DB().update_row('interface_proxies', proxy_to_db)
 
     # Берет из базы и парсит один непарсенный документ
     def start_parse_document(self, proxy=None):
@@ -475,14 +492,12 @@ class Parser:
             with open(error_filename, 'w') as f:
                 traceback.print_exc(file=f)
             traceback.print_exc(file=sys.stdout)
-            self._print('Ошибка для', document_obj['number'],' залогирована', error_filename)
+            self._print('Ошибка для', document_obj['number'], ' залогирована', error_filename)
             history['error_log_file'] = f"'{error_link}'"
 
             # Запись результата парсинга в БД и отметка документа спарсенным
             with self.get_workers().lock:
-                DB().executeone(f"UPDATE {self.dbdocument} SET document_parsed = TRUE, "
-                                # f"date_parsed = '{date.today()}' "
-                                f"date_parsed = NOW() "
+                DB().executeone(f"UPDATE {self.dbdocument} SET document_parsed = TRUE, date_parsed = NOW() "
                                 f"WHERE id = '{document_obj['id']}'")
         finally:
             self.documents_in_parsing.remove(f"'{document_obj['id']}'")
@@ -549,9 +564,11 @@ class Parser:
                         err = str(err).replace("'", '"')
                         with self.get_workers().lock:
                             history['message'] += f'Ошибка прокси {proxy["id"]}\n'
-                            DB().executeone(f"UPDATE interface_proxies SET is_working = FALSE, "
-                                            f"status = '{'Ошибка прокси ' + err[:200]}'"
-                                            f"WHERE id = '{proxy['id']}'")
+                            proxy['status'] = 'Ошибка прокси ' + err[:200]
+                            proxy['is_working'] = 'FALSE'
+                            # DB().executeone(f"UPDATE interface_proxies SET is_working = FALSE, "
+                            #                 f"status = '{'Ошибка прокси ' + err[:200]}'"
+                            #                 f"WHERE id = '{proxy['id']}'")
                         return False
                     if r.status_code == 502:
                         self._lprint(document_obj['number'], 'ошибка сервера', r.status_code, r.reason, url)
@@ -571,18 +588,20 @@ class Parser:
                         self._print(document_obj['number'], text, url)
                         with self.get_workers().lock:
                             history['message'] += f'Превышен предел прокси {proxy["id"]}\n'
-                            DB().executeone(f"UPDATE interface_proxies SET is_working = FALSE, "
-                                            f"status = '{text}'"
-                                            f"WHERE id = '{proxy['id']}'")
+                            proxy['status'] = text
+                            # DB().executeone(f"UPDATE interface_proxies SET status = '{text}'"
+                            #                 f"WHERE id = '{proxy['id']}'")
                         return False
 
                     elif 'Вы заблокированы' in text:
                         self._print(text, 'Поток закрыт')
                         with self.get_workers().lock:
                             history['message'] += f'Блокировка прокси {proxy["id"]}\n'
-                            DB().executeone(f"UPDATE interface_proxies SET is_banned = TRUE, "
-                                            f"status = '{text}'"
-                                            f"WHERE id = '{proxy['id']}'")
+                            proxy['status'] = text
+                            proxy['is_banned'] = 'TRUE'
+                            # DB().executeone(f"UPDATE interface_proxies SET is_banned = TRUE, "
+                            #                 f"status = '{text}'"
+                            #                 f"WHERE id = '{proxy['id']}'")
                         return False
 
                     elif 'Документ с данным номером отсутствует' in text:
@@ -617,7 +636,7 @@ class Parser:
                 with self.get_workers().lock:
                     DB().executeone(f"UPDATE {self.dbdocument} SET document_parsed = TRUE, "
                                     # f"date_parsed = '{date.today()}', document_exists = FALSE "
-                                    f"date_parsed = NOW() document_exists = FALSE "
+                                    f"date_parsed = NOW(), document_exists = FALSE "
                                     f"WHERE id = '{document_obj['id']}'")
             return True
 

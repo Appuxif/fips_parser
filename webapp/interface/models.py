@@ -5,15 +5,16 @@ from registers.models_base import Document as RegisterDocument
 
 # Объект прокси
 class Proxies(models.Model):
-    scheme = models.CharField(max_length=10, default='http://')
-    user = models.CharField(max_length=100, null=True)
-    password = models.CharField(max_length=100, null=True)
+    scheme = models.CharField(max_length=10, default='http://', blank=True)
+    user = models.CharField(max_length=100, null=True, blank=True)
+    password = models.CharField(max_length=100, null=True, blank=True)
     host = models.CharField(max_length=100)
     port = models.PositiveIntegerField()
+
     is_banned = models.BooleanField(default=False)
     is_working = models.BooleanField(default=True)
     in_use = models.BooleanField(default=False)
-    status = models.CharField(max_length=255, null=True)
+    status = models.CharField(max_length=255, null=True, blank=True)
     documents_parsed = models.IntegerField(default=0, null=True, blank=True)
     date_last_used = models.DateField(auto_now=True)
 
@@ -172,7 +173,7 @@ class ParserSetting(models.Model):
 
     # date_gte = models.DateField('С даты')
     # date_lte = models.DateField('По дату')
-
+    documents_parsed = models.IntegerField('Количество документов на один прокси', default=990)
     requests_period = models.IntegerField('Период запросов (сек)', default=3)
     requests_amount = models.IntegerField('Количество запросов за период', default=1)
 

@@ -330,7 +330,8 @@ def parse_contacts_from_izv(self, document, izv, history):
         person = get_or_create_person(self, document, correspondence_address, company)
 
 
-def start_parse_all_documents(threads=1, query=None, requests_period=3, requests_amount=1, source=1):
+def start_parse_all_documents(threads=1, query=None, requests_period=3, requests_amount=1,
+                              source=1, documents_parsed=900):
     parser_base.surnames = get_surnames()
     parser_base.names = get_names()
     parser_base.countries = get_countries()
@@ -340,6 +341,7 @@ def start_parse_all_documents(threads=1, query=None, requests_period=3, requests
     p.document_parse_query = query
     p.requests_period = requests_period
     p.requests_amount = requests_amount
+    p.documents_parsed = documents_parsed
     p.parser_source = 'new.fips.ru' if source == 1 else 'fips.ru'
     p.document_parse_query = query
     p.parse_all_documents_in_threads(threads)
