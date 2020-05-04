@@ -63,6 +63,7 @@ class CompanyInline(admin.StackedInline):
     model = RegisterCompanyRel
     extra = 0
     readonly_fields = ('company', 'document')
+    ordering = ('-company_is_holder')
 
     def view_on_site(self, obj):
         return f'/admin/interface/company/{obj.company_id}/change/'
