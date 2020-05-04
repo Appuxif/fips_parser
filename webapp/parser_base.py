@@ -1066,11 +1066,11 @@ def get_or_create_company(self, document, document_person, save_anyway=True, mak
     if name is None and save_anyway:
         full_name = document_person.get('person', {}).get('full_name', '')
         if full_name:
-            name = 'ИП ' + full_name
+            name = full_name
             company['form'] = 'ИП'
         else:
             name = f"Company for {self.name} {document['number']}"
-        name = 'ИП ' + full_name if full_name else f"Company for {self.name} {document['number']}"
+        # name = full_name if full_name else f"Company for {self.name} {document['number']}"
     elif name is None and not save_anyway:
         return {}
     form = company.get('form', '')

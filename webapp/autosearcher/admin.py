@@ -57,7 +57,7 @@ class AutoSearchTaskAdmin(admin.ModelAdmin):
 class CorrectorTaskInline(admin.StackedInline):
     model = CorrectorTask
     extra = 0
-    readonly_fields = ('datetime_created', )
+    readonly_fields = ('datetime_created', 'date_created')
     # def has_add_permission(self, request, obj):
     #     return False
 

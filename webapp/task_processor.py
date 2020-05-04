@@ -54,11 +54,13 @@ class Processor:
 
     def process_documents(self, documents):
         # Фильтр корректоров по общему количеству задач
-        correctors = self.Corrector.objects.annotate(tasks_count=Count('task'))
+        correctors = self.Corrector.objects.annotate(tasks_count=Count('task')).order_by('tasks_count')
         correctors_count = correctors.count()
         # correctors = list(correctors)
         today = date.today()
         now = datetime.now()
+        documents_skipped = 'Документы не распределены:\n'
+        sign_chars_not_founded = 'sign_char не определен для:\n'
 
         for document in documents:
             # Находим компанию - правообладателя
@@ -66,10 +68,27 @@ class Processor:
             sign_char = company.sign_char if company else None
             if sign_char is None:
                 self.vprint('sign_char не определен для', document)
+                sign_chars_not_founded += str(document.number)
                 continue
 
             # Если код страны определен, то ищем для него подходящего корректора
-            corrector = correctors.filter(sign_chars__icontains=sign_char).filter(tasks_count__lt=F('tasks_max')).order_by('tasks_count').first()
+            for corrector in correctors:
+                # Проверяем наличие кода страны и текущее количество задач
+                if sign_char in corrector.sign_chars and corrector.tasks_count < corrector.tasks_max:
+                    # Проверяем количество задач, добавленных сегодня
+                    tasks_today = corrector.correctortask_set.filter(date_created__gte=today).count()
+                    if tasks_today < corrector.tasks_day_amount and re.match(r'^[а-я]', company.name, re.I):
+                        # Проверяем начальную букву в названии компании документа
+                        break
+            else:
+                print('Подходящий для документа корректор не найден. Документ пропущен', document)
+                documents_skipped += str(document.number) + '\n'
+                continue
+
+            print('Корректор найден', corrector)
+
+            corrector = correctors.filter(sign_chars__icontains=sign_char).\
+                filter(tasks_count__lt=F('tasks_max')).order_by('tasks_count').first()
             if corrector is None:
                 self.vprint('Не найден corrector для sign_char', sign_char)
                 # TODO: Можно пропускать, или отдавать документ случайному корректору
@@ -78,26 +97,26 @@ class Processor:
         # Запрашиваем подходящих корректоров
 
         # Проверяем количество задач на сегодня
-        for corrector in correctors:
-            # Если дата последнего добавления задачи не равна сегодня, но обнуляем счетчик
-            if corrector.task_last_added_date.date() != today:
-                corrector.tasks_today = 0
-        corrector = correctors.filter()
-        for corrector in correctors:
-            c_documents = documents
-            # Документы, отфильтрованные для корректора
-            if ', ' in corrector.sign_chars:
-                chars = [c for c in corrector.sign_chars.split(', ')]
-            elif ',' in corrector.sign_chars:
-                chars = [c for c in corrector.sign_chars.split(',')]
-            else:
-                chars = []
-            if chars:
-                c_documents = c_documents.filter(person__sign_char__in=chars)
-                documents = documents.exclude(person__sign_char__in=chars)
-            for sign in re.findall('[' + corrector.company_startswith.lower() + ']', alphabet):
-                c_documents = c_documents.filter(person__name__istartswith=sign)
-                documents = documents.exclude(person__name__istartswith=sign)
+        # for corrector in correctors:
+        #     # Если дата последнего добавления задачи не равна сегодня, но обнуляем счетчик
+        #     if corrector.task_last_added_date.date() != today:
+        #         corrector.tasks_today = 0
+        # corrector = correctors.filter()
+        # for corrector in correctors:
+        #     c_documents = documents
+        #     # Документы, отфильтрованные для корректора
+        #     if ', ' in corrector.sign_chars:
+        #         chars = [c for c in corrector.sign_chars.split(', ')]
+        #     elif ',' in corrector.sign_chars:
+        #         chars = [c for c in corrector.sign_chars.split(',')]
+        #     else:
+        #         chars = []
+        #     if chars:
+        #         c_documents = c_documents.filter(person__sign_char__in=chars)
+        #         documents = documents.exclude(person__sign_char__in=chars)
+        #     for sign in re.findall('[' + corrector.company_startswith.lower() + ']', alphabet):
+        #         c_documents = c_documents.filter(person__name__istartswith=sign)
+        #         documents = documents.exclude(person__name__istartswith=sign)
 
     # Обработка задачи из БД
     def process_task(self, task):
