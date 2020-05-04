@@ -343,7 +343,7 @@ class Parser:
                     continue
 
                 if not self.proxies:
-                    self._lprint('Поиск прокси в БД')
+                    # self._lprint('Поиск прокси в БД')
                     today = date.today()
                     query = f"SELECT * FROM interface_proxies " \
                             f"WHERE is_banned = FALSE AND is_working = TRUE AND in_use = FALSE " \

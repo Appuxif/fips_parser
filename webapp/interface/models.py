@@ -38,6 +38,9 @@ class Company(models.Model):
     address_latin = models.CharField('Адрес компании латинский', max_length=255, null=True, blank=True)
     sign_char = models.CharField('Код страны', max_length=5, null=True, blank=True)
     web = models.CharField(max_length=100, null=True, blank=True)
+    inn = models.CharField('ИНН', max_length=100, null=True, blank=True)
+    kpp = models.CharField('КПП', max_length=100, null=True, blank=True)
+    ogrn = models.CharField('ОГРН', max_length=100, null=True, blank=True)
 
     order = models.ManyToManyField(OrderDocument, related_query_name='person',
                                    blank=True, through='OrderCompanyRel')
