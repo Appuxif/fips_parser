@@ -19,12 +19,12 @@ class DocumentIzv(models.Model):
     copyright_holder = models.CharField('Правообладатель', max_length=500, null=True, blank=True)
     transferor = models.CharField('Лицо, передающее исключительное право', max_length=500, null=True, blank=True)
     contract_type = models.CharField('Вид договора', max_length=500, null=True, blank=True)
-    contract_terms = models.CharField('Указание условий договора', max_length=500, null=True, blank=True)
+    contract_terms = models.CharField('Указание условий договора', max_length=2000, null=True, blank=True)
     grantor = models.CharField('Лицо, предоставляющее право использования', max_length=500, null=True, blank=True)
     granted = models.CharField('Лицо, которому предоставлено право использования',
                                max_length=500, null=True, blank=True)
-    licensee = models.CharField('Лицензиат', max_length=500, null=True, blank=True)
-    sublicensee = models.CharField('Сублицензиат', max_length=500, null=True, blank=True)
+    licensee = models.CharField('Лицензиат', max_length=2000, null=True, blank=True)
+    sublicensee = models.CharField('Сублицензиат', max_length=2000, null=True, blank=True)
     date_number_changes = models.CharField('Дата и номер государственной регистрации договора',
                                            max_length=100, null=True, blank=True)
     info = models.TextField(max_length=2000, null=True, blank=True)

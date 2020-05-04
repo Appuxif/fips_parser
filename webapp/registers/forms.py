@@ -564,7 +564,7 @@ class DocumentSearchForm(Form):
 
     izvitem_date_gte = DateField(required=False, widget=TextInput(
         attrs={
-            'filter_field': 'izv__date_renewal',
+            'filter_field': 'izvitem__date',
             'filter_method': '__gte',
             'data-mask': "0000-00-00",
             'placeholder': 'YYYY-MM-DD'

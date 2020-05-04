@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'orders.apps.OrdersConfig',
     'registers.apps.RegistersConfig',
     'accounts.apps.AccountsConfig',
+    'autosearcher.apps.AutosearcherConfig',
     'django_admin_search',
     'import_export',
 ]

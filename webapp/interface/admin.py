@@ -1,9 +1,8 @@
 import traceback
-
 import sys
 from django.contrib import admin
 from multiprocessing.connection import Client
-
+from django.contrib.admin.models import LogEntry
 # Все контакты отображаются непосредственно в документе
 
 # from .models import OrderContact, OrderContactPerson, RegisterContact, RegisterContactPerson, ContactPerson, Company
@@ -32,6 +31,12 @@ from .models import ContactPerson, Company, RegisterCompanyRel, OrderCompanyRel,
 # @admin.register(RegisterContactPerson)
 # class RegisterContactPersonAdmin(admin.ModelAdmin):
 #     readonly_fields = ('document', )
+
+@admin.register(LogEntry)
+class LogEntryAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'user', 'content_type', 'action_flag', 'object_repr', 'action_time')
+    exclude = ('change_message', )
+    readonly_fields = ( '__str__', 'user', 'action_time', 'content_type', 'object_id', 'object_repr', 'action_flag')
 
 
 # Для отображения контактов в даминке компании в БД

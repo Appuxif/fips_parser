@@ -90,6 +90,9 @@ class RegistersParser(Parser):
         izvs_serviceitem_values = []
         documentizvitem_values = []
 
+        # Получаем контакты из спарсенной информации
+        parse_contacts_from_documentparse(self, document, document_parse, history)
+
         # Подготовка запросов в БД, если были собраны извещения
         # if izvs_parsed_list:
         #     print(izv_unique_list)
@@ -157,9 +160,6 @@ class RegistersParser(Parser):
             order_query += ', order_done = TRUE '
         order_query += f"WHERE id = '{document['id']}'"
         queries.append(order_query)
-
-        # Получаем контакты из спарсенной информации
-        parse_contacts_from_documentparse(self, document, document_parse, history)
 
         # Сохраняем или обновляем парсинг документа
         with self.get_workers().lock:
@@ -291,7 +291,7 @@ def parse_contacts_from_izv(self, document, izv, history):
     copyright_holder = parse_applicant(izv, 'copyright_holder')
     if copyright_holder:
         print('izv copyright_holder', copyright_holder, '\n')
-        company = get_or_create_company(self, document, copyright_holder, False)
+        company = get_or_create_company(self, document, copyright_holder, False, make_holder=True)
         person = get_or_create_person(self, document, copyright_holder, company)
 
     # Парсинг предыдущего правообладателя

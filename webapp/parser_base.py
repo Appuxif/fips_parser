@@ -418,10 +418,6 @@ class Parser:
             if proxy:
                 proxy['documents_parsed'] += 1
                 if monotonic() - timer > 30:
-                    # q = update_by_id_query('interface_proxies', {'id': f"'{proxy['id']}'",
-                    #                                              'documents_parsed': f"'{documents_parsed}'",
-                    #                                              'date_last_used'})
-                    # DB().executeone(q)
                     proxy_to_db = {'id': f"'{proxy['id']}'", 'date_last_used': 'CURDATE()',
                                    'documents_parsed': f"'{proxy['documents_parsed']}'",
                                    'in_use': proxy['in_use'], 'is_working': proxy['is_working'],
@@ -443,10 +439,6 @@ class Parser:
             while monotonic() - timer2 < t + 1:
                 sleep(1)
 
-        # release_proxies([f"'{proxy['id']}'"])
-        # q = update_by_id_query('interface_proxies', {'id': f"'{proxy['id']}'",
-        #                                             'documents_parsed': f"'{documents_parsed}'"})
-        # DB().executeone(q)
         if proxy.get('need_to_release_proxy', True):
             proxy['in_use'] = 'FALSE'
 
@@ -871,7 +863,7 @@ def parse_person_address(applicant_string, item, person):
         c = c.capitalize()
 
         # Исключаем слова, которых не должно быть в Городе
-        if re.match(r'.*(поселок|площадь|проспект|пркт|улица|ул\.|край|область|обл\.|\d).*', item, re.IGNORECASE) or person.get('city'):
+        if re.match(r'.*(поселок|площадь|проспект|пркт|пр-кт|улица|ул\.|край|область|обл\.|\d).*', item, re.IGNORECASE) or person.get('city'):
             # print('пропущено', item)
             continue
 
@@ -1067,7 +1059,7 @@ def parse_patent_atty(document_parse):
     return patent_atty
 
 
-def get_or_create_company(self, document, document_person, save_anyway=True):
+def get_or_create_company(self, document, document_person, save_anyway=True, make_holder=False):
     company = document_person.get('company', {})
     name = company.get('name')
     if name is None and save_anyway:
@@ -1110,7 +1102,8 @@ def get_or_create_company(self, document, document_person, save_anyway=True):
         company['id'] = company_['id']
 
     # Проверяем дополнительную таблицу связей между компанией и документами
-    rel_obj = {'company_id': f"'{company['id']}'", 'document_id': f"'{document['id']}'"}
+    rel_obj = {'company_id': f"'{company['id']}'", 'document_id': f"'{document['id']}'",
+               'company_is_holder': 'FALSE'}
     rel_table = 'interface_ordercompanyrel' if self.name == 'orders' else 'interface_registercompanyrel'
 
     with self.get_workers().lock:
@@ -1119,6 +1112,11 @@ def get_or_create_company(self, document, document_person, save_anyway=True):
     if rel_ is None:
         # TODO: Этот запрос можно отправить общей кучей.
         with self.get_workers().lock:
+            # Если надо переопределить правообладателя
+            if make_holder:
+                DB().executeone(f"UPDATE {rel_table} SET company_is_holder = FALSE "
+                                f"WHERE document_id = '{document['id']}'")
+                rel_obj['company_is_holder'] = 'TRUE'
             rel_obj['id'] = DB().add_row(rel_table, rel_obj)
     else:
         rel_obj['id'] = rel_['id']
@@ -1207,7 +1205,7 @@ def parse_contacts_from_documentparse(self, document, document_parse, history):
         print('correspondence_address', correspondence_address, '\n')
 
     # Ищем компанию в БД
-    company = get_or_create_company(self, document, document_person)
+    company = get_or_create_company(self, document, document_person, make_holder=True)
     # print('company', company)
 
     # if not company.get('name') or 'Company for' in company.get('name', ''):

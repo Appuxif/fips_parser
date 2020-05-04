@@ -65,6 +65,7 @@ class Company(models.Model):
 
 class OrderCompanyRel(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    company_is_holder = models.BooleanField(default=False)
     document = models.ForeignKey(OrderDocument, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
@@ -80,6 +81,7 @@ class OrderCompanyRel(models.Model):
 
 class RegisterCompanyRel(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    company_is_holder = models.BooleanField(default=False)
     document = models.ForeignKey(RegisterDocument, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
