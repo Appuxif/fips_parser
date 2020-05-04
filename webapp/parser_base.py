@@ -1062,8 +1062,15 @@ def parse_patent_atty(document_parse):
 def get_or_create_company(self, document, document_person, save_anyway=True, make_holder=False):
     company = document_person.get('company', {})
     name = company.get('name')
+    # Если имя не найдено, то нужно проверить ФИО и сохранить как ИП
     if name is None and save_anyway:
-        name = f"Company for {self.name} {document['number']}"
+        full_name = document_parse.get('person', {}).get('full_name', '')
+        if full_name:
+            name = 'ИП ' + full_name
+            company['form'] = 'ИП'
+        else:
+            name = f"Company for {self.name} {document['number']}"
+        name = 'ИП ' + full_name if full_name else f"Company for {self.name} {document['number']}"
     elif name is None and not save_anyway:
         return {}
     form = company.get('form', '')

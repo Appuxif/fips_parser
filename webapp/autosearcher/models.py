@@ -20,7 +20,7 @@ filter_field_choices = [
     ('documentparse__first_order_date', 'Дата 1-й заявки'),
     ('documentparse__date_gos_reg', 'Дата гос. рег-ции'),
     ('documentparse__date_changes', 'Дата внесения'),
-    ('serviceitem__text', ''),
+    ('serviceitem__text', 'Классы МКТУ. Текст'),
     ('izv__izv_type', 'Тип извещения'),
     ('izv__address', 'Извещения. Адресс для переписки'),
     ('izv__last_copyright_holder', 'Извещения. Прежний правообладатель'),
@@ -68,7 +68,7 @@ class AutoSearchTask(models.Model):
     renew_in_days = models.IntegerField('Следующее срабатывание через (дней)', null=True, blank=True)
     renew_in_hours = models.IntegerField('Следующее срабатывание через (часов)', null=True, blank=True)
     next_action = models.DateTimeField('Дата следующего срабатывания', null=True)
-    last_launch = models.DateTimeField('Дата предыдущего срабатывания')
+    last_launch = models.DateTimeField('Дата предыдущего срабатывания', null=True, blank=True)
     auto_renew = models.BooleanField('Автопродление', default=False)
 
     def __str__(self):
@@ -89,4 +89,8 @@ class AutoSearchTaskItem(models.Model):
     # raw_filter = models.CharField('Полученное выражение для фильтра', max_length=1000)
 
     def __str__(self):
-        return str(self.filter_field) + str(self.filter_method) + '=' + str(self.filter_value)
+        return str(self.filter_field) + str(self.filter_method) + "='" + str(self.filter_value) + "'"
+
+    class Meta:
+        verbose_name = "Элемент задачи автопоиска"
+        verbose_name_plural = "Элементы задач автопоиска"
