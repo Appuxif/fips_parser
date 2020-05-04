@@ -82,8 +82,8 @@ class AutoSearchTask(models.Model):
 # Элемент задачи автопоиска для фильтрации документов
 class AutoSearchTaskItem(models.Model):
     autosearchtask = models.ForeignKey(AutoSearchTask, on_delete=models.CASCADE)
-    filter_field = models.SmallIntegerField('Поле для фильтра', choices=filter_field_choices)
-    filter_method = models.CharField('Метод для фильтрации', choices=filter_method_choices)
+    filter_field = models.CharField('Поле для фильтра', max_length=20, choices=filter_field_choices)
+    filter_method = models.CharField('Метод для фильтрации', max_length=20, choices=filter_method_choices)
     filter_value = models.CharField('Значение для фильтрации', max_length=500)
     except_field = models.BooleanField('Кроме', default=False)
     # raw_filter = models.CharField('Полученное выражение для фильтра', max_length=1000)
