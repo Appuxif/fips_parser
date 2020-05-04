@@ -383,6 +383,7 @@ class Parser:
                     proxies_in_use.append(in_use)
                 self._print('Запуск парсинга с прокси', proxy)
                 self.get_workers().add_task(self.start_parse_all_documents, (proxy,), proxy['host'])
+                sleep(1)
 
             self.get_workers()._queue.join()
             self._lprint('Парсинг окончен')
@@ -420,11 +421,12 @@ class Parser:
                     proxy_to_db = {'id': f"'{proxy['id']}'", 'date_last_used': 'CURDATE()',
                                    'documents_parsed': f"'{proxy['documents_parsed']}'",
                                    'in_use': f"'{proxy['in_use']}'", 'is_working': f"'{proxy['is_working']}'",
-                                   'is_banned': f"'{proxy['is_banned']}'", 'status': f"'{proxy['status']}'"}
+                                   'is_banned': f"'{proxy['is_banned']}'",
+                                   'status': f"'{proxy['status']}'" if proxy['status'] else 'NULL'}
                     DB().update_row('interface_proxies', proxy_to_db)
                     timer = monotonic()
 
-                if proxy['documents_parsed'] > self.documents_parsed:
+                if proxy['documents_parsed'] >= self.documents_parsed:
                     break
 
             try:
