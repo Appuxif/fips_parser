@@ -119,12 +119,14 @@ class RegisterCompanyRelAdmin(admin.ModelAdmin):
 @admin.register(Proxies)
 class ProxiesAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'is_banned', 'is_working', 'in_use', 'date_last_used', 'documents_parsed', 'status')
+    list_editable = ('is_banned', 'is_working', 'in_use', 'status')
 
 
 # Для управления парсером. Отправляет запрос на обновление конфига парсеров процессу парсингов
 @admin.register(ParserSetting)
 class ParserSettingAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'number_gte', 'number_lte', 'proxies_num', 'is_working')
+    list_display = ('__str__', 'number_gte', 'number_lte', 'proxies_num', 'documents_parsed', 'is_working')
+    list_editable = ('number_gte', 'number_lte', 'proxies_num', 'documents_parsed', 'is_working')
 
     def save_model(self, request, obj, form, change):
         try:

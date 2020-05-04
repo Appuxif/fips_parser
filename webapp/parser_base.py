@@ -420,8 +420,8 @@ class Parser:
                     # DB().executeone(q)
                     proxy_to_db = {'id': f"'{proxy['id']}'", 'date_last_used': 'CURDATE()',
                                    'documents_parsed': f"'{proxy['documents_parsed']}'",
-                                   'in_use': f"'{proxy['in_use']}'", 'is_working': f"'{proxy['is_working']}'",
-                                   'is_banned': f"'{proxy['is_banned']}'",
+                                   'in_use': proxy['in_use'], 'is_working': proxy['is_working'],
+                                   'is_banned': proxy['is_banned'],
                                    'status': f"'{proxy['status']}'" if proxy['status'] else 'NULL'}
                     DB().update_row('interface_proxies', proxy_to_db)
                     timer = monotonic()
@@ -443,11 +443,14 @@ class Parser:
         # q = update_by_id_query('interface_proxies', {'id': f"'{proxy['id']}'",
         #                                             'documents_parsed': f"'{documents_parsed}'"})
         # DB().executeone(q)
-        proxy['in_use'] = 'FALSE'
+        if proxy.get('need_to_release_proxy', True):
+            proxy['in_use'] = 'FALSE'
+
         proxy_to_db = {'id': f"'{proxy['id']}'", 'date_last_used': 'CURDATE()',
                        'documents_parsed': f"'{proxy['documents_parsed']}'",
                        'in_use': proxy['in_use'], 'is_working': proxy['is_working'],
-                       'is_banned': proxy['is_banned'], 'status': f"'{proxy['status']}'"}
+                       'is_banned': proxy['is_banned'],
+                       'status': f"'{proxy['status']}'" if proxy['status'] else 'NULL'}
         DB().update_row('interface_proxies', proxy_to_db)
 
     # Берет из базы и парсит один непарсенный документ
@@ -586,6 +589,9 @@ class Parser:
 
                     if 'Слишком быстрый просмотр документов' in text:
                         self._print(document_obj['number'], text, url)
+                        proxy['in_use'] = 'TRUE'
+                        proxy['need_to_release_proxy'] = False
+                        return False
                     elif 'Превышен допустимый предел' in text:
                         self._print(document_obj['number'], text, url)
                         with self.get_workers().lock:
