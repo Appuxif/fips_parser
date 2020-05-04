@@ -1064,7 +1064,7 @@ def get_or_create_company(self, document, document_person, save_anyway=True, mak
     name = company.get('name')
     # Если имя не найдено, то нужно проверить ФИО и сохранить как ИП
     if name is None and save_anyway:
-        full_name = document_parse.get('person', {}).get('full_name', '')
+        full_name = document_person.get('person', {}).get('full_name', '')
         if full_name:
             name = 'ИП ' + full_name
             company['form'] = 'ИП'
