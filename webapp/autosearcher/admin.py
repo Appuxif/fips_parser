@@ -1,10 +1,10 @@
 from django.contrib import admin, messages
 from django.db.models import Q
 
-from .models import AutoSearchTask, AutoSearchTaskItem
-# from interface.models import OrderDocument, RegisterDocument
-from orders.models_base import Document as OrderDocument
-from registers.models_base import Document as RegisterDocument
+from .models import AutoSearchTask, AutoSearchTaskItem, OrderDocument, RegisterDocument
+# from interface.models import OrderDocument, RegisterDocument,
+# from orders.models_base import Document as OrderDocument
+# from registers.models_base import Document as RegisterDocument
 
 # Register your models here.
 

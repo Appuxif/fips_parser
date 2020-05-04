@@ -1,4 +1,8 @@
 from django.db import models
+from django.contrib.auth.models import User
+
+from orders.models_base import Document as OrderDocument
+from registers.models_base import Document as RegisterDocument
 
 
 # Список всех полей, по которым возможна фильтрация в документах
@@ -13,7 +17,7 @@ filter_field_choices = [
     ('documentparse__patent_atty', 'Патентный поверенный'),
     ('documentparse__order_number', 'Номер заявки'),
     ('documentparse__order_register_number', 'Номер рег-ции'),
-    ('documentparse__date_refreshed', 'Дата обновл'),
+    ('documentparse__date_refreshed', 'Дата обновления'),
     ('documentparse__date_created', 'Дата поступ. заявки'),
     ('documentparse__date_publish', 'Дата публ. заявки'),
     ('documentparse__date_exclusive', 'Дата истеч. срока'),
@@ -56,14 +60,15 @@ filter_method_choices = [
     ('__iendswith', 'Оканчивается на (нечувствительно к регистру)'),
 ]
 
+registry_type_choices = [
+    (0, 'orders'),
+    (1, 'registers'),
+]
+
 
 # Модель для задачи автопоиска документов и распределения этих документов по корректорам
 class AutoSearchTask(models.Model):
     task_name = models.CharField('Имя задачи', max_length=50)
-    registry_type_choices = [
-        (0, 'orders'),
-        (1, 'registers'),
-    ]
     registry_type = models.IntegerField('Тип реестра для поиска', choices=registry_type_choices, default=0)
     renew_in_days = models.IntegerField('Следующее срабатывание через (дней)', null=True, blank=True)
     renew_in_hours = models.IntegerField('Следующее срабатывание через (часов)', null=True, blank=True)
@@ -94,3 +99,36 @@ class AutoSearchTaskItem(models.Model):
     class Meta:
         verbose_name = "Элемент задачи автопоиска"
         verbose_name_plural = "Элементы задач автопоиска"
+
+
+# Модель для личного кабинета корректора и его настроек
+class Corrector(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    sign_chars = models.CharField('Коды стран через запятую', max_length=255, null=True, blank=True)
+    company_startswith = models.CharField('Название компании начинается с', max_length=50, null=True, blank=True)
+    tasks_day_amount = models.IntegerField('Количество задач день', default=200)
+    tasks_day_max = models.IntegerField('Максимальное количество задач', default=600)
+    score = models.IntegerField('Баллы корректора')
+    task_last_added_date = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return str(self.user.username)
+
+    class Meta:
+        verbose_name = 'Корректор'
+        verbose_name_plural = 'Корректоры'
+
+
+# Задача для корректора.
+class CorrectorTask(models.Model):
+    corrector = models.ForeignKey(Corrector, on_delete=models.CASCADE, related_query_name='task')
+    document_registry = models.IntegerField('Тип реестра', choices=registry_type_choices, default=0)
+    document_id = models.CharField(max_length=30, null=True, blank=True)
+
+    def __str__(self):
+        return 'Task for ' + str(self.corrector)
+
+    class Meta:
+        verbose_name = 'Задача корректора'
+        verbose_name_plural = 'Задачи корректора'
+

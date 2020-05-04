@@ -1117,7 +1117,6 @@ def get_or_create_company(self, document, document_person, save_anyway=True, mak
         rel_ = DB().fetchone(f"SELECT id FROM {rel_table} "
                              f"WHERE company_id = '{company['id']}' AND document_id = '{document['id']}'")
     if rel_ is None:
-        # TODO: Этот запрос можно отправить общей кучей.
         with self.get_workers().lock:
             # Если надо переопределить правообладателя
             if make_holder:
