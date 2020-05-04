@@ -356,7 +356,7 @@ class Parser:
                             proxy = db.c.fetchone()
                             if proxy:
                                 q = f"UPDATE interface_proxies " \
-                                    f"SET in_use = TRUE, date_last_used = '{today}', status = NULL " \
+                                    f"SET in_use = TRUE, date_last_used = CURDATE(), status = NULL " \
                                     f"WHERE id = '{proxy['id']}'"
                                 db.c.execute(q)
                                 db.conn.commit()
@@ -374,7 +374,7 @@ class Parser:
                     proxy = dict(proxy)
                     if proxy['date_last_used'] != today:
                         proxy['documents_parsed'] = 0
-                        proxy['date_last_used'] = 'NOW()'
+                        # proxy['date_last_used'] = 'CURDATE()'
 
                     in_use = [f"'{proxy['id']}'"]
                     # proxies_in_use.extend(in_use)
@@ -417,7 +417,7 @@ class Parser:
                     #                                              'documents_parsed': f"'{documents_parsed}'",
                     #                                              'date_last_used'})
                     # DB().executeone(q)
-                    proxy_to_db = {'id': f"'{proxy['id']}'", 'date_last_used': 'NOW()',
+                    proxy_to_db = {'id': f"'{proxy['id']}'", 'date_last_used': 'CURDATE()',
                                    'documents_parsed': f"'{proxy['documents_parsed']}'",
                                    'in_use': f"'{proxy['in_use']}'", 'is_working': f"'{proxy['is_working']}'",
                                    'is_banned': f"'{proxy['is_banned']}'", 'status': f"'{proxy['status']}'"}
@@ -442,7 +442,7 @@ class Parser:
         #                                             'documents_parsed': f"'{documents_parsed}'"})
         # DB().executeone(q)
         proxy['in_use'] = 'FALSE'
-        proxy_to_db = {'id': f"'{proxy['id']}'", 'date_last_used': 'NOW()',
+        proxy_to_db = {'id': f"'{proxy['id']}'", 'date_last_used': 'CURDATE()',
                        'documents_parsed': f"'{proxy['documents_parsed']}'",
                        'in_use': proxy['in_use'], 'is_working': proxy['is_working'],
                        'is_banned': proxy['is_banned'], 'status': f"'{proxy['status']}'"}
