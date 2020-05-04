@@ -9,9 +9,9 @@ from .models import AutoSearchTask, AutoSearchTaskItem, OrderDocument, RegisterD
 # Register your models here.
 
 
-def get_q_from_formset_queryset(formset):
+def get_q_from_queryset(queryset):
     q = Q()
-    for item in formset.queryset:
+    for item in queryset:
         if item.filter_method == '__in':
             if ', ' in item.filter_value:
                 item.filter_value = [it for it in item.filter_value.split(', ')]
@@ -28,7 +28,7 @@ def get_q_from_formset_queryset(formset):
 def get_task_queryset(form, formsets):
     q = Q()
     for formset in formsets:
-        q &= get_q_from_formset_queryset(formset)
+        q &= get_q_from_queryset(formset.queryset)
     if form.cleaned_data['registry_type'] == 0:
         Document = OrderDocument
     else:
@@ -38,6 +38,7 @@ def get_task_queryset(form, formsets):
 
 class AutoSearchTaskItemInline(admin.StackedInline):
     model = AutoSearchTaskItem
+    # exclude = ('tasks_today', )
     extra = 0
 
 
@@ -56,7 +57,7 @@ class AutoSearchTaskAdmin(admin.ModelAdmin):
 class CorrectorTaskInline(admin.StackedInline):
     model = CorrectorTask
     extra = 0
-
+    readonly_fields = ('datetime_created', )
     # def has_add_permission(self, request, obj):
     #     return False
 

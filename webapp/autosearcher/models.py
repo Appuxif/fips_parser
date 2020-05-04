@@ -74,7 +74,9 @@ class AutoSearchTask(models.Model):
     renew_in_hours = models.IntegerField('Следующее срабатывание через (часов)', null=True, blank=True)
     next_action = models.DateTimeField('Дата следующего срабатывания', null=True)
     last_launch = models.DateTimeField('Дата предыдущего срабатывания', null=True, blank=True)
+
     auto_renew = models.BooleanField('Автопродление', default=False)
+    is_active = models.BooleanField('Задача активна', default=True)
 
     def __str__(self):
         return str(self.task_name)
@@ -104,10 +106,13 @@ class AutoSearchTaskItem(models.Model):
 # Модель для личного кабинета корректора и его настроек
 class Corrector(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    sign_chars = models.CharField('Коды стран через запятую', max_length=255, null=True, blank=True)
-    company_startswith = models.CharField('Название компании начинается с', max_length=50, null=True, blank=True)
-    tasks_day_amount = models.IntegerField('Количество задач день', default=200)
-    tasks_day_max = models.IntegerField('Максимальное количество задач', default=600)
+    sign_chars = models.CharField('Коды стран через запятую', max_length=255, null=True, blank=True,
+                                  help_text='Например: RU,GB,NL')
+    company_startswith = models.CharField('Название компании начинается с',
+                                          max_length=50, null=True, blank=True, help_text='Например: а-н')
+    tasks_day_amount = models.IntegerField('Количество задач в день', default=200, blank=True)
+    tasks_max = models.IntegerField('Максимальное количество задач', default=600, blank=True)
+    # tasks_today = models.IntegerField('Количество задач, добавленное сегодня', default=0, blank=True)
     score = models.IntegerField('Баллы корректора', default=0)
     task_last_added_date = models.DateTimeField(null=True, blank=True)
 
@@ -123,9 +128,10 @@ class Corrector(models.Model):
 class CorrectorTask(models.Model):
     corrector = models.ForeignKey(Corrector, on_delete=models.CASCADE, related_query_name='task')
     document_registry = models.IntegerField('Тип реестра', choices=registry_type_choices, default=0)
-    document_id = models.CharField(max_length=30, null=True, blank=True)
-    date_task_created = models.DateTimeField(auto_now_add=True)
-    date_task_done = models.DateTimeField(null=True, blank=True)
+    document_id = models.CharField('ID документа задачи', max_length=30, null=True, blank=True)
+    datetime_created = models.DateTimeField('Дата и время создания задачи', auto_now_add=True)
+    date_created = models.DateField('Дата создания задачи', auto_now_add=True)
+    date_task_done = models.DateTimeField('Дата завершения задачи', null=True, blank=True)
 
     def __str__(self):
         return 'Task for ' + str(self.corrector)

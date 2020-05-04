@@ -142,7 +142,7 @@ class Processor:
                             break
                         except Exception as err:
                             traceback.print_exc(file=sys.stdout)
-                            print('Ошибка листенера')
+                            self.vprint('Ошибка листенера')
 
 
 if __name__ == '__main__':
