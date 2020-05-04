@@ -334,6 +334,7 @@ class Parser:
     def parse_all_documents_in_threads(self, number=1):
         stop_iteration = False
         proxies_in_use = []
+        timer = 0
         try:
             while True:
                 # if self.get_workers(number)._queue.qsize() > 0:
@@ -365,8 +366,10 @@ class Parser:
                             db.conn.close()
                     if proxy is None:
                         # self._lprint('Нет доступных прокси. Ждем окончания потоков или закрытия программы')
-                        self._lprint('Нет доступных прокси. Ждем')
-                        sleep(30)
+                        if monotonic() - timer > 3600:
+                            self._lprint('Нет доступных прокси. Ждем')
+                            timer = monotonic()
+                        sleep(60)
                         continue
                         # break
                         # in_use = [f"'{p['id']}'" for p in proxies]
