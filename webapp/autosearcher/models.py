@@ -108,7 +108,7 @@ class Corrector(models.Model):
     company_startswith = models.CharField('Название компании начинается с', max_length=50, null=True, blank=True)
     tasks_day_amount = models.IntegerField('Количество задач день', default=200)
     tasks_day_max = models.IntegerField('Максимальное количество задач', default=600)
-    score = models.IntegerField('Баллы корректора')
+    score = models.IntegerField('Баллы корректора', default=0)
     task_last_added_date = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
@@ -124,6 +124,8 @@ class CorrectorTask(models.Model):
     corrector = models.ForeignKey(Corrector, on_delete=models.CASCADE, related_query_name='task')
     document_registry = models.IntegerField('Тип реестра', choices=registry_type_choices, default=0)
     document_id = models.CharField(max_length=30, null=True, blank=True)
+    date_task_created = models.DateTimeField(auto_now_add=True)
+    date_task_done = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return 'Task for ' + str(self.corrector)
@@ -132,3 +134,9 @@ class CorrectorTask(models.Model):
         verbose_name = 'Задача корректора'
         verbose_name_plural = 'Задачи корректора'
 
+    def get_absolute_url(self):
+        registry = 'orders'
+        for reg in registry_type_choices:
+            if reg[0] == self.document_registry:
+                registry = reg[1]
+        return f'/admin/{registry}/document/{self.document_id}/change/'

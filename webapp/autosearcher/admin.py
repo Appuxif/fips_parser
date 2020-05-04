@@ -1,7 +1,7 @@
 from django.contrib import admin, messages
 from django.db.models import Q
 
-from .models import AutoSearchTask, AutoSearchTaskItem, OrderDocument, RegisterDocument
+from .models import AutoSearchTask, AutoSearchTaskItem, OrderDocument, RegisterDocument, Corrector, CorrectorTask
 # from interface.models import OrderDocument, RegisterDocument,
 # from orders.models_base import Document as OrderDocument
 # from registers.models_base import Document as RegisterDocument
@@ -52,3 +52,15 @@ class AutoSearchTaskAdmin(admin.ModelAdmin):
         c = queryset.count()
         messages.add_message(request, messages.INFO, 'Найдено ' + str(c) + ' документов')
 
+
+class CorrectorTaskInline(admin.StackedInline):
+    model = CorrectorTask
+    extra = 0
+
+    # def has_add_permission(self, request, obj):
+    #     return False
+
+
+@admin.register(Corrector)
+class CorrectorAdmin(admin.ModelAdmin):
+    inlines = (CorrectorTaskInline, )
