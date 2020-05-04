@@ -740,7 +740,7 @@ def parse_main_info(page, document, document_info, document_parse, service_items
         number, name, value = regex_string(child_text) or ("", "", "")
 
         if number in numbers_fields_values_dict:
-            value = re.sub('[-\'{}]', '', value)
+            value = re.sub('[\'{}]', '', value)
             # value = value.replace("'", '"')
             document_parse[numbers_fields_values_dict[number]] = f"'{value}'" if value else 'NULL'
 
