@@ -63,6 +63,16 @@ class CompanyInline(admin.StackedInline):
     #     return False
 
 
+class ContactPersonOrderInline(admin.StackedInline):
+    model = ContactPerson.order.through
+    readonly_fields = ('contactperson', 'document')
+    extra = 0
+    verbose_name = 'Связанный контакт компании'
+    verbose_name_plural = 'Связанные контакты компании'
+
+    def view_on_site(self, obj):
+        return f'/admin/interface/contactperson/{obj.contactperson_id}/change/'
+
 # class OrderContactInLine(admin.StackedInline):
 #     model = OrderContact
 #     extra = 0
@@ -105,7 +115,7 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
     inlines = [DocumentParseInLine, ServiceItemInLine, DocumentFileInLine, WorkStateInLine,
                # OrderContactInLine, OrderContactPersonInLine]
                # OrderContactPersonInLine]  # TODO: Удалить OrderContactPersonInLine
-               CompanyInline]
+               CompanyInline, ContactPersonOrderInline]
 
     fieldsets = (
         (None, {'fields': (('leaf', 'number'),)}),

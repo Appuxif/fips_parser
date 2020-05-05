@@ -105,17 +105,32 @@ class CompanyAdmin(admin.ModelAdmin):
 
 class ContactPersonOrderInline(admin.StackedInline):
     model = ContactPerson.order.through
+    readonly_fields = ('contactperson', 'document')
     extra = 0
+
+    verbose_name = 'Связанный контакт компании (Заявки)'
+    verbose_name_plural = 'Связанные контакты компании (Заявки)'
+
+    def view_on_site(self, obj):
+        return f'/admin/orders/document/{obj.document_id}/change/'
 
 
 class ContactPersonRegisterInline(admin.StackedInline):
     model = ContactPerson.register.through
+    readonly_fields = ('contactperson', 'document')
     extra = 0
+
+    verbose_name = 'Связанный контакт компании (Регистрации)'
+    verbose_name_plural = 'Связанные контакты компании (Регистрации)'
+
+    def view_on_site(self, obj):
+        return f'/admin/registers/document/{obj.document_id}/change/'
 
 
 @admin.register(ContactPerson)
 class ContactPersonAdmin(admin.ModelAdmin):
-    exclude = ('order', 'register')
+    list_display = ('id', 'company', 'full_name', 'rep_reg_number')
+    exclude = ('company', 'order', 'register')
     inlines = (ContactPersonOrderInline, ContactPersonRegisterInline)
 
 

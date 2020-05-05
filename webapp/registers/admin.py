@@ -72,6 +72,17 @@ class CompanyInline(admin.StackedInline):
     #     return False
 
 
+class ContactPersonRegisterInline(admin.StackedInline):
+    model = ContactPerson.register.through
+    readonly_fields = ('contactperson', 'document')
+    extra = 0
+    verbose_name = 'Связанный контакт компании'
+    verbose_name_plural = 'Связанные контакты компании'
+
+    def view_on_site(self, obj):
+        return f'/admin/interface/contactperson/{obj.contactperson_id}/change/'
+
+
 class DocumentIzvInLine(admin.StackedInline):
     model = DocumentIzv
     fields = ('date_publish', )
@@ -106,7 +117,7 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
     inlines = [DocumentParseInLine, ServiceItemInLine, DocumentFileInLine, DocumentIzvInLine,
                # RegisterContactInLine, RegisterContactPersonInLine]
                # RegisterContactPersonInLine, ContactPersonInline]  # TODO: Удалить RegisterContactPersonInLine
-               CompanyInline]
+               CompanyInline, ContactPersonRegisterInline]
 
     fieldsets = (
         (None, {'fields': (('leaf', 'number'),)}),
