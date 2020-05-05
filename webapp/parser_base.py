@@ -1167,6 +1167,20 @@ def get_or_create_person(self, document, document_person, company):
         # Если контакт нашелся, то просто передаем ID
         else:
             person['id'] = person_['id']
+
+        # Проверяем дополнительную таблицу связей между контактами и документами
+        rel_obj = {'contactperson_id': f"'{person['id']}'", 'document_id': f"'{document['id']}'"}
+        rel_table = 'interface_contactperson_order' if self.name == 'orders' else 'interface_contactperson_register'
+
+        with self.get_workers().lock:
+            rel_ = DB().fetchone(f"SELECT id FROM {rel_table} "
+                                 f"WHERE company_id = '{company['id']}' AND document_id = '{document['id']}'")
+        if rel_ is None:
+            with self.get_workers().lock:
+                rel_obj['id'] = DB().add_row(rel_table, rel_obj)
+        else:
+            rel_obj['id'] = rel_['id']
+
         return person
     return None
 
