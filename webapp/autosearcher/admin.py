@@ -23,15 +23,17 @@ def get_q_from_queryset(queryset):
                 item.filter_value = [it for it in item.filter_value.split(',')]
         filter_field = item.filter_field_raw or item.filter_field
         filter_method = item.filter_method_raw or item.filter_method
-        filter_value_lower = filter_value.lower()
+        filter_value_lower = item.filter_value.lower()
         if 'false' in filter_value_lower:
             filter_value = False
         elif 'true' in filter_value_lower:
             filter_value = True
-        if item.except_field:
-            q &= ~Q(**{filter_field + filter_method: item.filter_value})
         else:
-            q &= Q(**{filter_field + filter_method: item.filter_value})
+            filter_value = item.filter_value
+        if item.except_field:
+            q &= ~Q(**{filter_field + filter_method: filter_value})
+        else:
+            q &= Q(**{filter_field + filter_method: filter_value})
     return q
 
 
