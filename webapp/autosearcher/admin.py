@@ -86,6 +86,8 @@ class CorrectorTaskInline(admin.TabularInline):
     extra = 0
     readonly_fields = ('datetime_created', 'date_created')
     ordering = ('date_task_done', )
+    max_num = 30
+    fields = ('document_registry', 'document_id', 'date_created', 'task_done', 'date_task_done')
     # def has_add_permission(self, request, obj):
     #     return False
 
