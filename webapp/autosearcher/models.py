@@ -169,6 +169,6 @@ class AutoSearchLog(models.Model):
         return 'TaskLog ' + str(self.task.task_name)
 
     def get_absolute_url(self):
-        if self.is_error:
-            return str(self.log_file)
-        return f'/admin/autosearcher/autosearchlog/{self.id}/change/'
+        # if self.is_error:
+        return str(self.log_file)
+        # return f'/admin/autosearcher/autosearchlog/{self.id}/change/'

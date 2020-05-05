@@ -58,14 +58,8 @@ class Processor:
         correctors = self.Corrector.objects.annotate(tasks_count=Count('task')).order_by('tasks_count')
         correctors_count = correctors.count()
         print('Найдено', correctors_count, 'корректоров')
-        # correctors = list(correctors)
         today = date.today()
-        now = datetime.now()
-
-        # documents_skipped = ''
-        # sign_chars_not_founded = ''
-        # task_already_exists = ''
-        # sign_chars_not_founded = set()
+        # now = datetime.now()
 
         for i, document in enumerate(documents):
             # Проверяем, что для этого докуента не было создано задачи
@@ -73,7 +67,7 @@ class Processor:
             if tasks is not None:
                 text = f'{i} {document} Уже есть задача'
                 print(text)
-                f.write(text)
+                f.write(text + '\n')
                 # task_already_exists += str(document.number) + ', '
                 continue
 
@@ -81,11 +75,9 @@ class Processor:
             company = document.company_set.filter(ordercompanyrel__company_is_holder=True).first()
             sign_char = company.sign_char if company else None
             if sign_char is None:
-                # self.vprint(i, document, 'sign_char не определен для')
-                # sign_chars_not_founded += str(document.number) + ', '
                 text = f'{i} {document} sign_char не определен для компании'
                 print(text)
-                f.write(text)
+                f.write(text + '\n')
                 continue
 
             # Если код страны определен, то ищем для него подходящего корректора
@@ -98,22 +90,15 @@ class Processor:
                         # Проверяем начальную букву в названии компании документа
                         break
             else:
-                # print(i, document, 'Подходящий для документа корректор не найден. Документ пропущен')
-                # documents_skipped += str(document.number) + ', '
                 text = f'{i} {document} Нет подходящего корректора'
                 print(text)
-                f.write(text)
+                f.write(text + '\n')
                 continue
             print('Корректор найден', corrector, corrector.tasks_count, tasks_today)
             # TODO: Добавить этому корректору задачу с документом
             task_created = corrector.correctortask_set.create(document_registry=task.registry_type,
                                                               document_id=document.id)
             print('Задача создана', task_created)
-        documents_skipped = 'Документы не распределены:\n' + documents_skipped + '\n' if documents_skipped else ''
-        # sign_chars_not_founded = 'sign_char не определен для:\n' + sign_chars_not_founded + '\n' if sign_chars_not_founded else ''
-        task_already_exists = 'Задача уже была создана для:\n' + task_already_exists + '\n' if task_already_exists else ''
-        # log_object.message = documents_skipped + sign_chars_not_founded + task_already_exists
-        f.message = ''
 
         # Обработка задачи из БД
     def process_task(self, task, f):
