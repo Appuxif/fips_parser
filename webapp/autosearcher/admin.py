@@ -21,8 +21,8 @@ def get_q_from_queryset(queryset):
                 item.filter_value = [it for it in item.filter_value.split(', ')]
             else:
                 item.filter_value = [it for it in item.filter_value.split(',')]
-        filter_field = item.filter_field_raw or item.filter_field
-        filter_method = item.filter_method_raw or item.filter_method
+        filter_field = item.filter_field_raw or item.filter_field or ''
+        filter_method = item.filter_method_raw or item.filter_method or ''
         filter_value_lower = item.filter_value.lower()
         if 'false' in filter_value_lower:
             filter_value = False
