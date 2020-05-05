@@ -91,9 +91,11 @@ class AutoSearchTask(models.Model):
 # Элемент задачи автопоиска для фильтрации документов
 class AutoSearchTaskItem(models.Model):
     autosearchtask = models.ForeignKey(AutoSearchTask, on_delete=models.CASCADE)
-    filter_field = models.CharField('Поле для фильтра', max_length=50, choices=filter_field_choices)
+    filter_field = models.CharField('Поле для фильтра', max_length=50,
+                                    choices=filter_field_choices, null=True, blank=True)
     filter_field_raw = models.CharField('Поле для фильтра', max_length=50, null=True, blank=True)
-    filter_method = models.CharField('Метод для фильтрации', max_length=50, choices=filter_method_choices)
+    filter_method = models.CharField('Метод для фильтрации', max_length=50,
+                                     choices=filter_method_choices, null=True, blank=True)
     filter_method_raw = models.CharField('Метод для фильтрации', max_length=50, null=True, blank=True)
     filter_value = models.CharField('Значение для фильтрации', max_length=500,
                                     help_text='Дата в формате YYYY-MM-DD - строго')
