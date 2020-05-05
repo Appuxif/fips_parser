@@ -53,12 +53,14 @@ class AutoSearchTaskItemInline(admin.StackedInline):
     model = AutoSearchTaskItem
     # exclude = ('tasks_today', )
     extra = 0
+    ordering = ('date_task_done', )
 
 
 @admin.register(AutoSearchTask)
 class AutoSearchTaskAdmin(admin.ModelAdmin):
     inlines = (AutoSearchTaskItemInline, )
     list_display = ('__str__', 'registry_type', 'next_action', 'last_launch', 'auto_renew')
+    save_on_top = True
 
     def save_related(self, request, form, formsets, change):
         super(AutoSearchTaskAdmin, self).save_related(request, form, formsets, change)

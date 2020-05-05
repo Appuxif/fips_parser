@@ -62,12 +62,14 @@ class Processor:
         now = datetime.now()
         documents_skipped = 'Документы не распределены:\n'
         sign_chars_not_founded = 'sign_char не определен для:\n'
+        task_already_exists = 'Задача уже была создана для:'
 
         for document in documents:
             # Проверяем, что для этого докуента не было создано задачи
             tasks = self.CorrectorTask.objects.filter(document_id=document.id).first()
             if tasks is not None:
                 print('Для этого документа уже есть задача. Пропускаем')
+                task_already_exists += str(document.number) + '\n'
                 continue
 
             # Находим компанию - правообладателя
@@ -75,7 +77,7 @@ class Processor:
             sign_char = company.sign_char if company else None
             if sign_char is None:
                 self.vprint('sign_char не определен для', document)
-                sign_chars_not_founded += str(document.number)
+                sign_chars_not_founded += str(document.number) + '\n'
                 continue
 
             # Если код страны определен, то ищем для него подходящего корректора
@@ -92,10 +94,11 @@ class Processor:
                 documents_skipped += str(document.number) + '\n'
                 continue
 
-            print('Корректор найден', corrector)
+            print('Корректор найден', corrector, corrector.tasks_count, tasks_today)
             # TODO: Добавить этому корректору задачу с документом
-            corrector.correctortask_set.create(document_registry=task.registry_type,
-                                               document_id=document.id)
+            task = corrector.correctortask_set.create(document_registry=task.registry_type,
+                                                      document_id=document.id)
+            print('Задача создана', task)
 
             # corrector = correctors.filter(sign_chars__icontains=sign_char).\
             #     filter(tasks_count__lt=F('tasks_max')).order_by('tasks_count').first()
