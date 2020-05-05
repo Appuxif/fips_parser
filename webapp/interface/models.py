@@ -42,9 +42,9 @@ class Company(models.Model):
     kpp = models.CharField('КПП', max_length=100, null=True, blank=True)
     ogrn = models.CharField('ОГРН', max_length=100, null=True, blank=True)
 
-    order = models.ManyToManyField(OrderDocument, related_query_name='person',
+    order = models.ManyToManyField(OrderDocument, related_query_name='company',
                                    blank=True, through='OrderCompanyRel')
-    register = models.ManyToManyField(RegisterDocument, related_query_name='person',
+    register = models.ManyToManyField(RegisterDocument, related_query_name='company',
                                       blank=True, through='RegisterCompanyRel')
 
     logo = models.ImageField('Логотип компании', upload_to=company_logo_path, null=True, blank=True)
