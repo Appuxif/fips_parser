@@ -148,6 +148,9 @@ class ContactPerson(models.Model):
     photo = models.ImageField('Персональное фото', upload_to=person_photo_path, null=True, blank=True)  ##
     bday_date = models.DateField('День рождения', null=True, blank=True)  ##
 
+    order = models.ManyToManyField(OrderDocument, related_query_name='person', null=True, blank=True)
+    register = models.ManyToManyField(RegisterDocument, related_query_name='person', null=True, blank=True)
+
     def __str__(self):
         return 'Контакт ' + str(self.id) + ' компании ' + str(self.company)
 
