@@ -80,7 +80,8 @@ class AutoSearchTaskAdmin(admin.ModelAdmin):
         return super(AutoSearchTaskAdmin, self).save_model(request, obj, form, change)
 
 
-class CorrectorTaskInline(admin.StackedInline):
+# class CorrectorTaskInline(admin.StackedInline):
+class CorrectorTaskInline(admin.TabularInline):
     model = CorrectorTask
     extra = 0
     readonly_fields = ('datetime_created', 'date_created')
