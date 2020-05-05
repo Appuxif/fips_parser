@@ -23,6 +23,11 @@ def get_q_from_queryset(queryset):
                 item.filter_value = [it for it in item.filter_value.split(',')]
         filter_field = item.filter_field_raw or item.filter_field
         filter_method = item.filter_method_raw or item.filter_method
+        filter_value_lower = filter_value.lower()
+        if 'false' in filter_value_lower:
+            filter_value = False
+        elif 'true' in filter_value_lower:
+            filter_value = True
         if item.except_field:
             q &= ~Q(**{filter_field + filter_method: item.filter_value})
         else:
