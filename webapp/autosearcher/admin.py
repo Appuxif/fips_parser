@@ -53,7 +53,6 @@ class AutoSearchTaskItemInline(admin.StackedInline):
     model = AutoSearchTaskItem
     # exclude = ('tasks_today', )
     extra = 0
-    ordering = ('date_task_done', )
 
 
 @admin.register(AutoSearchTask)
@@ -85,6 +84,7 @@ class CorrectorTaskInline(admin.StackedInline):
     model = CorrectorTask
     extra = 0
     readonly_fields = ('datetime_created', 'date_created')
+    ordering = ('date_task_done', )
     # def has_add_permission(self, request, obj):
     #     return False
 
@@ -92,3 +92,4 @@ class CorrectorTaskInline(admin.StackedInline):
 @admin.register(Corrector)
 class CorrectorAdmin(admin.ModelAdmin):
     inlines = (CorrectorTaskInline, )
+    save_on_top = True
