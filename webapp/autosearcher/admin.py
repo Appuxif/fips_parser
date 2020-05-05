@@ -19,11 +19,6 @@ from .models import AutoSearchTask, AutoSearchTaskItem, \
 def get_q_from_queryset(queryset):
     q = Q()
     for item in queryset:
-        if item.filter_method == '__in':
-            if ', ' in item.filter_value:
-                item.filter_value = [it for it in item.filter_value.split(', ')]
-            else:
-                item.filter_value = [it for it in item.filter_value.split(',')]
         # Подготовка значений для составления фильтра
         filter_field = item.filter_field_raw or item.filter_field or ''
         filter_method = item.filter_method_raw or item.filter_method or ''
@@ -34,6 +29,13 @@ def get_q_from_queryset(queryset):
             filter_value = True
         else:
             filter_value = item.filter_value
+
+        if item.filter_method == '__in':
+            if ', ' in item.filter_value:
+                item.filter_value = [it for it in filter_value.split(', ')]
+            else:
+                item.filter_value = [it for it in filter_value.split(',')]
+
         # Получение фильтра
         if item.except_field:
             q &= ~Q(**{filter_field + filter_method: filter_value})
@@ -118,4 +120,4 @@ class CorrectorAdmin(admin.ModelAdmin):
 @admin.register(AutoSearchLog)
 class AutoSearchLogAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'is_error','date_created')
-    readonly_fields = ('is_error', 'error_log_file', 'message', 'date_created')
+    readonly_fields = ('task', 'is_error', 'error_log_file', 'message', 'date_created')

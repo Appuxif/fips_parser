@@ -1150,17 +1150,6 @@ def get_or_create_person(self, document, document_person, company):
             for f in person_fields:
                 if f in person:
                     person[f] = f"'{person[f]}'"
-            # person['full_name'] = f"'{person['full_name']}'" if person.get('full_name') else 'NULL'
-            # person['first_name'] = f"'{person['first_name']}'" if person.get('first_name') else 'NULL'
-            # person['middle_name'] = f"'{person['middle_name']}'" if person.get('middle_name') else 'NULL'
-            # person['last_name'] = f"'{person['last_name']}'" if person.get('last_name') else 'NULL'
-            # person['office_address'] = f"'{person['office_address']}'" if person.get('office_address') else 'NULL'
-            # person['rep_correspondence_address'] = f"'{person['rep_correspondence_address']}'" if person.get('rep_correspondence_address') else 'NULL'
-            # person['city'] = f"'{person['city']}'" if person.get('city') else 'NULL'
-            # person['zip'] = f"'{person['zip']}'" if person.get('zip') else 'NULL'
-            # person['area'] = f"'{person['area']}'" if person.get('area') else 'NULL'
-            # person['state'] = f"'{person['state']}'" if person.get('state') else 'NULL'
-            # person['country'] = f"'{person['country']}'" if person.get('country') else 'NULL'
             person['gender'] = "'0'"
             if 'rep_reg_number' in person:
                 person['rep_reg_number'] = f"'{person['rep_reg_number']}'"
