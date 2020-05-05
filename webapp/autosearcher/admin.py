@@ -49,11 +49,13 @@ def get_task_queryset(form, formsets):
     return Document.objects.filter(q)
 
 
-# class AutoSearchTaskItemInline(admin.StackedInline):
-class AutoSearchTaskItemInline(admin.TabularInline):
+class AutoSearchTaskItemInline(admin.StackedInline):
     model = AutoSearchTaskItem
     # exclude = ('tasks_today', )
     extra = 0
+    fields = (('filter_field', 'filter_field_raw'),
+              ('filter_method', 'filter_method_raw'),
+              ('filter_value', 'except_field'))
 
 
 @admin.register(AutoSearchTask)
