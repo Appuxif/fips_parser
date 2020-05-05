@@ -53,7 +53,7 @@ class Processor:
         self.tasks = {task.id: task for task in self.AutoSearchTask.objects.all() if task.is_active}
         print(self.tasks)
 
-    def process_documents(self, task, documents, log_object):
+    def process_documents(self, task, documents, f):
         # Фильтр корректоров по общему количеству задач
         correctors = self.Corrector.objects.annotate(tasks_count=Count('task')).order_by('tasks_count')
         correctors_count = correctors.count()
@@ -62,24 +62,30 @@ class Processor:
         today = date.today()
         now = datetime.now()
 
-        documents_skipped = ''
-        sign_chars_not_founded = ''
-        task_already_exists = ''
+        # documents_skipped = ''
+        # sign_chars_not_founded = ''
+        # task_already_exists = ''
+        # sign_chars_not_founded = set()
 
         for i, document in enumerate(documents):
             # Проверяем, что для этого докуента не было создано задачи
             tasks = self.CorrectorTask.objects.filter(document_id=document.id).first()
             if tasks is not None:
-                print(i, 'Для этого документа уже есть задача. Пропускаем')
-                task_already_exists += str(document.number) + '\n'
+                text = f'{i} {document} Уже есть задача'
+                print(text)
+                f.write(text)
+                # task_already_exists += str(document.number) + ', '
                 continue
 
             # Находим компанию - правообладателя
             company = document.company_set.filter(ordercompanyrel__company_is_holder=True).first()
             sign_char = company.sign_char if company else None
             if sign_char is None:
-                self.vprint('sign_char не определен для', i, document)
-                sign_chars_not_founded += str(document.number) + '\n'
+                # self.vprint(i, document, 'sign_char не определен для')
+                # sign_chars_not_founded += str(document.number) + ', '
+                text = f'{i} {document} sign_char не определен для компании'
+                print(text)
+                f.write(text)
                 continue
 
             # Если код страны определен, то ищем для него подходящего корректора
@@ -92,8 +98,11 @@ class Processor:
                         # Проверяем начальную букву в названии компании документа
                         break
             else:
-                print('Подходящий для документа корректор не найден. Документ пропущен', i, document)
-                documents_skipped += str(document.number) + '\n'
+                # print(i, document, 'Подходящий для документа корректор не найден. Документ пропущен')
+                # documents_skipped += str(document.number) + ', '
+                text = f'{i} {document} Нет подходящего корректора'
+                print(text)
+                f.write(text)
                 continue
             print('Корректор найден', corrector, corrector.tasks_count, tasks_today)
             # TODO: Добавить этому корректору задачу с документом
@@ -101,12 +110,13 @@ class Processor:
                                                               document_id=document.id)
             print('Задача создана', task_created)
         documents_skipped = 'Документы не распределены:\n' + documents_skipped + '\n' if documents_skipped else ''
-        sign_chars_not_founded = 'sign_char не определен для:\n' + sign_chars_not_founded + '\n' if sign_chars_not_founded else ''
+        # sign_chars_not_founded = 'sign_char не определен для:\n' + sign_chars_not_founded + '\n' if sign_chars_not_founded else ''
         task_already_exists = 'Задача уже была создана для:\n' + task_already_exists + '\n' if task_already_exists else ''
-        log_object.message = documents_skipped + sign_chars_not_founded + task_already_exists
+        # log_object.message = documents_skipped + sign_chars_not_founded + task_already_exists
+        f.message = ''
 
         # Обработка задачи из БД
-    def process_task(self, task, log_object):
+    def process_task(self, task, f):
         now = datetime.now(tz=timezone.utc)
         delta = now - task.next_action
         print(task.id, delta.total_seconds())
@@ -123,7 +133,7 @@ class Processor:
             print('Найдено', documents.count(), 'документов')
 
             # Распределение документов по корректорам
-            self.process_documents(task, documents, log_object)
+            self.process_documents(task, documents, f)
 
             # Если задача автообновляемая, то нужно продлить даты до следующего периода
             if task.auto_renew:
@@ -141,8 +151,6 @@ class Processor:
 
             task.last_launch = now
             task.save()
-
-            # TODO: Добавить в историю задач информацию о результате
             print('Задача', task.task_name, 'завершена')
 
     # Основной процесс для обработки задач
@@ -158,26 +166,25 @@ class Processor:
                     continue
                 log_object = self.AutoSearchLog(task=task)
                 print('Задача', task_id)
-                try:
-                    self.process_task(task, log_object)
-                except:
-                    now = datetime.now()
-                    now_str = now.strftime('%Y-%m-%d_%H-%M-%S')
-                    filename = 'task_' + str(task.id) + '_' + now_str + '.txt'
-                    filepath = os.path.join('.', 'media', 'logs')
-                    if not os.path.exists(filepath):
-                        os.makedirs(filepath)
-                    error_filename = os.path.join(filepath, filename)
-                    error_link = '/media/logs/' + filename
-                    with open(error_filename, 'w') as f:
+                now = datetime.now()
+                now_str = now.strftime('%Y-%m-%d_%H-%M-%S')
+                filename = 'task_' + str(task.id) + '_' + now_str + '.txt'
+                filepath = os.path.join('.', 'media', 'logs')
+                if not os.path.exists(filepath):
+                    os.makedirs(filepath)
+                error_filename = os.path.join(filepath, filename)
+                log_file = '/media/logs/' + filename
+                log_object.log_file = log_file
+                with open(error_filename, 'w') as f:
+                    try:
+                        self.process_task(task, f)
+                    except:
                         traceback.print_exc(file=f)
-
-                    log_object.is_error = True
-                    log_object.error_log_file = error_link
-                    traceback.print_exc(file=sys.stdout)
-                    self.vprint('parser_processor Ошибка парсера', task)
-                finally:
-                    log_object.save()
+                        traceback.print_exc(file=sys.stdout)
+                        log_object.is_error = True
+                        self.vprint('parser_processor Ошибка парсера', task)
+                    finally:
+                        log_object.save()
 
             # for task_id in self.processes:
             #     if task_id not in self.tasks:

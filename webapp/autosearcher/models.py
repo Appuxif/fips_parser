@@ -162,7 +162,7 @@ class AutoSearchLog(models.Model):
     task = models.ForeignKey(AutoSearchTask, on_delete=models.DO_NOTHING, null=True)
     date_created = models.DateTimeField(auto_now_add=True)
     is_error = models.BooleanField(default=False)
-    error_log_file = models.CharField(max_length=255, null=True, blank=True)
+    log_file = models.CharField(max_length=255, null=True, blank=True)
     message = models.TextField(max_length=10000, null=True, blank=True)
 
     def __str__(self):
@@ -170,5 +170,5 @@ class AutoSearchLog(models.Model):
 
     def get_absolute_url(self):
         if self.is_error:
-            return str(self.error_log_file)
+            return str(self.log_file)
         return f'/admin/autosearcher/autosearchlog/{self.id}/change/'
