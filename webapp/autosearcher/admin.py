@@ -5,7 +5,9 @@ from django.contrib import admin, messages
 from django.db.models import Q
 from multiprocessing.connection import Client
 
-from .models import AutoSearchTask, AutoSearchTaskItem, OrderDocument, RegisterDocument, Corrector, CorrectorTask
+from .models import AutoSearchTask, AutoSearchTaskItem, \
+    OrderDocument, RegisterDocument, \
+    Corrector, CorrectorTask, AutoSearchLog
 # from interface.models import OrderDocument, RegisterDocument,
 # from orders.models_base import Document as OrderDocument
 # from registers.models_base import Document as RegisterDocument
@@ -13,6 +15,7 @@ from .models import AutoSearchTask, AutoSearchTaskItem, OrderDocument, RegisterD
 # Register your models here.
 
 
+# Составляет запрос для фильтрации элементов из БД, используя элементы задачи
 def get_q_from_queryset(queryset):
     q = Q()
     for item in queryset:
@@ -21,6 +24,7 @@ def get_q_from_queryset(queryset):
                 item.filter_value = [it for it in item.filter_value.split(', ')]
             else:
                 item.filter_value = [it for it in item.filter_value.split(',')]
+        # Подготовка значений для составления фильтра
         filter_field = item.filter_field_raw or item.filter_field or ''
         filter_method = item.filter_method_raw or item.filter_method or ''
         filter_value_lower = item.filter_value.lower()
@@ -30,6 +34,7 @@ def get_q_from_queryset(queryset):
             filter_value = True
         else:
             filter_value = item.filter_value
+        # Получение фильтра
         if item.except_field:
             q &= ~Q(**{filter_field + filter_method: filter_value})
         else:
@@ -58,15 +63,19 @@ class AutoSearchTaskItemInline(admin.StackedInline):
               ('filter_value', 'except_field'))
 
 
+class AutoSearchLogInline(admin.TabularInline):
+    model = AutoSearchLog
+
+
 @admin.register(AutoSearchTask)
 class AutoSearchTaskAdmin(admin.ModelAdmin):
-    inlines = (AutoSearchTaskItemInline, )
+    inlines = (AutoSearchTaskItemInline, AutoSearchLogInline)
     list_display = ('__str__', 'registry_type', 'next_action', 'last_launch', 'auto_renew')
     save_on_top = True
 
     def save_related(self, request, form, formsets, change):
         super(AutoSearchTaskAdmin, self).save_related(request, form, formsets, change)
-        queryset = get_task_queryset(form, formsets)
+        queryset = get_task_queryset(form, formsets[:1])
         c = queryset.count()
         messages.add_message(request, messages.INFO, 'Найдено ' + str(c) + ' документов')
 
@@ -99,3 +108,8 @@ class CorrectorTaskInline(admin.TabularInline):
 class CorrectorAdmin(admin.ModelAdmin):
     inlines = (CorrectorTaskInline, )
     save_on_top = True
+
+
+@admin.register(AutoSearchLog)
+class AutoSearchLogAdmin(admin.ModelAdmin):
+    pass

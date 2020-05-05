@@ -156,3 +156,19 @@ class CorrectorTask(models.Model):
             if reg[0] == self.document_registry:
                 registry = reg[1]
         return f'/admin/{registry}/document/{self.document_id}/change/'
+
+
+class AutoSearchLog(models.Model):
+    task = models.ForeignKey(AutoSearchTask, on_delete=models.DO_NOTHING, null=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    is_error = models.BooleanField(default=False)
+    error_log_file = models.CharField(max_length=255, null=True, blank=True)
+    message = models.TextField(max_length=10000, null=True, blank=True)
+
+    def __str__(self):
+        return 'TaskLog ' + str(self.task.task_name)
+
+    def get_absolute_url(self):
+        if self.is_error:
+            return str(self.error_log_file)
+        return f'/admin/autosearcher/autosearchlog/{self.id}/change/'

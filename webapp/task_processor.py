@@ -19,6 +19,7 @@ class Processor:
     processes = {}
     tasks = {}
     verbose = False
+    need_to_refresh = False
 
     def __init__(self, verbose=True):
         self.verbose = verbose
@@ -138,6 +139,7 @@ class Processor:
         print(task.id, delta.total_seconds())
         # Значение должно быть положительным, чтобы сработал триггер
         if delta.total_seconds() >= 0:
+            print('Начинаем задачу', task.task_name)
             # Список элементов задачи
             queryset = task.autosearchtaskitem_set.all()
 
@@ -169,12 +171,20 @@ class Processor:
 
             # TODO: Добавить в историю задач информацию о результате
 
+            print('Задача', task.task_name, 'завершена')
+
     # Основной процесс для обработки задач
     def go_processor(self):
         while True:
+            if self.need_to_refresh:
+                self.load_tasks()
+                self.need_to_refresh = False
+
             for task_id, task in self.tasks.items():
                 if not task.is_active:
+                    self.need_to_refresh = True
                     continue
+
                 print('Задача', task_id)
                 try:
                     self.process_task(task)
