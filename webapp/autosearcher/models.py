@@ -103,7 +103,8 @@ class AutoSearchTaskItem(models.Model):
     # raw_filter = models.CharField('Полученное выражение для фильтра', max_length=1000)
 
     def __str__(self):
-        return str(self.filter_field) + str(self.filter_method) + "='" + str(self.filter_value) + "'"
+        return str(self.filter_field or self.filter_field_raw) + str(self.filter_method or self.filter_method_raw) +\
+               "='" + str(self.filter_value) + "'"
 
     class Meta:
         verbose_name = "Элемент задачи автопоиска"
