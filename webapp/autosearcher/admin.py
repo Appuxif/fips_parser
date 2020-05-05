@@ -30,11 +30,11 @@ def get_q_from_queryset(queryset):
         else:
             filter_value = item.filter_value
 
-        if item.filter_method == '__in':
+        if filter_method == '__in':
             if ', ' in item.filter_value:
-                item.filter_value = [it for it in filter_value.split(', ')]
+                filter_value = [it for it in filter_value.split(', ')]
             else:
-                item.filter_value = [it for it in filter_value.split(',')]
+                filter_value = [it for it in filter_value.split(',')]
 
         # Получение фильтра
         if item.except_field:
