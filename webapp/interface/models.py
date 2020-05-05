@@ -34,8 +34,8 @@ class Company(models.Model):
     form = models.CharField(max_length=50, null=True, blank=True)  # ! # Организационная форма ООО
     name = models.CharField('Наименование компании', max_length=255, blank=True)
     name_latin = models.CharField('Наименование компании латинское', max_length=255, null=True, blank=True)
-    address = models.CharField('Адрес компании', max_length=255, null=True, blank=True)
-    address_latin = models.CharField('Адрес компании латинский', max_length=255, null=True, blank=True)
+    address = models.CharField('Адрес компании', max_length=1000, null=True, blank=True)
+    address_latin = models.CharField('Адрес компании латинский', max_length=1000, null=True, blank=True)
     sign_char = models.CharField('Код страны', max_length=5, null=True, blank=True)
     web = models.CharField(max_length=100, null=True, blank=True)
     inn = models.CharField('ИНН', max_length=100, null=True, blank=True)

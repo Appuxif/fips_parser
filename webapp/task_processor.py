@@ -27,12 +27,13 @@ class Processor:
         self.verbose = verbose
         django.setup()
         # from autosearcher.models import AutoSearchTask, AutoSearchTaskItem, OrderDocument, RegisterDocument, Corrector
-        from autosearcher.models import AutoSearchTask, OrderDocument, RegisterDocument, Corrector
+        from autosearcher.models import AutoSearchTask, OrderDocument, RegisterDocument, Corrector, CorrectorTask
         self.AutoSearchTask = AutoSearchTask
         # self.AutoSearchTaskItem = AutoSearchTaskItem
         self.OrderDocument = OrderDocument
         self.RegisterDocument = RegisterDocument
         self.Corrector = Corrector
+        self.CorrectorTask = CorrectorTask
         django.db.close_old_connections()
 
         self.load_tasks()
@@ -52,7 +53,7 @@ class Processor:
         self.tasks = {task.id: task for task in self.AutoSearchTask.objects.all() if task.is_active}
         print(self.tasks)
 
-    def process_documents(self, documents):
+    def process_documents(self, task, documents):
         # Фильтр корректоров по общему количеству задач
         correctors = self.Corrector.objects.annotate(tasks_count=Count('task')).order_by('tasks_count')
         correctors_count = correctors.count()
@@ -63,6 +64,12 @@ class Processor:
         sign_chars_not_founded = 'sign_char не определен для:\n'
 
         for document in documents:
+            # Проверяем, что для этого докуента не было создано задачи
+            tasks = self.CorrectorTask.objects.filter(document_id=document.id).first()
+            if tasks is not None:
+                print('Для этого документа уже есть задача. Пропускаем')
+                continue
+
             # Находим компанию - правообладателя
             company = document.company_set.filter(ordercompanyrel__company_is_holder=True).first()
             sign_char = company.sign_char if company else None
@@ -86,13 +93,16 @@ class Processor:
                 continue
 
             print('Корректор найден', corrector)
+            # TODO: Добавить этому корректору задачу с документом
+            corrector.correctortask_set.create(document_registry=task.registry_type,
+                                               document_id=document.id)
 
-            corrector = correctors.filter(sign_chars__icontains=sign_char).\
-                filter(tasks_count__lt=F('tasks_max')).order_by('tasks_count').first()
-            if corrector is None:
-                self.vprint('Не найден corrector для sign_char', sign_char)
-                # TODO: Можно пропускать, или отдавать документ случайному корректору
-                continue
+            # corrector = correctors.filter(sign_chars__icontains=sign_char).\
+            #     filter(tasks_count__lt=F('tasks_max')).order_by('tasks_count').first()
+            # if corrector is None:
+            #     self.vprint('Не найден corrector для sign_char', sign_char)
+            #     # TODO: Можно пропускать, или отдавать документ случайному корректору
+            #     continue
 
         # Запрашиваем подходящих корректоров
 
@@ -133,7 +143,7 @@ class Processor:
             documents = document.objects.filter(q)
 
             # Распределение документов по корректорам
-            self.process_documents(documents)
+            self.process_documents(task, documents)
 
             # Если задача автообновляемая, то нужно продлить даты до следующего периода
             if task.auto_renew:
