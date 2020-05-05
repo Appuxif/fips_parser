@@ -97,9 +97,10 @@ class RegisterCompanyInline(admin.StackedInline):
 class CompanyAdmin(admin.ModelAdmin):
     inlines = [ContactPersonInline, OrderCompanyInline, RegisterCompanyInline]
     exclude = ('order', 'register')
+    list_display = ('__str__', 'sign_char', 'form', 'form_correct', 'name', 'name_correct', 'address')
+    readonly_fields = ('name', 'form')
     # Шаблон, на котором добавлено лого компании
     change_form_template = 'admin/custom_change_form_company.html'
-    list_display = ('__str__', 'sign_char', 'form', 'name', 'address')
 
 
 # TODO: Для отладки. Потом удалить

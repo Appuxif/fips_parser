@@ -122,7 +122,8 @@ class Corrector(models.Model):
     tasks_day_amount = models.IntegerField('Количество задач в день', default=200, blank=True)
     tasks_max = models.IntegerField('Максимальное количество задач', default=600, blank=True)
     # tasks_today = models.IntegerField('Количество задач, добавленное сегодня', default=0, blank=True)
-    score = models.IntegerField('Баллы корректора', default=0)
+    score = models.IntegerField('Баллы корректора', default=0, blank=True)
+    tasks_done = models.IntegerField('Задач выполнено', default=0, blank=True)
     task_last_added_date = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):

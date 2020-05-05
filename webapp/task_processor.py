@@ -25,7 +25,8 @@ class Processor:
         self.verbose = verbose
         django.setup()
         # from autosearcher.models import AutoSearchTask, AutoSearchTaskItem, OrderDocument, RegisterDocument, Corrector
-        from autosearcher.models import AutoSearchTask, OrderDocument, RegisterDocument, Corrector, CorrectorTask, AutoSearchLog
+        from autosearcher.models import AutoSearchTask, OrderDocument, RegisterDocument, Corrector, CorrectorTask, \
+            AutoSearchLog
         from autosearcher.admin import get_q_from_queryset
         self.get_q_from_queryset = get_q_from_queryset
         self.AutoSearchTask = AutoSearchTask
@@ -53,14 +54,36 @@ class Processor:
         self.tasks = {task.id: task for task in self.AutoSearchTask.objects.all() if task.is_active}
         print(self.tasks)
 
-    def process_documents(self, task, documents, f):
+    def process_documents(self, task, documents, f, log_object):
+        documents_count = documents.count()
+        text = f'Найдено {documents_count} документов'
+        print(text)
+        f.write(text + '\n')
+        log_object.message = (log_object.message or '') + text + '\n'
+
+        if documents.count() == 0:
+            return
+
         # Фильтр корректоров по общему количеству задач
         correctors = self.Corrector.objects.annotate(tasks_count=Count('task')).order_by('tasks_count')
         correctors_count = correctors.count()
         print('Найдено', correctors_count, 'корректоров')
+
         today = date.today()
         # now = datetime.now()
 
+        correctors_dict = {}
+        for corrector in correctors:
+            correctors_dict[corrector.id] = {
+                'corrector': corrector,
+                'name': corrector.user.username,
+                'today': corrector.correctortask_set.filter(date_created__gte=today).count(),
+                'total': corrector.tasks_count,
+                'documents_distributed': 0,
+                'done': False
+            }
+        correctors_ids = sorted(correctors_dict, key=lambda x: correctors_dict[x]['total'])
+        documents_distributed = 0
         for i, document in enumerate(documents):
             # Проверяем, что для этого докуента не было создано задачи
             tasks = self.CorrectorTask.objects.filter(document_id=document.id).first()
@@ -81,27 +104,53 @@ class Processor:
                 continue
 
             # Если код страны определен, то ищем для него подходящего корректора
-            for corrector in correctors:
+            all_correctors_done = True
+            for corrector_id in correctors_ids:
+                corrector = correctors_dict[corrector_id]['corrector']
                 # Проверяем наличие кода страны и текущее количество задач
-                if sign_char in corrector.sign_chars and corrector.tasks_count <= corrector.tasks_max:
-                    # Проверяем количество задач, добавленных сегодня
-                    tasks_today = corrector.correctortask_set.filter(date_created__gte=today).count()
-                    if tasks_today <= corrector.tasks_day_amount and re.match(r'^[а-я]', company.name, re.I):
-                        # Проверяем начальную букву в названии компании документа
+                tasks_today = correctors_dict[corrector.id]['today']
+                tasks_total = correctors_dict[corrector.id]['total']
+
+                # Проверяем количество задач, добавленных сегодня
+                if tasks_total <= corrector.tasks_max and tasks_today <= corrector.tasks_day_amount:
+                    # Проверяем начальную букву в названии компании документа
+                    all_correctors_done = False
+                    if sign_char in corrector.sign_chars and re.match(r'^[а-я]', company.name, re.I):
                         break
             else:
-                text = f'{i} {document} Нет подходящего корректора'
+                if all_correctors_done:
+                    text = f'{i} {document} у всех корректоров переполнены списки задач'
+                    print(text)
+                    f.write(text + '\n')
+                    break
+
+                text = f'{i} {document} Нет подходящего корректора {sign_char} '
                 print(text)
                 f.write(text + '\n')
                 continue
-            print('Корректор найден', corrector, corrector.tasks_count, tasks_today)
-            # TODO: Добавить этому корректору задачу с документом
+            text = f'{i} {document} Корректор найден {corrector} {tasks_total} {tasks_today}'
+            print(text)
+            f.write(text + '\n')
+
+            # Добавить этому корректору задачу с документом
             task_created = corrector.correctortask_set.create(document_registry=task.registry_type,
                                                               document_id=document.id)
-            print('Задача создана', task_created)
+            correctors_dict[corrector.id]['today'] += 1
+            correctors_dict[corrector.id]['total'] += 1
+            correctors_dict[corrector.id]['documents_distributed'] += 1
+            documents_distributed += 1
+            correctors_ids = sorted(correctors_dict, key=lambda x: correctors_dict[x]['total'])
+
+        text = f'Распределено документов {documents_distributed}\n'
+        text += f'Корректоров {correctors_count}\n'
+        for corrector_id, obj in correctors_dict.items():
+            text += f'{obj["name"]}: добавлено задач {obj["documents_distributed"]}, \n'
+        log_object.message = (log_object.message or '') + text
+        print(log_object.message)
 
         # Обработка задачи из БД
-    def process_task(self, task, f):
+
+    def process_task(self, task, f, log_object):
         now = datetime.now(tz=timezone.utc)
         delta = now - task.next_action
         print(task.id, delta.total_seconds())
@@ -115,10 +164,9 @@ class Processor:
             q = self.get_q_from_queryset(queryset)
             document = self.OrderDocument if task.registry_type == 0 else self.RegisterDocument
             documents = document.objects.filter(q)
-            print('Найдено', documents.count(), 'документов')
 
             # Распределение документов по корректорам
-            self.process_documents(task, documents, f)
+            self.process_documents(task, documents, f, log_object)
 
             # Если задача автообновляемая, то нужно продлить даты до следующего периода
             if task.auto_renew:
@@ -162,7 +210,7 @@ class Processor:
                 log_object.log_file = log_file
                 with open(error_filename, 'w') as f:
                     try:
-                        self.process_task(task, f)
+                        self.process_task(task, f, log_object)
                     except:
                         traceback.print_exc(file=f)
                         traceback.print_exc(file=sys.stdout)
@@ -170,10 +218,6 @@ class Processor:
                         self.vprint('parser_processor Ошибка парсера', task)
                     finally:
                         log_object.save()
-
-            # for task_id in self.processes:
-            #     if task_id not in self.tasks:
-            #         self.terminate_process(parser_id)
 
             sleep(5)
 

@@ -69,6 +69,7 @@ class AutoSearchLogInline(admin.TabularInline):
     model = AutoSearchLog
     extra = 0
     readonly_fields = ('is_error', 'log_file', 'message', 'date_created')
+    ordering = ('date_created', )
 
     def has_add_permission(self, request, obj):
         return False
@@ -115,6 +116,7 @@ class CorrectorTaskInline(admin.TabularInline):
 class CorrectorAdmin(admin.ModelAdmin):
     inlines = (CorrectorTaskInline, )
     save_on_top = True
+    list_select_related = ('correctortask', )
 
 
 @admin.register(AutoSearchLog)

@@ -1099,7 +1099,9 @@ def get_or_create_company(self, document, document_person, save_anyway=True, mak
     if company_ is None:
         # Предварительно подготовить поля для внесения в БД
         company['name'] = f"'{name}'"
+        company['name_correct'] = company['name']
         company['form'] = f"'{company['form']}'" if company.get('form') else 'NULL'
+        company['form_correct'] = company['form']
         company['address'] = f"'{company['address']}'" if company.get('address') else 'NULL'
         company['sign_char'] = f"'{company['sign_char']}'" if company.get('sign_char') else 'NULL'
         with self.get_workers().lock:
