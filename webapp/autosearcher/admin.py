@@ -68,7 +68,7 @@ class AutoSearchTaskItemInline(admin.StackedInline):
 class AutoSearchLogInline(admin.TabularInline):
     model = AutoSearchLog
     extra = 0
-    readonly_fields = ('is_error', 'error_log_file', 'message', 'date_created')
+    readonly_fields = ('is_error', 'log_file', 'message', 'date_created')
 
     def has_add_permission(self, request, obj):
         return False
@@ -119,5 +119,5 @@ class CorrectorAdmin(admin.ModelAdmin):
 
 @admin.register(AutoSearchLog)
 class AutoSearchLogAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'is_error','date_created')
-    readonly_fields = ('task', 'is_error', 'error_log_file', 'message', 'date_created')
+    list_display = ('__str__', 'is_error', 'date_created')
+    readonly_fields = ('task', 'is_error', 'log_file', 'message', 'date_created')
