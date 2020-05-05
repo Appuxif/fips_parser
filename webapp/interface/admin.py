@@ -103,10 +103,20 @@ class CompanyAdmin(admin.ModelAdmin):
     change_form_template = 'admin/custom_change_form_company.html'
 
 
-# TODO: Для отладки. Потом удалить
+class ContactPersonOrderInline(admin.StackedInline):
+    model = ContactPerson.order.through
+    extra = 0
+
+
+class ContactPersonRegisterInline(admin.StackedInline):
+    model = ContactPerson.register.through
+    extra = 0
+
+
 @admin.register(ContactPerson)
 class ContactPersonAdmin(admin.ModelAdmin):
-    pass
+    exclude = ('order', 'register')
+    inlines = (ContactPersonOrderInline, ContactPersonRegisterInline)
 
 
 # TODO: Для отладки. Потом удалить

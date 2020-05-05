@@ -1174,7 +1174,7 @@ def get_or_create_person(self, document, document_person, company):
 
         with self.get_workers().lock:
             rel_ = DB().fetchone(f"SELECT id FROM {rel_table} "
-                                 f"WHERE company_id = '{company['id']}' AND document_id = '{document['id']}'")
+                                 f"WHERE contactperson_id = '{person['id']}' AND document_id = '{document['id']}'")
         if rel_ is None:
             with self.get_workers().lock:
                 rel_obj['id'] = DB().add_row(rel_table, rel_obj)
