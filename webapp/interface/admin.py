@@ -139,8 +139,8 @@ class ParserSettingAdmin(admin.ModelAdmin):
             with Client(socket_path) as conn:
                 conn.send('self.load_parsers(5)')
         except FileNotFoundError:
-            print('save_model Сокет не найден')
+            print('ParserSettingAdmin save_model Сокет не найден')
         except:
-            print('save_model Ошибка подключения')
+            print('ParserSettingAdmin save_model Ошибка подключения')
             traceback.print_exc(file=sys.stdout)
         return super(ParserSettingAdmin, self).save_model(request, obj, form, change)

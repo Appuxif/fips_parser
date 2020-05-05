@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 import django
 from django.db.models import Q, Count, F
 import os
@@ -9,9 +9,6 @@ from time import sleep
 import multiprocessing as mp
 from multiprocessing.connection import Listener
 import threading
-
-
-from autosearcher.admin import get_q_from_queryset
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'webapp.settings')
 alphabet = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя'
@@ -28,6 +25,8 @@ class Processor:
         django.setup()
         # from autosearcher.models import AutoSearchTask, AutoSearchTaskItem, OrderDocument, RegisterDocument, Corrector
         from autosearcher.models import AutoSearchTask, OrderDocument, RegisterDocument, Corrector, CorrectorTask
+        from autosearcher.admin import get_q_from_queryset
+        self.get_q_from_queryset = get_q_from_queryset
         self.AutoSearchTask = AutoSearchTask
         # self.AutoSearchTaskItem = AutoSearchTaskItem
         self.OrderDocument = OrderDocument
@@ -37,8 +36,8 @@ class Processor:
         django.db.close_old_connections()
 
         self.load_tasks()
-        self.listener = threading.Thread(target=self.listener_thread)
-        self.listener.start()
+        # self.listener = threading.Thread(target=self.listener_thread)
+        # self.listener.start()
         self.vprint('Запущен процессор')
 
     def vprint(self, *args, **kwargs):
@@ -57,6 +56,7 @@ class Processor:
         # Фильтр корректоров по общему количеству задач
         correctors = self.Corrector.objects.annotate(tasks_count=Count('task')).order_by('tasks_count')
         correctors_count = correctors.count()
+        print('Найдено', correctors_count, 'корректоров')
         # correctors = list(correctors)
         today = date.today()
         now = datetime.now()
@@ -130,17 +130,19 @@ class Processor:
 
     # Обработка задачи из БД
     def process_task(self, task):
-        now = datetime.now()
+        now = datetime.now(tz=timezone.utc)
         delta = now - task.next_action
+        print(task.id, delta.total_seconds())
         # Значение должно быть положительным, чтобы сработал триггер
         if delta.total_seconds() >= 0:
             # Список элементов задачи
             queryset = task.autosearchtaskitem_set.all()
 
             # Запрос в БД для фильтрации документов
-            q = get_q_from_queryset(queryset)
+            q = self.get_q_from_queryset(queryset)
             document = self.OrderDocument if task.registry_type == 0 else self.RegisterDocument
             documents = document.objects.filter(q)
+            print('Найдено', documents.count(), 'документов')
 
             # Распределение документов по корректорам
             self.process_documents(task, documents)
@@ -168,6 +170,7 @@ class Processor:
     def go_processor(self):
         while True:
             for task_id, task in self.tasks.items():
+                print('Задача', task_id)
                 try:
                     self.process_task(task)
                 except:

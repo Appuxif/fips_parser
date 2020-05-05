@@ -1,5 +1,9 @@
+import traceback
+
+import sys
 from django.contrib import admin, messages
 from django.db.models import Q
+from multiprocessing.connection import Client
 
 from .models import AutoSearchTask, AutoSearchTaskItem, OrderDocument, RegisterDocument, Corrector, CorrectorTask
 # from interface.models import OrderDocument, RegisterDocument,
@@ -17,10 +21,12 @@ def get_q_from_queryset(queryset):
                 item.filter_value = [it for it in item.filter_value.split(', ')]
             else:
                 item.filter_value = [it for it in item.filter_value.split(',')]
+        filter_field = item.filter_field_raw or item.filter_field
+        filter_method = item.filter_method_raw or item.filter_method
         if item.except_field:
-            q &= ~Q(**{item.filter_field + item.filter_method: item.filter_value})
+            q &= ~Q(**{filter_field + filter_method: item.filter_value})
         else:
-            q &= Q(**{item.filter_field + item.filter_method: item.filter_value})
+            q &= Q(**{filter_field + filter_method: item.filter_value})
     return q
 
 
@@ -52,6 +58,18 @@ class AutoSearchTaskAdmin(admin.ModelAdmin):
         queryset = get_task_queryset(form, formsets)
         c = queryset.count()
         messages.add_message(request, messages.INFO, 'Найдено ' + str(c) + ' документов')
+
+    def save_model(self, request, obj, form, change):
+        try:
+            socket_path = '/var/www/fips_parser/tasks_processor.sock'
+            with Client(socket_path) as conn:
+                conn.send('self.load_tasks(5)')
+        except FileNotFoundError:
+            print('AutoSearchTaskAdmin save_model Сокет не найден')
+        except:
+            print('AutoSearchTaskAdmin save_model Ошибка подключения')
+            traceback.print_exc(file=sys.stdout)
+        return super(AutoSearchTaskAdmin, self).save_model(request, obj, form, change)
 
 
 class CorrectorTaskInline(admin.StackedInline):
