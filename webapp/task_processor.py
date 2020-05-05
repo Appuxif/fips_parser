@@ -64,11 +64,11 @@ class Processor:
         sign_chars_not_founded = 'sign_char не определен для:\n'
         task_already_exists = 'Задача уже была создана для:'
 
-        for document in documents:
+        for i, document in enumerate(documents):
             # Проверяем, что для этого докуента не было создано задачи
             tasks = self.CorrectorTask.objects.filter(document_id=document.id).first()
             if tasks is not None:
-                print('Для этого документа уже есть задача. Пропускаем')
+                print(i, 'Для этого документа уже есть задача. Пропускаем')
                 task_already_exists += str(document.number) + '\n'
                 continue
 
@@ -76,29 +76,29 @@ class Processor:
             company = document.company_set.filter(ordercompanyrel__company_is_holder=True).first()
             sign_char = company.sign_char if company else None
             if sign_char is None:
-                self.vprint('sign_char не определен для', document)
+                self.vprint('sign_char не определен для', i, document)
                 sign_chars_not_founded += str(document.number) + '\n'
                 continue
 
             # Если код страны определен, то ищем для него подходящего корректора
             for corrector in correctors:
                 # Проверяем наличие кода страны и текущее количество задач
-                if sign_char in corrector.sign_chars and corrector.tasks_count < corrector.tasks_max:
+                if sign_char in corrector.sign_chars and corrector.tasks_count <= corrector.tasks_max:
                     # Проверяем количество задач, добавленных сегодня
                     tasks_today = corrector.correctortask_set.filter(date_created__gte=today).count()
-                    if tasks_today < corrector.tasks_day_amount and re.match(r'^[а-я]', company.name, re.I):
+                    if tasks_today <= corrector.tasks_day_amount and re.match(r'^[а-я]', company.name, re.I):
                         # Проверяем начальную букву в названии компании документа
                         break
             else:
-                print('Подходящий для документа корректор не найден. Документ пропущен', document)
+                print('Подходящий для документа корректор не найден. Документ пропущен', i, document)
                 documents_skipped += str(document.number) + '\n'
                 continue
 
             print('Корректор найден', corrector, corrector.tasks_count, tasks_today)
             # TODO: Добавить этому корректору задачу с документом
-            task = corrector.correctortask_set.create(document_registry=task.registry_type,
-                                                      document_id=document.id)
-            print('Задача создана', task)
+            task_created = corrector.correctortask_set.create(document_registry=task.registry_type,
+                                                              document_id=document.id)
+            print('Задача создана', task_created)
 
             # corrector = correctors.filter(sign_chars__icontains=sign_char).\
             #     filter(tasks_count__lt=F('tasks_max')).order_by('tasks_count').first()
@@ -173,6 +173,8 @@ class Processor:
     def go_processor(self):
         while True:
             for task_id, task in self.tasks.items():
+                if not task.is_active:
+                    continue
                 print('Задача', task_id)
                 try:
                     self.process_task(task)

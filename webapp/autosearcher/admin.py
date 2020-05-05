@@ -49,7 +49,8 @@ def get_task_queryset(form, formsets):
     return Document.objects.filter(q)
 
 
-class AutoSearchTaskItemInline(admin.StackedInline):
+# class AutoSearchTaskItemInline(admin.StackedInline):
+class AutoSearchTaskItemInline(admin.TabularInline):
     model = AutoSearchTaskItem
     # exclude = ('tasks_today', )
     extra = 0
@@ -85,7 +86,7 @@ class CorrectorTaskInline(admin.TabularInline):
     model = CorrectorTask
     extra = 0
     readonly_fields = ('datetime_created', 'date_created')
-    ordering = ('date_task_done', )
+    ordering = ('date_task_done', 'datetime_created')
     max_num = 30
     fields = ('document_registry', 'document_id', 'date_created', 'task_done', 'date_task_done')
     # def has_add_permission(self, request, obj):
