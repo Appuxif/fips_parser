@@ -495,7 +495,7 @@ class Parser:
             traceback.print_exc(file=sys.stdout)
             self._print('Ошибка для', document_obj['number'], ' залогирована', error_filename)
             history['error_log_file'] = f"'{error_link}'"
-
+            history['is_error'] = 'TRUE'
             # Запись результата парсинга в БД и отметка документа спарсенным
             with self.get_workers().lock:
                 DB().executeone(f"UPDATE {self.dbdocument} SET document_parsed = TRUE, date_parsed = NOW() "
