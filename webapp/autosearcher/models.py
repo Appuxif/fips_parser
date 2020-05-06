@@ -115,7 +115,6 @@ class AutoSearchTaskItem(models.Model):
 # Модель для личного кабинета корректора и его настроек
 class Corrector(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    email_api_key = models.CharField('API ключ для верификации почты', max_length=100)
     sign_chars = models.CharField('Коды стран через запятую', max_length=255, null=True, blank=True,
                                   help_text='Например: RU,GB,NL')
     company_startswith = models.CharField('Название компании начинается с',

@@ -7,7 +7,8 @@ from django.contrib.auth.models import User
 # Все контакты отображаются непосредственно в документе
 
 # from .models import OrderContact, OrderContactPerson, RegisterContact, RegisterContactPerson, ContactPerson, Company
-from .models import ContactPerson, Company, RegisterCompanyRel, OrderCompanyRel, ParserSetting, Proxies
+from .models import ContactPerson, Company, RegisterCompanyRel, OrderCompanyRel, \
+    ParserSetting, Proxies, EmailApiKey, EmailApiKeyLog
 from interface.change_message_utils import construct_change_message
 
 # from orders.admin import CompanyInline as OrderCompanyInline
@@ -211,3 +212,16 @@ class ParserSettingAdmin(admin.ModelAdmin):
             print('ParserSettingAdmin save_model Ошибка подключения')
             traceback.print_exc(file=sys.stdout)
         return super(ParserSettingAdmin, self).save_model(request, obj, form, change)
+
+
+# Модели для API ключей для верификации почты
+class EmailApiKeyLogInline(admin.StackedInline):
+    model = EmailApiKeyLog
+    extra = 0
+    readonly_fields = ('api_key', 'date_created', 'uses_amount')
+
+
+@admin.register(EmailApiKey)
+class EmailApiKeyAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'is_valid')
+    inlines = (EmailApiKeyLogInline, )

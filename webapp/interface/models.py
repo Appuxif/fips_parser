@@ -200,3 +200,31 @@ class ParserSetting(models.Model):
     def __str__(self):
         type = 'orders' if self.type == 0 else 'registers'
         return 'Настройки для ' + type + ' ' + str(self.id)
+
+
+# Таблица для API ключей для верификации почты
+class EmailApiKey(models.Model):
+    api_key = models.CharField('API Ключ', max_length=100)
+    is_valid = models.BooleanField(default=True)
+
+    def __str__(self):
+        return str(self.api_key)
+
+    class Meta:
+        verbose_name = 'API ключ'
+        verbose_name_plural = 'API ключи'
+
+
+# Записи использования API ключа
+class EmailApiKeyLog(models):
+    api_key = models.ForeignKey(EmailApiKey, on_delete=models.CASCADE)
+    date_created = models.DateTimeField('Дата использования', auto_now_add=True)
+    uses_amount = models.SmallIntegerField('Количество использований', default=0)
+
+    def __str__(self):
+        return str(self.api_key)
+
+    class Meta:
+        verbose_name = 'Использование API ключа'
+        verbose_name_plural = 'Использование API ключей'
+
