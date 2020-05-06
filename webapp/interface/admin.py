@@ -59,8 +59,9 @@ class ContactPersonInline(admin.StackedInline):
         (None, {'fields': ('office_address', 'zip', ('country', 'state'),
                            ('area', 'city'), ('rep_correspondence_address', 'rep_reg_number')),
                 'description': 'Адресные данные'}),
+        (None, {'fields': ('date_corrected',)})
     ]
-    # readonly_fields = ('company',)
+    readonly_fields = ('date_corrected',)
 
     # Чтобы выводить по два поля на ширину экрана
     # def get_fieldsets(self, request, obj=None):
@@ -135,7 +136,7 @@ class ContactPersonRegisterInline(admin.StackedInline):
 class ContactPersonAdmin(admin.ModelAdmin):
     list_display = ('id', 'full_name', 'company', 'rep_reg_number')
     exclude = ('order', 'register')
-    readonly_fields = ('company', )
+    readonly_fields = ('company', 'date_corrected')
     inlines = (ContactPersonOrderInline, ContactPersonRegisterInline)
     fieldsets = [
         (None, {'fields': ('company', )}),
@@ -151,6 +152,7 @@ class ContactPersonAdmin(admin.ModelAdmin):
         (None, {'fields': ('office_address', 'zip', ('country', 'state'),
                            ('area', 'city'), ('rep_correspondence_address', 'rep_reg_number')),
                 'description': 'Адресные данные'}),
+        (None, {'fields': ('date_corrected', )})
     ]
 
     def save_model(self, request, obj, form, change):

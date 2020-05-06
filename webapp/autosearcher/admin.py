@@ -3,6 +3,7 @@ import sys
 from django.contrib import admin, messages
 from django.db.models import Q
 from django.contrib.auth.models import User
+from django.contrib.admin.models import LogEntry
 from multiprocessing.connection import Client
 
 from .models import AutoSearchTask, AutoSearchTaskItem, \
@@ -142,14 +143,17 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
             corrector = None
         # TODO: Добавить проверку менеждера
         if obj.corrector == corrector:
-
+            # Определяем БД для документов
             Document = OrderDocument if obj.document_registry == 0 else RegisterDocument
+            # Получаем документ из задания
             doc = Document.objects.get(id=obj.document_id)
             print(doc)
             print(doc.company_set.all())
+            # Проверяем все компании документа на корректировку
             for company in doc.company_set.all():
                 print('company.date_corrected', company.date_corrected)
             print(doc.contactperson_set.all())
+            # Проверяем все контакты компании на корректировку
             for person in doc.contactperson_set.all():
                 print(person)
 
