@@ -242,7 +242,7 @@ class ParserSettingAdmin(admin.ModelAdmin):
 class EmailApiKeyLogInline(admin.StackedInline):
     model = EmailApiKeyLog
     extra = 0
-    readonly_fields = ('api_key', 'date_created', 'uses_amount')
+    readonly_fields = ('api_key', 'date_created', 'email_verified', 'result')
 
     def has_add_permission(self, request, obj):
         return False
