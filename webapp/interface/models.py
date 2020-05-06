@@ -220,7 +220,8 @@ class EmailApiKeyLog(models.Model):
     api_key = models.ForeignKey(EmailApiKey, on_delete=models.CASCADE)
     date_created = models.DateTimeField('Дата создания', auto_now_add=True)
     email_verified = models.CharField('Верифицируемый имейл', max_length=255)
-    result = models.CharField('Результат верификации', max_length=50)
+    email_is_valid = models.BooleanField()
+    result = models.TextField('Результат верификации', max_length=1000)
 
     def __str__(self):
         return str(self.api_key)

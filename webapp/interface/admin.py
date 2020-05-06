@@ -5,7 +5,7 @@ from multiprocessing.connection import Client
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import User
 from datetime import datetime, timezone
-from django.db.models import F
+from django.db.models import Q, F, Count
 import requests
 # Все контакты отображаются непосредственно в документе
 
@@ -48,7 +48,7 @@ class LogEntryAdmin(admin.ModelAdmin):
 class ContactPersonInline(admin.StackedInline):
     model = ContactPerson
     extra = 0
-    view_on_site = False
+    # view_on_site = False
     template = 'admin/edit_inline/stacked_file_person.html'
     fieldsets = [
         (None, {'fields': ('category', ('job_title'), 'photo',)}),
@@ -171,26 +171,32 @@ class ContactPersonAdmin(admin.ModelAdmin):
             corrector = request.user.corrector
         except User.corrector.RelatedObjectDoesNotExist:
             pass
-        # verify_url = 'http://api.quickemailverification.com/v1/verify?email={}&apikey={}'
-        # # Верификация имейла
-        # if obj.email and not obj.email_verified:
-        #     now = datetime.now(tz=timezone.utc)
-        #     today = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
-        #     api_key = EmailApiKey.objects.filter(is_valid=True)
-        #     # Находим ключи, у которых есть сегодняшние логи
-        #     api_key = api_key.filter(emailapikeylog__date_created__gte=today)
-        #     # Если есть такие ключи, проверяем количество использований
-        #     if api_key.count() != 0:
-        #         api_key = api_key.filter(emailapikeylog__uses_amount__lt=F('emailapikeylog__max_amount'))
-        #     api_key = api_key.first()
-        #     if api_key:
-        #         verify_url = verify_url.format(obj.email, api_key.api_key)
-        #         r = requests.get(verify_url)
-        #         print(r)
-        #         log = e.emailapikeylog_set.get_or_create()
-        #     else:
-        #         messages.add_message(request, messages.ERROR, 'Нет доступных API ключей для верификации почты')
-
+        verify_url = 'http://api.quickemailverification.com/v1/verify?email={}&apikey={}'
+        # Верификация имейла
+        if obj.email and not obj.email_verified:
+            now = datetime.now(tz=timezone.utc)
+            today = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+            api_key = EmailApiKey.objects.filter(is_valid=True)
+            # Находим ключи, у которых есть сегодняшние логи
+            today_logs_amount = Count('emailapikeylog', filter=Q(emailapikeylog__date_created__gte=today))
+            api_key = api_key.annotate(today_logs_amount=today_logs_amount).filter(today_logs_amount__lt=100).first()
+            print(api_key)
+            print(api_key.today_logs_amount)
+            if api_key:
+                verify_url = verify_url.format(obj.email, api_key.api_key)
+                r = requests.get(verify_url)
+                if r.status_code == 200:
+                    result = r.json()
+                    email_is_valid = result['result'] == 'valid'
+                    if email_is_valid:
+                        messages.add_message(request, messages.INFO, 'Почта верифицирована')
+                    else:
+                        messages.add_message(request, messages.ERROR, 'Почта не верифицирована')
+                    print(r.json())
+                    api_key.emailapikeylog_set.create(email_verified=obj.email,
+                                                      email_is_valid=email_is_valid, result=r.text[:1000])
+            else:
+                messages.add_message(request, messages.ERROR, 'Нет доступных API ключей для верификации почты')
 
         obj.save()
 
@@ -239,10 +245,10 @@ class ParserSettingAdmin(admin.ModelAdmin):
 
 
 # Модели для API ключей для верификации почты
-class EmailApiKeyLogInline(admin.StackedInline):
+class EmailApiKeyLogInline(admin.TabularInline):
     model = EmailApiKeyLog
     extra = 0
-    readonly_fields = ('api_key', 'date_created', 'email_verified', 'result')
+    readonly_fields = ('api_key', 'date_created', 'email_verified', 'email_is_valid')
 
     def has_add_permission(self, request, obj):
         return False
@@ -252,3 +258,8 @@ class EmailApiKeyLogInline(admin.StackedInline):
 class EmailApiKeyAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'is_valid')
     inlines = (EmailApiKeyLogInline, )
+
+
+@admin.register(EmailApiKeyLog)
+class EmailApiKeyAdmin(admin.ModelAdmin):
+    list_display = ('api_key', 'date_created', 'email_verified', 'result')
