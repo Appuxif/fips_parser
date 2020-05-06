@@ -1,9 +1,12 @@
 import traceback
 import sys
-from django.contrib import admin
+from django.contrib import admin, messages
 from multiprocessing.connection import Client
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import User
+from datetime import datetime, timezone
+from django.db.models import F
+import requests
 # Все контакты отображаются непосредственно в документе
 
 # from .models import OrderContact, OrderContactPerson, RegisterContact, RegisterContactPerson, ContactPerson, Company
@@ -168,6 +171,22 @@ class ContactPersonAdmin(admin.ModelAdmin):
             corrector = request.user.corrector
         except User.corrector.RelatedObjectDoesNotExist:
             pass
+        # verify_url = 'http://api.quickemailverification.com/v1/verify?email={}&apikey={}'
+        # if obj.email and not obj.email_verified:
+        #     now = datetime.now(tz=timezone.utc)
+        #     today = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+        #     api_key = EmailApiKey.objects.filter(is_valid=True)
+        #     api_key = api_key.filter(emailapikeylog__date_created__gte=today) or api_key
+        #     api_key = api_key.filter(emailapikeylog__uses_amount__lt=F('emailapikeylog__max_amount')).first()
+        #     if api_key:
+        #         verify_url = verify_url.format(obj.email, api_key.api_key)
+        #         r = requests.get(verify_url)
+        #         print(r)
+        #         log = e.emailapikeylog_set.get_or_create()
+        #     else:
+        #         messages.add_message(request, messages.ERROR, 'Нет доступных API ключей для верификации почты')
+
+
         obj.save()
 
     # Кастомное логирование при изменениях в заявках
@@ -219,6 +238,9 @@ class EmailApiKeyLogInline(admin.StackedInline):
     model = EmailApiKeyLog
     extra = 0
     readonly_fields = ('api_key', 'date_created', 'uses_amount')
+
+    def has_add_permission(self, request, obj):
+        return False
 
 
 @admin.register(EmailApiKey)

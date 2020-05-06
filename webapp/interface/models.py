@@ -220,6 +220,7 @@ class EmailApiKeyLog(models.Model):
     api_key = models.ForeignKey(EmailApiKey, on_delete=models.CASCADE)
     date_created = models.DateTimeField('Дата использования', auto_now_add=True)
     uses_amount = models.SmallIntegerField('Количество использований', default=0)
+    max_amount = models.SmallIntegerField('Максимальное количество', default=100)
 
     def __str__(self):
         return str(self.api_key)
