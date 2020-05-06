@@ -216,7 +216,7 @@ class EmailApiKey(models.Model):
 
 
 # Записи использования API ключа
-class EmailApiKeyLog(models):
+class EmailApiKeyLog(models.Model):
     api_key = models.ForeignKey(EmailApiKey, on_delete=models.CASCADE)
     date_created = models.DateTimeField('Дата использования', auto_now_add=True)
     uses_amount = models.SmallIntegerField('Количество использований', default=0)
