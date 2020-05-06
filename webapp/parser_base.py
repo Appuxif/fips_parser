@@ -503,10 +503,9 @@ class Parser:
                                 f"WHERE id = '{document_obj['id']}'")
         finally:
             self.documents_in_parsing.remove(f"'{document_obj['id']}'")
-            if history['message']:
-                history['message'] = history['message'].replace("'", '"')
-                history['message'] = f"'{history['message']}'"
             if history['is_error'] == 'TRUE' or history['message']:
+                history['message'] = history['message'].replace("'", '"')
+                history['message'] = f"'{history['message']}'" if history['message'] or 'NULL'
                 self._print('Лог парсинга для', document_obj['number'], ' сохранен в БД\n')
                 self._print(history)
                 with self.get_workers().lock:
@@ -1106,6 +1105,7 @@ def get_or_create_company(self, document, document_person, save_anyway=True, mak
         company['form_correct'] = company['form']
         company['address'] = f"'{company['address']}'" if company.get('address') else 'NULL'
         company['sign_char'] = f"'{company['sign_char']}'" if company.get('sign_char') else 'NULL'
+        company['date_corrected'] = 'NULL'
         with self.get_workers().lock:
             company['id'] = DB().add_row(f"interface_company", company)
     # Если компания нашлась, то просто передаем ID
@@ -1163,6 +1163,7 @@ def get_or_create_person(self, document, document_person, company):
             person['company_id'] = f"'{company['id']}'"
             person['email_verified'] = 'FALSE'
             person['email_correct'] = 'TRUE'
+            person['date_corrected'] = 'NULL'
 
             with self.get_workers().lock:
                 person['id'] = DB().add_row(f"interface_contactperson", person)
