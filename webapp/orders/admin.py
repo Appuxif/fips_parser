@@ -280,7 +280,7 @@ class LeafAdmin(AdvancedSearchAdmin):
 
 @admin.register(ParserHistory)
 class ParserHistoryAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'is_error', 'date_created')
+    list_display = ('__str__', 'is_error', 'date_created', 'message')
     readonly_fields = ('document', 'date_created', 'is_error', 'error_log_file', 'message')
 
 # Функции ################################################################
