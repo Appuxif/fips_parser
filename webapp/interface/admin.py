@@ -3,6 +3,7 @@ import sys
 from django.contrib import admin
 from multiprocessing.connection import Client
 from django.contrib.admin.models import LogEntry
+from django.contrib.auth.models import User
 # Все контакты отображаются непосредственно в документе
 
 # from .models import OrderContact, OrderContactPerson, RegisterContact, RegisterContactPerson, ContactPerson, Company
@@ -98,9 +99,12 @@ class CompanyAdmin(admin.ModelAdmin):
     inlines = [ContactPersonInline, OrderCompanyInline, RegisterCompanyInline]
     exclude = ('order', 'register')
     list_display = ('__str__', 'sign_char', 'form', 'form_correct', 'name', 'name_correct', 'address')
-    readonly_fields = ('name', 'form')
+    readonly_fields = ('name', 'form', 'date_corrected')
     # Шаблон, на котором добавлено лого компании
     change_form_template = 'admin/custom_change_form_company.html'
+
+    # def save_related(self, request, form, formsets, change):
+    # def save_model(self, request, obj, form, change):
 
 
 class ContactPersonOrderInline(admin.StackedInline):
@@ -148,6 +152,14 @@ class ContactPersonAdmin(admin.ModelAdmin):
                            ('area', 'city'), ('rep_correspondence_address', 'rep_reg_number')),
                 'description': 'Адресные данные'}),
     ]
+
+    def save_model(self, request, obj, form, change):
+        # super(ContactPersonAdmin, self).save_model(request, obj, form, change)
+        try:
+            corrector = request.user.corrector
+        except User.corrector.RelatedObjectDoesNotExist:
+            pass
+        obj.save()
 
 
 # TODO: Для отладки. Потом удалить

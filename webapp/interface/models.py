@@ -51,6 +51,8 @@ class Company(models.Model):
 
     logo = models.ImageField('Логотип компании', upload_to=company_logo_path, null=True, blank=True)
 
+    date_corrected = models.DateField('Дата последней корректировки', null=True, blank=True)
+
     def __str__(self):
         return str(self.name)
 
