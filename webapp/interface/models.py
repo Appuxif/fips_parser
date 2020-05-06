@@ -217,10 +217,10 @@ class EmailApiKey(models.Model):
 
 # Записи использования API ключа
 class EmailApiKeyLog(models.Model):
-    api_key = models.ForeignKey(EmailApiKey, on_delete=models.CASCADE)
+    api_key = models.ForeignKey(EmailApiKey, on_delete=models.CASCADE, null=True)
     date_created = models.DateTimeField('Дата создания', auto_now_add=True)
     email_verified = models.CharField('Верифицируемый имейл', max_length=255)
-    email_is_valid = models.BooleanField()
+    email_is_valid = models.BooleanField('Валидация успешна')
     result = models.TextField('Результат верификации', max_length=1000)
 
     def __str__(self):
@@ -229,4 +229,7 @@ class EmailApiKeyLog(models.Model):
     class Meta:
         verbose_name = 'Использование API ключа'
         verbose_name_plural = 'Использование API ключей'
+
+    def get_absolute_url(self):
+        return f'/admin/interface/emailapikeylog/{self.id}/change/'
 

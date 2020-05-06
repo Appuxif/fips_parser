@@ -179,10 +179,10 @@ class ContactPersonAdmin(admin.ModelAdmin):
             api_key = EmailApiKey.objects.filter(is_valid=True)
             # Находим ключи, у которых есть сегодняшние логи
             today_logs_amount = Count('emailapikeylog', filter=Q(emailapikeylog__date_created__gte=today))
-            api_key = api_key.annotate(today_logs_amount=today_logs_amount).filter(today_logs_amount__lt=100).first()
+            api_key = api_key.annotate(today_logs_amount=today_logs_amount).filter(today_logs_amount__lt=2).first()
             print(api_key)
-            print(api_key.today_logs_amount)
             if api_key:
+                print(api_key.today_logs_amount)
                 verify_url = verify_url.format(obj.email, api_key.api_key)
                 r = requests.get(verify_url)
                 if r.status_code == 200:
@@ -190,6 +190,7 @@ class ContactPersonAdmin(admin.ModelAdmin):
                     email_is_valid = result['result'] == 'valid'
                     if email_is_valid:
                         messages.add_message(request, messages.INFO, 'Почта верифицирована')
+                        obj.email_verified = True
                     else:
                         messages.add_message(request, messages.ERROR, 'Почта не верифицирована')
                     print(r.json())
@@ -197,6 +198,9 @@ class ContactPersonAdmin(admin.ModelAdmin):
                                                       email_is_valid=email_is_valid, result=r.text[:1000])
             else:
                 messages.add_message(request, messages.ERROR, 'Нет доступных API ключей для верификации почты')
+                EmailApiKeyLog.objects.create(email_verified=obj.email,
+                                              email_is_valid=False,
+                                              result='Нет доступных API ключей для верификации почты')
 
         obj.save()
 
@@ -248,7 +252,7 @@ class ParserSettingAdmin(admin.ModelAdmin):
 class EmailApiKeyLogInline(admin.TabularInline):
     model = EmailApiKeyLog
     extra = 0
-    readonly_fields = ('api_key', 'date_created', 'email_verified', 'email_is_valid')
+    readonly_fields = ('api_key', 'date_created', 'email_verified', 'email_is_valid', 'result')
 
     def has_add_permission(self, request, obj):
         return False
@@ -262,4 +266,5 @@ class EmailApiKeyAdmin(admin.ModelAdmin):
 
 @admin.register(EmailApiKeyLog)
 class EmailApiKeyAdmin(admin.ModelAdmin):
-    list_display = ('api_key', 'date_created', 'email_verified', 'result')
+    list_display = ('api_key', 'date_created', 'email_verified', 'email_is_valid')
+    readonly_fields = ('api_key', 'date_created', 'email_verified', 'email_is_valid', 'result')
