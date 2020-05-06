@@ -218,9 +218,9 @@ class EmailApiKey(models.Model):
 # Записи использования API ключа
 class EmailApiKeyLog(models.Model):
     api_key = models.ForeignKey(EmailApiKey, on_delete=models.CASCADE)
-    date_created = models.DateTimeField('Дата использования', auto_now_add=True)
-    uses_amount = models.SmallIntegerField('Количество использований', default=0)
-    max_amount = models.SmallIntegerField('Максимальное количество', default=100)
+    date_created = models.DateTimeField('Дата создания', auto_now_add=True)
+    email_verified = models.CharField('Верифицируемый имейл', max_length=255)
+    status = models.CharField('Результат верификации', max_length=50)
 
     def __str__(self):
         return str(self.api_key)

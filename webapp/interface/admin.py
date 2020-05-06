@@ -172,12 +172,17 @@ class ContactPersonAdmin(admin.ModelAdmin):
         except User.corrector.RelatedObjectDoesNotExist:
             pass
         # verify_url = 'http://api.quickemailverification.com/v1/verify?email={}&apikey={}'
+        # # Верификация имейла
         # if obj.email and not obj.email_verified:
         #     now = datetime.now(tz=timezone.utc)
         #     today = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
         #     api_key = EmailApiKey.objects.filter(is_valid=True)
-        #     api_key = api_key.filter(emailapikeylog__date_created__gte=today) or api_key
-        #     api_key = api_key.filter(emailapikeylog__uses_amount__lt=F('emailapikeylog__max_amount')).first()
+        #     # Находим ключи, у которых есть сегодняшние логи
+        #     api_key = api_key.filter(emailapikeylog__date_created__gte=today)
+        #     # Если есть такие ключи, проверяем количество использований
+        #     if api_key.count() != 0:
+        #         api_key = api_key.filter(emailapikeylog__uses_amount__lt=F('emailapikeylog__max_amount'))
+        #     api_key = api_key.first()
         #     if api_key:
         #         verify_url = verify_url.format(obj.email, api_key.api_key)
         #         r = requests.get(verify_url)
