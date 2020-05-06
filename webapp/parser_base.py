@@ -505,7 +505,7 @@ class Parser:
             self.documents_in_parsing.remove(f"'{document_obj['id']}'")
             if history['is_error'] == 'TRUE' or history['message']:
                 history['message'] = history['message'].replace("'", '"')
-                history['message'] = f"'{history['message']}'" if history['message'] or 'NULL'
+                history['message'] = f"'{history['message']}'" if history['message'] else 'NULL'
                 self._print('Лог парсинга для', document_obj['number'], ' сохранен в БД\n')
                 self._print(history)
                 with self.get_workers().lock:
