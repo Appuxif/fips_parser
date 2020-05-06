@@ -593,6 +593,7 @@ class Parser:
                         with self.get_workers().lock:
                             history['message'] += f'Превышен предел прокси {proxy["id"]}\n'
                             proxy['status'] = text
+                            proxy['documents_parsed'] = 999999
                             # DB().executeone(f"UPDATE interface_proxies SET status = '{text}'"
                             #                 f"WHERE id = '{proxy['id']}'")
                         return False

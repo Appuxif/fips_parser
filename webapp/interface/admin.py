@@ -129,9 +129,25 @@ class ContactPersonRegisterInline(admin.StackedInline):
 
 @admin.register(ContactPerson)
 class ContactPersonAdmin(admin.ModelAdmin):
-    list_display = ('id', 'company', 'full_name', 'rep_reg_number')
-    exclude = ('company', 'order', 'register')
+    list_display = ('id', 'full_name', 'company', 'rep_reg_number')
+    exclude = ('order', 'register')
+    readonly_fields = ('company', )
     inlines = (ContactPersonOrderInline, ContactPersonRegisterInline)
+    fieldsets = [
+        (None, {'fields': ('company', )}),
+        (None, {'fields': ('category', ('job_title'), 'photo',)}),
+        (None, {'fields': ('full_name', ('last_name', 'first_name', 'middle_name'),
+                           ('gender',), 'bday_date'),
+                'description': 'Личные данные'}),
+        (None, {'fields': (('email', 'email_verified', 'email_correct'),
+                           ('messenger_type', 'messenger_id', 'nick_name'),
+                           ('mobile_phone', 'office_phone', 'home_phone', 'fax'),
+                           'personal_web',),
+                'description': 'Контактные данные'}),
+        (None, {'fields': ('office_address', 'zip', ('country', 'state'),
+                           ('area', 'city'), ('rep_correspondence_address', 'rep_reg_number')),
+                'description': 'Адресные данные'}),
+    ]
 
 
 # TODO: Для отладки. Потом удалить
