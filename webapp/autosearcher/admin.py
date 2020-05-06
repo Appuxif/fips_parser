@@ -1,8 +1,8 @@
 import traceback
-
 import sys
 from django.contrib import admin, messages
 from django.db.models import Q
+from django.contrib.auth.models import User
 from multiprocessing.connection import Client
 
 from .models import AutoSearchTask, AutoSearchTaskItem, \
@@ -108,14 +108,52 @@ class CorrectorTaskInline(admin.TabularInline):
     ordering = ('date_task_done', 'datetime_created')
     max_num = 30
     fields = ('document_registry', 'document_id', 'date_created', 'task_done', 'date_task_done')
-    # def has_add_permission(self, request, obj):
-    #     return False
+
+    def view_on_site(self, obj):
+        return f'/admin/autosearcher/contactperson/{obj.contactperson_id}/change/'
 
 
 @admin.register(Corrector)
 class CorrectorAdmin(admin.ModelAdmin):
-    inlines = (CorrectorTaskInline, )
+    inlines = (CorrectorTaskInline, )  # TODO: Может стоит убрать
     save_on_top = True
+
+
+@admin.register(CorrectorTask)
+class CorrectorTaskAdmin(admin.ModelAdmin):
+    readonly_fields = ('corrector', 'document_registry', 'document_id', 'datetime_created',
+                       'date_created', 'date_task_done', )
+    list_display = ('__str__', 'corrector', 'document_registry', 'document_id',
+                    'task_done', 'date_created')
+
+    def get_queryset(self, request):
+        qs = super(CorrectorTaskAdmin, self).get_queryset(request)
+        try:
+            qs = qs.filter(corrector_id=request.user.corrector.id)
+        except User.corrector.RelatedObjectDoesNotExist:
+            pass
+        return qs
+
+    def save_model(self, request, obj, form, change):
+        # super(CorrectorTaskAdmin, self).save_model(request, obj, form, change)
+        try:
+            corrector = request.user.corrector
+        except User.corrector.RelatedObjectDoesNotExist:
+            corrector = None
+        # TODO: Добавить проверку менеждера
+        if obj.corrector == corrector:
+
+            Document = OrderDocument if obj.document_registry == 0 else RegisterDocument
+            doc = Document.objects.get(id=obj.document_id)
+            print(doc)
+            print(doc.company_set.all())
+            for company in doc.company_set.all():
+                print('company.date_corrected', company.date_corrected)
+            print(doc.contactperson_set.all())
+            for person in doc.contactperson_set.all():
+                print(person)
+
+            obj.save()
 
 
 @admin.register(AutoSearchLog)

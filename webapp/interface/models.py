@@ -51,7 +51,7 @@ class Company(models.Model):
 
     logo = models.ImageField('Логотип компании', upload_to=company_logo_path, null=True, blank=True)
 
-    date_corrected = models.DateField('Дата последней корректировки', null=True, blank=True)
+    date_corrected = models.DateField('Дата последней корректировки', auto_now=True, null=True, blank=True)
 
     def __str__(self):
         return str(self.name)
@@ -152,6 +152,8 @@ class ContactPerson(models.Model):
 
     order = models.ManyToManyField(OrderDocument, related_query_name='person', blank=True)
     register = models.ManyToManyField(RegisterDocument, related_query_name='person', blank=True)
+
+    date_corrected = models.DateField('Дата последней корректировки', auto_now=True, null=True, blank=True)
 
     def __str__(self):
         return 'Контакт ' + str(self.id) + ' компании ' + str(self.company)
