@@ -116,7 +116,6 @@ class CorrectorTaskInline(admin.TabularInline):
 class CorrectorAdmin(admin.ModelAdmin):
     inlines = (CorrectorTaskInline, )
     save_on_top = True
-    list_select_related = ('correctortask', )
 
 
 @admin.register(AutoSearchLog)

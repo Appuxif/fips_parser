@@ -345,6 +345,7 @@ class Parser:
                 if not self.proxies:
                     # self._lprint('Поиск прокси в БД')
                     today = date.today()
+                    two_days_ago = today - timedelta(days=2)
                     query = f"SELECT * FROM interface_proxies " \
                             f"WHERE is_banned = FALSE AND is_working = TRUE AND in_use = FALSE " \
                             f"AND (documents_parsed < {self.documents_parsed} AND date_last_used = '{today}' " \
