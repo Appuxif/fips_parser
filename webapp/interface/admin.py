@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 
 # from .models import OrderContact, OrderContactPerson, RegisterContact, RegisterContactPerson, ContactPerson, Company
 from .models import ContactPerson, Company, RegisterCompanyRel, OrderCompanyRel, ParserSetting, Proxies
-
+from interface.change_message_utils import construct_change_message
 
 # from orders.admin import CompanyInline as OrderCompanyInline
 # from registers.admin import CompanyInline as RegisterCompanyInline
@@ -103,9 +103,14 @@ class CompanyAdmin(admin.ModelAdmin):
     readonly_fields = ('name', 'form', 'date_corrected')
     # Шаблон, на котором добавлено лого компании
     change_form_template = 'admin/custom_change_form_company.html'
-
+    save_on_top = True
     # def save_related(self, request, form, formsets, change):
     # def save_model(self, request, obj, form, change):
+
+    # Кастомное логирование при изменениях в заявках
+    def construct_change_message(self, request, form, formsets, add=False):
+        change_message = construct_change_message(form, formsets, add)
+        return change_message
 
 
 class ContactPersonOrderInline(admin.StackedInline):
@@ -138,6 +143,7 @@ class ContactPersonAdmin(admin.ModelAdmin):
     exclude = ('order', 'register')
     readonly_fields = ('company', 'date_corrected')
     inlines = (ContactPersonOrderInline, ContactPersonRegisterInline)
+    save_on_top = True
     fieldsets = [
         (None, {'fields': ('company', )}),
         (None, {'fields': ('category', ('job_title'), 'photo',)}),
@@ -162,6 +168,11 @@ class ContactPersonAdmin(admin.ModelAdmin):
         except User.corrector.RelatedObjectDoesNotExist:
             pass
         obj.save()
+
+    # Кастомное логирование при изменениях в заявках
+    def construct_change_message(self, request, form, formsets, add=False):
+        change_message = construct_change_message(form, formsets, add)
+        return change_message
 
 
 # TODO: Для отладки. Потом удалить

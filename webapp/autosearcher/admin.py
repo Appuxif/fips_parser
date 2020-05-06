@@ -1,9 +1,11 @@
 import traceback
 import sys
+from datetime import datetime, timezone, date
+
 from django.contrib import admin, messages
 from django.db.models import Q
 from django.contrib.auth.models import User
-from django.contrib.admin.models import LogEntry
+from django.contrib.admin.models import LogEntry, ContentType
 from multiprocessing.connection import Client
 
 from .models import AutoSearchTask, AutoSearchTaskItem, \
@@ -126,6 +128,7 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                        'date_created', 'date_task_done', )
     list_display = ('__str__', 'corrector', 'document_registry', 'document_id',
                     'task_done', 'date_created')
+    save_on_top = True
 
     def get_queryset(self, request):
         qs = super(CorrectorTaskAdmin, self).get_queryset(request)
@@ -142,22 +145,52 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
         except User.corrector.RelatedObjectDoesNotExist:
             corrector = None
         # TODO: Добавить проверку менеждера
-        if obj.corrector == corrector:
+        if obj.task_done and obj.corrector == corrector:
             # Определяем БД для документов
             Document = OrderDocument if obj.document_registry == 0 else RegisterDocument
             # Получаем документ из задания
             doc = Document.objects.get(id=obj.document_id)
             print(doc)
             print(doc.company_set.all())
+
+            corrector_logs = LogEntry.objects.filter(user_id=corrector.user.id)
+            now = datetime.now(tz=timezone.utc)
+            today = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+
             # Проверяем все компании документа на корректировку
+            company_corrected = True
             for company in doc.company_set.all():
-                print('company.date_corrected', company.date_corrected)
+                # Ищем изменения в компании от этого пользователя в логах
+                company_content_type = ContentType.objects.get(model='company')
+                company_corrector_logs = corrector_logs.filter(content_type_id=company_content_type.id)
+                company_corrector_logs = company_corrector_logs.filter(object_id=company.id)
+                company_corrector_logs = company_corrector_logs.filter(action_time__gte=obj.datetime_created)
+                if len(company_corrector_logs) == 0:
+                    company_corrected = False
+                    messages.add_message(request, messages.ERROR, f'Компания {company} не была откорректирована')
+                # print('company_corrector_logs', company_corrector_logs)
+                # print('company.date_corrected', company.date_corrected)
+
             print(doc.contactperson_set.all())
             # Проверяем все контакты компании на корректировку
+            person_corrected = True
             for person in doc.contactperson_set.all():
-                print(person)
+                # Ищем изменения в контакте от этого пользователя в логах
+                person_content_type = ContentType.objects.get(model='contactperson')
+                person_corrector_logs = corrector_logs.filter(content_type_id=person_content_type.id)
+                person_corrector_logs = person_corrector_logs.filter(object_id=person.id)
+                person_corrector_logs = person_corrector_logs.filter(action_time__gte=obj.datetime_created)
+                if len(person_corrector_logs) == 0:
+                    company_corrected = False
+                    messages.add_message(request, messages.ERROR, f'Контакт {person} не был откорректирован')
+                # print('company_corrector_logs', person_corrector_logs)
+                # print('company.date_corrected', person.date_corrected)
 
-            obj.save()
+            if person_corrected and company_corrected:
+                messages.add_message(request, messages.INFO, f'Задача выполнена')
+                obj.save()
+            else:
+                messages.add_message(request, messages.ERROR, f'Задача не выполнена')
 
 
 @admin.register(AutoSearchLog)

@@ -84,13 +84,14 @@
             let div = col.firstElementChild;
             let div_text = div.textContent.trim();
             // col.innerHTML = '<button class="col_button" form="list_display_form" name="del_' + i + '">' + div.innerHTML + '</button>'
-            col.innerHTML = '<button class="col_button" form="list_display_form" name="col_' + i + '">' + div.innerHTML + '</button>'
+            col.innerHTML = '<button class="col_button" form="list_display_form" name="col_' + i + '">' + div.innerHTML + '</button>';
         }
 
         let td_links = document.getElementsByClassName('field-documentparse__documentfile_set__links');
         for (let link of td_links) {
             link.innerHTML = link.innerText;
-            link.innerHTML = '<a href="' + link.innerText + '" target="_blank"><img src="' + link.innerText + '" alt="file" width="100px"></a>'
+            if (link.innerText !== '-')
+                link.innerHTML = '<a href="' + link.innerText + '" target="_blank"><img src="' + link.innerText + '" alt="file" width="100px"></a>';
         }
     }
 
