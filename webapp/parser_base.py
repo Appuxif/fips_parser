@@ -377,6 +377,7 @@ class Parser:
 
                     proxy = dict(proxy)
                     proxy['in_use'] = 'TRUE'
+                    print(today,proxy['date_last_used'])
                     if proxy['date_last_used'] != today:
                         proxy['documents_parsed'] = 0
                         # proxy['date_last_used'] = 'CURDATE()'
