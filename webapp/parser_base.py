@@ -349,7 +349,7 @@ class Parser:
                     query = f"SELECT * FROM interface_proxies " \
                             f"WHERE is_banned = FALSE AND is_working = TRUE AND in_use = FALSE " \
                             f"AND (documents_parsed < {self.documents_parsed} AND date_last_used = '{today}' " \
-                            f"OR date_last_used != '{today}')" \
+                            f"OR date_last_used < '{two_days_ago}')" \
                             f"LIMIT 1"
                     with self.get_workers().lock:
                         db = DB()
@@ -377,8 +377,8 @@ class Parser:
 
                     proxy = dict(proxy)
                     proxy['in_use'] = 'TRUE'
-                    print(today,proxy['date_last_used'])
-                    if proxy['date_last_used'] != today:
+                    print(two_days_ago, proxy['date_last_used'])
+                    if proxy['date_last_used'] < two_days_ago:
                         proxy['documents_parsed'] = 0
                         # proxy['date_last_used'] = 'CURDATE()'
 
