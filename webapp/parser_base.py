@@ -686,7 +686,10 @@ def download_file(session, proxies, a, document, self_name):
     # print(direct_url)
     # Если файла нет на диске, то загружаем его
     if not os.path.exists(filepath):
-        r = session.get(direct_url, proxies=proxies)
+        try:
+            r = session.get(direct_url, proxies=proxies)
+        except:
+            return None
         if r.status_code != 200:
             # print('Файл не был загружен')
             return None
