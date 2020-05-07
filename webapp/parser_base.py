@@ -667,6 +667,8 @@ def get_date_from_string(string):
     if match:
         match = match.groupdict()
         date_splitted = [int(match['day']), int(match['month']), int(match['year'])]
+        if date_splitted[1] == 2 and date_splitted[0] >= 29:
+            date_splitted[0] -= 1
         return date(date_splitted[2], date_splitted[1], date_splitted[0])
     return None
 
