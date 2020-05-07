@@ -39,7 +39,14 @@ class OrdersParser(Parser):
         queries = []  # Список запросов к БД для отправки одной кучей
 
         # Получение статуса
-        status = page.find('tr', class_='Status').text
+        status = page.find('tr', class_='Status')
+        if status is None:
+            self._print(document['number'], 'Не найдена статус')
+            with self.get_workers().lock:
+                DB().executeone(f"UPDATE {self.dbdocument} SET document_exists = FALSE WHERE id = '{document['id']}'")
+            return
+
+        status = status.text
         status = re.sub('(Статус|Статус:|Статус: )', '', status)
         status = ' '.join(status.split())
         document_parse['status'] = f"'{status}'"
