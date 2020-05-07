@@ -583,7 +583,6 @@ class Parser:
                         # existence = True
                         # break
                     text = r.text
-                    text = 'Превышен допустимый предел' # TODO: Для отладки
                     page_content = r.content
 
                     if 'Слишком быстрый просмотр документов' in text:
