@@ -1194,13 +1194,13 @@ def get_or_create_person(self, document, document_person, company):
 def parse_contacts_from_documentparse(self, document, document_parse, history):
     # Парсинг заявителя
     applicant = parse_applicant(document_parse, 'applicant')
-    if applicant:
-        print('applicant', applicant, '\n')
+    # if applicant:
+    #     print('applicant', applicant, '\n')
 
     # Парсинг Правообладателя
     copyright_holder = parse_applicant(document_parse, 'copyright_holder')
-    if copyright_holder:
-        print('copyright_holder', copyright_holder, '\n')
+    # if copyright_holder:
+    #     print('copyright_holder', copyright_holder, '\n')
 
     document_person = applicant or copyright_holder or {}
     # Парсинг патентного поверенного
@@ -1211,14 +1211,14 @@ def parse_contacts_from_documentparse(self, document, document_parse, history):
         else:
             document_person['person']['rep_correspondence_address'] = document_parse['address'][1:-1]
 
-    if patent_atty:
-        print('patent_atty', patent_atty, '\n')
+    # if patent_atty:
+    #     print('patent_atty', patent_atty, '\n')
 
     # Парсинг адреса для переписки
     # correspondence_address = parse_correspondence_address(document_parse)
     correspondence_address = parse_applicant(document_parse, 'address')
-    if correspondence_address:
-        print('correspondence_address', correspondence_address, '\n')
+    # if correspondence_address:
+    #     print('correspondence_address', correspondence_address, '\n')
 
     # Ищем компанию в БД
     company = get_or_create_company(self, document, document_person, make_holder=True)
