@@ -56,7 +56,7 @@ class Processor:
 
     def process_documents(self, task, documents, f, log_object):
         documents_count = documents.count()
-        text = f'Найдено {documents_count} документов'
+        text = f'{documents_count} documents found'
         self.vprint(text)
         f.write(text + '\n')
         log_object.message = (log_object.message or '') + text + '\n'
@@ -67,7 +67,7 @@ class Processor:
         # Фильтр корректоров по общему количеству задач
         correctors = self.Corrector.objects.annotate(tasks_count=Count('task')).order_by('tasks_count')
         correctors_count = correctors.count()
-        self.vprint('Найдено', correctors_count, 'корректоров')
+        self.vprint(correctors_count, 'correctors found')
 
         today = date.today()
         # now = datetime.now()
@@ -88,7 +88,7 @@ class Processor:
             # Проверяем, что для этого докуента не было создано задачи
             tasks = self.CorrectorTask.objects.filter(document_id=document.id).first()
             if tasks is not None:
-                text = f'{i} {document} Уже есть задача'
+                text = f'{i} {document} task exists'
                 self.vprint(text)
                 f.write(text + '\n')
                 # task_already_exists += str(document.number) + ', '
@@ -98,7 +98,7 @@ class Processor:
             company = document.company_set.filter(ordercompanyrel__company_is_holder=True).first()
             sign_char = company.sign_char if company else None
             if sign_char is None:
-                text = f'{i} {document} sign_char не определен для компании'
+                text = f'{i} {document} sign_char is not resolved'
                 self.vprint(text)
                 f.write(text + '\n')
                 continue
@@ -119,16 +119,16 @@ class Processor:
                         break
             else:
                 if all_correctors_done:
-                    text = f'{i} {document} у всех корректоров переполнены списки задач'
+                    text = f'{i} {document} all correctors have overloaded task lists'
                     self.vprint(text)
                     f.write(text + '\n')
                     break
 
-                text = f'{i} {document} Нет подходящего корректора {sign_char} '
+                text = f'{i} {document} there is no corrector for {sign_char} {company.name[:5]}'
                 self.vprint(text)
                 f.write(text + '\n')
                 continue
-            text = f'{i} {document} Корректор найден {corrector} {tasks_total} {tasks_today}'
+            text = f'{i} {document} corrector found {corrector} {tasks_total} {tasks_today}'
             self.vprint(text)
             f.write(text + '\n')
 
@@ -141,10 +141,10 @@ class Processor:
             documents_distributed += 1
             correctors_ids = sorted(correctors_dict, key=lambda x: correctors_dict[x]['total'])
 
-        text = f'Распределено документов {documents_distributed}\n'
-        text += f'Корректоров {correctors_count}\n'
+        text = f'Documents distributed {documents_distributed}\n'
+        text += f'Correctors {correctors_count}\n'
         for corrector_id, obj in correctors_dict.items():
-            text += f'{obj["name"]}: добавлено задач {obj["documents_distributed"]}, \n'
+            text += f'{obj["name"]}: added tasks {obj["documents_distributed"]}, \n'
         log_object.message = (log_object.message or '') + text
         self.vprint(log_object.message)
 

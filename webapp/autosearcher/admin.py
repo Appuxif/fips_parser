@@ -91,15 +91,16 @@ class AutoSearchTaskAdmin(admin.ModelAdmin):
         messages.add_message(request, messages.INFO, 'Найдено ' + str(c) + ' документов')
 
     def save_model(self, request, obj, form, change):
-        try:
-            socket_path = '/var/www/fips_parser/tasks_processor.sock'
-            with Client(socket_path) as conn:
-                conn.send('self.load_tasks(5)')
-        except FileNotFoundError:
-            print('AutoSearchTaskAdmin save_model Сокет не найден')
-        except:
-            print('AutoSearchTaskAdmin save_model Ошибка подключения')
-            traceback.print_exc(file=sys.stdout)
+        if obj.is_active:
+            try:
+                socket_path = '/var/www/fips_parser/tasks_processor.sock'
+                with Client(socket_path) as conn:
+                    conn.send('self.load_tasks(5)')
+            except FileNotFoundError:
+                print('AutoSearchTaskAdmin save_model Сокет не найден')
+            except:
+                print('AutoSearchTaskAdmin save_model Ошибка подключения')
+                traceback.print_exc(file=sys.stdout)
         return super(AutoSearchTaskAdmin, self).save_model(request, obj, form, change)
 
 
