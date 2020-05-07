@@ -38,8 +38,8 @@ class Processor:
         django.db.close_old_connections()
 
         self.load_tasks()
-        # self.listener = threading.Thread(target=self.listener_thread)
-        # self.listener.start()
+        self.listener = threading.Thread(target=self.listener_thread)
+        self.listener.start()
         self.vprint('Запущен процессор')
 
     def vprint(self, *args, **kwargs):
@@ -50,14 +50,14 @@ class Processor:
     def load_tasks(self, sleep_time=0):
         if sleep_time:
             sleep(sleep_time)
-        print('Загрузка списка задач из БД')
+        self.vprint('Загрузка списка задач из БД')
         self.tasks = {task.id: task for task in self.AutoSearchTask.objects.all() if task.is_active}
-        print(self.tasks)
+        self.vprint(self.tasks)
 
     def process_documents(self, task, documents, f, log_object):
         documents_count = documents.count()
         text = f'Найдено {documents_count} документов'
-        print(text)
+        self.vprint(text)
         f.write(text + '\n')
         log_object.message = (log_object.message or '') + text + '\n'
 
@@ -67,7 +67,7 @@ class Processor:
         # Фильтр корректоров по общему количеству задач
         correctors = self.Corrector.objects.annotate(tasks_count=Count('task')).order_by('tasks_count')
         correctors_count = correctors.count()
-        print('Найдено', correctors_count, 'корректоров')
+        self.vprint('Найдено', correctors_count, 'корректоров')
 
         today = date.today()
         # now = datetime.now()
@@ -89,7 +89,7 @@ class Processor:
             tasks = self.CorrectorTask.objects.filter(document_id=document.id).first()
             if tasks is not None:
                 text = f'{i} {document} Уже есть задача'
-                print(text)
+                self.vprint(text)
                 f.write(text + '\n')
                 # task_already_exists += str(document.number) + ', '
                 continue
@@ -99,7 +99,7 @@ class Processor:
             sign_char = company.sign_char if company else None
             if sign_char is None:
                 text = f'{i} {document} sign_char не определен для компании'
-                print(text)
+                self.vprint(text)
                 f.write(text + '\n')
                 continue
 
@@ -120,16 +120,16 @@ class Processor:
             else:
                 if all_correctors_done:
                     text = f'{i} {document} у всех корректоров переполнены списки задач'
-                    print(text)
+                    self.vprint(text)
                     f.write(text + '\n')
                     break
 
                 text = f'{i} {document} Нет подходящего корректора {sign_char} '
-                print(text)
+                self.vprint(text)
                 f.write(text + '\n')
                 continue
             text = f'{i} {document} Корректор найден {corrector} {tasks_total} {tasks_today}'
-            print(text)
+            self.vprint(text)
             f.write(text + '\n')
 
             # Добавить этому корректору задачу с документом
@@ -146,17 +146,17 @@ class Processor:
         for corrector_id, obj in correctors_dict.items():
             text += f'{obj["name"]}: добавлено задач {obj["documents_distributed"]}, \n'
         log_object.message = (log_object.message or '') + text
-        print(log_object.message)
+        self.vprint(log_object.message)
 
         # Обработка задачи из БД
 
     def process_task(self, task, f, log_object):
         now = datetime.now(tz=timezone.utc)
         delta = now - task.next_action
-        print(task.id, delta.total_seconds())
+        self.vprint(task.id, delta.total_seconds())
         # Значение должно быть положительным, чтобы сработал триггер
         if delta.total_seconds() >= 0:
-            print('Начинаем задачу', task.task_name)
+            self.vprint('Начинаем задачу', task.task_name)
             # Список элементов задачи
             queryset = task.autosearchtaskitem_set.all()
 
@@ -184,7 +184,7 @@ class Processor:
 
             task.last_launch = now
             task.save()
-            print('Задача', task.task_name, 'завершена')
+            self.vprint('Задача', task.task_name, 'завершена')
 
     # Основной процесс для обработки задач
     def go_processor(self):
@@ -198,7 +198,7 @@ class Processor:
                     self.need_to_refresh = True
                     continue
                 log_object = self.AutoSearchLog(task=task)
-                print('Задача', task_id)
+                self.vprint('Задача', task_id)
                 now = datetime.now()
                 now_str = now.strftime('%Y-%m-%d_%H-%M-%S')
                 filename = 'task_' + str(task.id) + '_' + now_str + '.txt'
