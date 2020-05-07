@@ -119,7 +119,7 @@ class CorrectorTaskInline(admin.TabularInline):
 
 @admin.register(Corrector)
 class CorrectorAdmin(admin.ModelAdmin):
-    inlines = (CorrectorTaskInline, )  # TODO: Может стоит убрать
+    # inlines = (CorrectorTaskInline, )  # TODO: Может стоит убрать
     save_on_top = True
 
 
