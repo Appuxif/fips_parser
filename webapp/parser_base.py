@@ -581,6 +581,7 @@ class Parser:
                         # existence = True
                         # break
                     text = r.text
+                    text = 'Превышен допустимый предел' # TODO: Для отладки
                     page_content = r.content
 
                     if 'Слишком быстрый просмотр документов' in text:
@@ -590,20 +591,20 @@ class Parser:
                         return False
                     elif 'Превышен допустимый предел' in text:
                         self._print(document_obj['number'], text, url)
-                        with self.get_workers().lock:
-                            history['message'] += f'Превышен предел прокси {proxy["id"]}\n'
-                            proxy['status'] = text
-                            proxy['documents_parsed'] = 999999
+                        history['message'] += f'Превышен предел прокси {proxy["id"]}\n'
+                        proxy['status'] = text
+                        proxy['documents_parsed'] = 999999
+                        # with self.get_workers().lock:
                             # DB().executeone(f"UPDATE interface_proxies SET status = '{text}'"
                             #                 f"WHERE id = '{proxy['id']}'")
                         return False
 
                     elif 'Вы заблокированы' in text:
                         self._print(text, 'Поток закрыт')
-                        with self.get_workers().lock:
-                            history['message'] += f'Блокировка прокси {proxy["id"]}\n'
-                            proxy['status'] = text
-                            proxy['is_banned'] = 'TRUE'
+                        history['message'] += f'Блокировка прокси {proxy["id"]}\n'
+                        proxy['status'] = text
+                        proxy['is_banned'] = 'TRUE'
+                        # with self.get_workers().lock:
                             # DB().executeone(f"UPDATE interface_proxies SET is_banned = TRUE, "
                             #                 f"status = '{text}'"
                             #                 f"WHERE id = '{proxy['id']}'")

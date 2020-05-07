@@ -150,7 +150,7 @@ class ContactPersonAdmin(admin.ModelAdmin):
     save_on_top = True
     fieldsets = [
         (None, {'fields': ('company', )}),
-        (None, {'fields': ('category', ('job_title'), 'photo',)}),
+        (None, {'fields': ('category', ('job_title',), 'photo',)}),
         (None, {'fields': ('full_name', ('last_name', 'first_name', 'middle_name'),
                            ('gender',), 'bday_date'),
                 'description': 'Личные данные'}),
@@ -166,43 +166,14 @@ class ContactPersonAdmin(admin.ModelAdmin):
     ]
 
     def save_model(self, request, obj, form, change):
-        # super(ContactPersonAdmin, self).save_model(request, obj, form, change)
-        try:
-            corrector = request.user.corrector
-        except User.corrector.RelatedObjectDoesNotExist:
-            pass
-        verify_url = 'http://api.quickemailverification.com/v1/verify?email={}&apikey={}'
+        # try:
+        #     corrector = request.user.corrector
+        # except User.corrector.RelatedObjectDoesNotExist:
+        #     pass
         # Верификация имейла
         if obj.email and not obj.email_verified:
-            now = datetime.now(tz=timezone.utc)
-            today = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
-            api_key = EmailApiKey.objects.filter(is_valid=True)
-            # Находим ключи, у которых есть сегодняшние логи
-            today_logs_amount = Count('emailapikeylog', filter=Q(emailapikeylog__date_created__gte=today))
-            api_key = api_key.annotate(today_logs_amount=today_logs_amount).filter(today_logs_amount__lt=2).first()
-            print(api_key)
-            if api_key:
-                print(api_key.today_logs_amount)
-                verify_url = verify_url.format(obj.email, api_key.api_key)
-                r = requests.get(verify_url)
-                if r.status_code == 200:
-                    result = r.json()
-                    email_is_valid = result['result'] == 'valid'
-                    if email_is_valid:
-                        messages.add_message(request, messages.INFO, 'Почта верифицирована')
-                        obj.email_verified = True
-                    else:
-                        messages.add_message(request, messages.ERROR, 'Почта не верифицирована')
-                    print(r.json())
-                    api_key.emailapikeylog_set.create(email_verified=obj.email,
-                                                      email_is_valid=email_is_valid, result=r.text[:1000])
-            else:
-                messages.add_message(request, messages.ERROR, 'Нет доступных API ключей для верификации почты')
-                EmailApiKeyLog.objects.create(email_verified=obj.email,
-                                              email_is_valid=False,
-                                              result='Нет доступных API ключей для верификации почты')
-
-        obj.save()
+            verify_email(request, obj)
+        return super(ContactPersonAdmin, self).save_model(request, obj, form, change)
 
     # Кастомное логирование при изменениях в заявках
     def construct_change_message(self, request, form, formsets, add=False):
@@ -253,6 +224,8 @@ class EmailApiKeyLogInline(admin.TabularInline):
     model = EmailApiKeyLog
     extra = 0
     readonly_fields = ('api_key', 'date_created', 'email_verified', 'email_is_valid', 'result')
+    ordering = ('-date_created', )
+    max_num = 20
 
     def has_add_permission(self, request, obj):
         return False
@@ -268,3 +241,38 @@ class EmailApiKeyAdmin(admin.ModelAdmin):
 class EmailApiKeyAdmin(admin.ModelAdmin):
     list_display = ('api_key', 'date_created', 'email_verified', 'email_is_valid')
     readonly_fields = ('api_key', 'date_created', 'email_verified', 'email_is_valid', 'result')
+
+
+# Дополнительные функции
+
+def verify_email(request, obj, ):
+    verify_url = 'http://api.quickemailverification.com/v1/verify?email={}&apikey={}'
+    now = datetime.now(tz=timezone.utc)
+    today = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+
+    api_key = EmailApiKey.objects.filter(is_valid=True)
+    # Находим ключи, у которых есть сегодняшние логи
+    today_logs_amount = Count('emailapikeylog', filter=Q(emailapikeylog__date_created__gte=today))
+    api_key = api_key.annotate(today_logs_amount=today_logs_amount).filter(today_logs_amount__lt=95).first()
+    # Если найден свободный API ключ, проводим верификацию
+    if api_key:
+        # print(api_key.today_logs_amount)
+        verify_url = verify_url.format(obj.email, api_key.api_key)
+        r = requests.get(verify_url)
+        # print(r.headers.get('X-QEV-Remaining-Credits'))
+        if r.status_code == 200:
+            result = r.json()
+            email_is_valid = result['result'] == 'valid'
+            if email_is_valid:
+                messages.add_message(request, messages.INFO, 'Почта верифицирована')
+                obj.email_verified = True
+            else:
+                messages.add_message(request, messages.ERROR, 'Почта не верифицирована')
+            # print(r.json())
+            api_key.emailapikeylog_set.create(email_verified=obj.email,
+                                              email_is_valid=email_is_valid, result=r.text[:1000])
+    else:
+        messages.add_message(request, messages.ERROR, 'Нет доступных API ключей для верификации почты')
+        EmailApiKeyLog.objects.create(email_verified=obj.email,
+                                      email_is_valid=False,
+                                      result='Нет доступных API ключей для верификации почты')
