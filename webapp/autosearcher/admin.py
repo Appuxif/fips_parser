@@ -112,8 +112,8 @@ class CorrectorTaskInline(admin.TabularInline):
     max_num = 30
     fields = ('document_registry', 'document_id', 'date_created', 'task_done', 'date_task_done')
 
-    def view_on_site(self, obj):
-        return f'/admin/autosearcher/contactperson/{obj.contactperson_id}/change/'
+    # def view_on_site(self, obj):
+    #     return f'/admin/autosearcher/contactperson/{obj.contactperson_id}/change/'
 
 
 @admin.register(Corrector)
