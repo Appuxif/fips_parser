@@ -208,7 +208,7 @@ class Processor:
                 error_filename = os.path.join(filepath, filename)
                 log_file = '/media/logs/' + filename
                 log_object.log_file = log_file
-                with open(error_filename, 'w') as f:
+                with open(error_filename, 'w', encoding='utf-8') as f:
                     try:
                         self.process_task(task, f, log_object)
                     except:
