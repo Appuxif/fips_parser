@@ -74,7 +74,7 @@ class Company(models.Model):
 
 class OrderCompanyRel(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
-    company_is_holder = models.BooleanField(default=False)
+    company_is_holder = models.BooleanField('Правообладатель', default=False)
     document = models.ForeignKey(OrderDocument, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
