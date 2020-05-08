@@ -104,7 +104,8 @@ class RegisterCompanyInline(admin.StackedInline):
 # Отображение компании в БД
 @admin.register(Company)
 class CompanyAdmin(admin.ModelAdmin):
-    inlines = [ContactPersonInline, OrderCompanyInline, RegisterCompanyInline]
+    # inlines = [ContactPersonInline, OrderCompanyInline, RegisterCompanyInline]
+    inlines = [ContactPersonInline]
     exclude = ('order', 'register')
     list_display = ('__str__', 'sign_char', 'form', 'form_correct', 'name', 'name_correct', 'address')
     readonly_fields = ('name', 'form', 'date_corrected')
