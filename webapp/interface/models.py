@@ -59,7 +59,7 @@ class Company(models.Model):
     date_corrected = models.DateField('Дата последней корректировки', auto_now=True, null=True, blank=True)
 
     def __str__(self):
-        return str(self.name)
+        return str(self.form_correct or self.form or '') + ' ' + str(self.name_correct or self.name or '')
 
     def get_absolute_url(self):
         return f'/admin/interface/company/{self.id}/change/'
@@ -162,6 +162,8 @@ class ContactPerson(models.Model):
     date_corrected = models.DateField('Дата последней корректировки', auto_now=True, null=True, blank=True)
 
     def __str__(self):
+        if self.full_name:
+            return str(self.full_name)
         return 'Контакт ' + str(self.id) + ' компании ' + str(self.company)
 
     def get_absolute_url(self):

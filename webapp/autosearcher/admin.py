@@ -125,7 +125,7 @@ class CorrectorAdmin(admin.ModelAdmin):
 
 @admin.register(CorrectorTask)
 class CorrectorTaskAdmin(admin.ModelAdmin):
-    readonly_fields = ('corrector', 'document_registry', 'document_id', 'datetime_created',
+    readonly_fields = ('note', 'corrector', 'document_registry', 'document_id', 'datetime_created',
                        'date_created', 'date_task_done', )
     list_display = ('__str__', 'corrector', 'document_registry', 'document_id',
                     'task_done', 'date_created')
