@@ -85,6 +85,7 @@ class OrderCompanyInline(admin.StackedInline):
     model = OrderCompanyRel
     extra = 0
     readonly_fields = ('company', 'document')
+    max_num = 5
 
     def has_add_permission(self, request, obj):
         return False
@@ -94,6 +95,7 @@ class RegisterCompanyInline(admin.StackedInline):
     model = RegisterCompanyRel
     extra = 0
     readonly_fields = ('company', 'document')
+    max_num = 5
 
     def has_add_permission(self, request, obj):
         return False
