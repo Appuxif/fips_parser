@@ -82,6 +82,9 @@ class ContactPersonRegisterInline(admin.StackedInline):
     def view_on_site(self, obj):
         return f'/admin/interface/contactperson/{obj.contactperson_id}/change/'
 
+    def has_add_permission(self, request, obj):
+        return False
+
 
 class DocumentIzvInLine(admin.StackedInline):
     model = DocumentIzv
@@ -294,4 +297,4 @@ class LeafAdmin(admin.ModelAdmin):
 @admin.register(ParserHistory)
 class ParserHistoryAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'is_error', 'date_created', 'message')
-    readonly_fields = ('document', 'date_created', 'is_error', 'error_log_file', 'message')
+    readonly_fields = ('document_id', 'document', 'date_created', 'is_error', 'error_log_file', 'message')

@@ -116,6 +116,10 @@ class CompanyAdmin(admin.ModelAdmin):
         change_message = construct_change_message(form, formsets, add)
         return change_message
 
+    def save_model(self, request, obj, form, change):
+
+        return super(CompanyAdmin, self).save_model(request, obj, form, change)
+
 
 class ContactPersonOrderInline(admin.StackedInline):
     model = ContactPerson.order.through
