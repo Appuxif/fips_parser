@@ -41,8 +41,8 @@ from interface.change_message_utils import construct_change_message
 class LogEntryAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'user', 'content_type', 'action_flag', 'object_repr', 'action_time')
     exclude = ('change_message', )
-    readonly_fields = ( '__str__', 'user', 'action_time', 'content_type', 'object_id', 'object_repr', 'action_flag')
-    search_fields = ('user', 'content_type')
+    readonly_fields = ('__str__', 'user', 'action_time', 'content_type', 'object_id', 'object_repr', 'action_flag')
+    search_fields = ('user__username', 'content_type__app_label')
 
 
 # Для отображения контактов в даминке компании в БД
