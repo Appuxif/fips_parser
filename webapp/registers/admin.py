@@ -127,7 +127,9 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
         (None, {'fields': ('url', )}),
         (None, {'fields': ('document_exists', ('document_parsed', 'date_parsed'), 'order_done')})
     )
-    readonly_fields = ('leaf', 'number', 'url', 'document_exists', 'document_parsed', 'date_parsed')
+    # readonly_fields = ('leaf', 'number', 'url', 'document_exists', 'document_parsed', 'date_parsed')
+    readonly_fields = ('leaf', 'number', 'url', 'document_exists')
+    save_on_top = True
     sortable_by = ()
 
     # list_filter = ('document_exists', 'document_parsed', 'documentparse__id')

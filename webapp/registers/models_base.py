@@ -27,8 +27,7 @@ class Document(models.Model):
     order_done = models.BooleanField('Не обновлять', default=False)  # True - если документ не обновляемый
     downloaded_page = models.CharField('Сохраненная на диске страница',
                                        max_length=200, null=True)  # Скачанная страница документа
-    # date_parsed = models.DateField('Дата парсинга', null=True)
-    date_parsed = models.DateTimeField('Дата парсинга', null=True)
+    date_parsed = models.DateTimeField('Дата парсинга', null=True, blank=True)
 
     class Meta:
         verbose_name = 'Документ'
