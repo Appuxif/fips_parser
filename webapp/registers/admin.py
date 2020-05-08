@@ -251,7 +251,7 @@ class DocumentIzvAdmin(admin.ModelAdmin):
 
 
 @admin.register(DocumentIzvItem)
-class DocumentIzvAdmin(admin.ModelAdmin):
+class DocumentIzvItemAdmin(admin.ModelAdmin):
     list_display = ('id', 'document', 'document_izv', 'key', 'date')
     exclude = ['document']
 

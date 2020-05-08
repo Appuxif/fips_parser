@@ -116,9 +116,11 @@ class CompanyAdmin(admin.ModelAdmin):
         change_message = construct_change_message(form, formsets, add)
         return change_message
 
-    def save_model(self, request, obj, form, change):
-
-        return super(CompanyAdmin, self).save_model(request, obj, form, change)
+    def save_related(self, request, form, formsets, change):
+        if formsets[0].has_changed():
+            for obj in formsets[0].queryset:
+                verify_email(request, obj)
+        return super(CompanyAdmin, self).save_related(request, form, formsets, change)
 
 
 class ContactPersonOrderInline(admin.StackedInline):
