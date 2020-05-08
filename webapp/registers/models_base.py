@@ -48,7 +48,7 @@ class DocumentParse(models.Model):
     applicant = models.CharField('Заявитель', max_length=500, null=True)  # Заявитель документа
     address = models.CharField('Адрес для переписки', max_length=500, null=True)  # Аддрес заявителя
     copyright_holder = models.CharField('Правообладатель', max_length=500, null=True)  # Правообладатель
-    sign_char = models.CharField('Указание, относящееся к виду знака, и его характеристики', max_length=2000, null=True)  # Характеристики знака
+    sign_char = models.TextField('Указание, относящееся к виду знака, и его характеристики', max_length=2000, null=True)  # Характеристики знака
 
     status = models.CharField('Статус', max_length=200)  # Спарсенный статус документа
     order_type = models.CharField('Тип', max_length=200)  # Тип документа (реестра) BibType
