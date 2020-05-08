@@ -117,10 +117,12 @@ class CompanyAdmin(admin.ModelAdmin):
         return change_message
 
     def save_related(self, request, form, formsets, change):
-        if formsets[0].has_changed():
-            for obj in formsets[0].queryset:
+        super(CompanyAdmin, self).save_related(request, form, formsets, change)
+        for obj in formsets[0].queryset:
+            print(obj, obj.email)
+            if obj.email and not obj.email_verified:
                 verify_email(request, obj)
-        return super(CompanyAdmin, self).save_related(request, form, formsets, change)
+                obj.save()
 
 
 class ContactPersonOrderInline(admin.StackedInline):
@@ -270,10 +272,10 @@ def verify_email(request, obj, ):
             result = r.json()
             email_is_valid = result['result'] == 'valid'
             if email_is_valid:
-                messages.add_message(request, messages.INFO, 'Почта верифицирована')
+                messages.add_message(request, messages.INFO, f'Почта {obj.email} верифицирована')
                 obj.email_verified = True
             else:
-                messages.add_message(request, messages.ERROR, 'Почта не верифицирована')
+                messages.add_message(request, messages.ERROR, f'Почта {obj.email} не верифицирована')
             # print(r.json())
             api_key.emailapikeylog_set.create(email_verified=obj.email,
                                               email_is_valid=email_is_valid, result=r.text[:1000])

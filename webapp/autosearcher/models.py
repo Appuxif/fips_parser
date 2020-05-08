@@ -143,6 +143,7 @@ class CorrectorTask(models.Model):
     date_created = models.DateField('Дата создания задачи', auto_now_add=True)
     date_task_done = models.DateTimeField('Дата завершения задачи', null=True, blank=True)
     task_done = models.BooleanField('Задача завершена', default=False)
+    note = models.CharField('Примечание', max_length=255, null=True, blank=True)
 
     def __str__(self):
         return 'Task for ' + str(self.corrector)
