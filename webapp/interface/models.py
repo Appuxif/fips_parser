@@ -3,8 +3,10 @@ from orders.models_base import Document as OrderDocument
 from registers.models_base import Document as RegisterDocument
 
 contact_categories = [
-    ('DEFAULT', 'Обычный'),
-    ('REPRESENTATIVE', 'Поверенный'),
+    ('DEFAULT', 'Общий'),
+    ('DIRECTOR', 'Руководитель'),
+    ('EXECUTOR', 'Исполнитель'),
+    ('REPRESENTATIVE', 'Патентный поверенный'),
 ]
 
 

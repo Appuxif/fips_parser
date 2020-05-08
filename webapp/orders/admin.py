@@ -11,7 +11,7 @@ from import_export.admin import ExportActionMixin, ExportActionModelAdmin, Expor
 from .django_admin_search import AdvancedSearchAdmin
 from .models_base import Leaf, Document, DocumentParse, DocumentFile, ServiceItem, document_parse_dict
 from .models import WorkState, WorkStateRow, ParserHistory
-from .forms import LeafSearchForm, DocumentSearchForm, fields_dict, income_choices, outcome_choices
+from .forms import LeafSearchForm, DocumentSearchForm, fields_dict, income_choices, outcome_choices, ContactPersonAddForm
 from accounts.models import UserQuery
 # from interface.models import OrderContact, OrderContactPerson
 from interface.models import ContactPerson, Company, OrderCompanyRel
@@ -65,16 +65,20 @@ class CompanyInline(admin.StackedInline):
 
 class ContactPersonOrderInline(admin.StackedInline):
     model = ContactPerson.order.through
-    readonly_fields = ('contactperson', 'document')
+    # readonly_fields = ('contactperson', 'document')
+    fields = ('contactperson_new_id', 'contactperson_id', 'contactperson', 'document', )
+    readonly_fields = ('contactperson_id', 'contactperson', 'document', )
     extra = 0
     verbose_name = 'Связанный контакт компании'
     verbose_name_plural = 'Связанные контакты компании'
+    form = ContactPersonAddForm
 
     def view_on_site(self, obj):
         return f'/admin/interface/contactperson/{obj.contactperson_id}/change/'
 
-    def has_add_permission(self, request, obj):
-        return False
+    # def has_add_permission(self, request, obj):
+    #     return False
+
 
 # class OrderContactInLine(admin.StackedInline):
 #     model = OrderContact
@@ -129,8 +133,6 @@ class DocumentAdmin(ExportActionMixin, AdvancedSearchAdmin):
     readonly_fields = ('leaf', 'number', 'url', 'document_exists')
     save_on_top = True
     sortable_by = ()
-
-    # list_filter = ('document_exists', 'document_parsed', 'documentparse__id')
 
     # Если в переменной list_display появляется кастомное поле для объекта documentparse
     def __getattr__(self, item):

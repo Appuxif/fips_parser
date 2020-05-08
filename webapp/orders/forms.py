@@ -1,5 +1,7 @@
 from django.forms import ModelForm, Form
 from django.forms import DateField, CharField, ChoiceField, TextInput, IntegerField, BooleanField
+from interface.models import ContactPerson
+
 
 from .models_base import Leaf, Document, DocumentParse, DocumentFile, ServiceItem
 income_choices = [
@@ -66,6 +68,23 @@ outcome_choices = [
     (29, 'Ходатайство о зачете пошлины'),
     (30, 'Ходатайство о продлении установленного срока'),
 ]
+
+
+class ContactPersonAddForm(ModelForm):
+    contactperson_new_id = IntegerField(help_text="Для ручного добавления контакта", required=False)
+    contactperson = CharField(required=False)
+
+    class Meta:
+        model = ContactPerson.order.through
+        fields = ('contactperson', 'contactperson_new_id')
+
+    def clean(self):
+        cleaned_data = super(ContactPersonAddForm, self).clean()
+        contactperson_new = cleaned_data['contactperson_new_id']
+        if contactperson_new:
+            cleaned_data['contactperson'] = ContactPerson.objects.get(id=contactperson_new)
+            self.instance.contactperson = cleaned_data['contactperson']
+        return cleaned_data
 
 
 class LeafSearchForm(Form):

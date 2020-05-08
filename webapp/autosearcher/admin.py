@@ -121,6 +121,12 @@ class CorrectorTaskInline(admin.TabularInline):
 class CorrectorAdmin(admin.ModelAdmin):
     # inlines = (CorrectorTaskInline, )  # TODO: Может стоит убрать
     save_on_top = True
+    fields = ('user', 'sign_chars', 'company_startswith', 'tasks_day_amount', 'tasks_max', 'score', 'tasks_done_amount')
+    readonly_fields = ('tasks_done_amount', )
+
+    def tasks_done_amount(self, obj):
+        return obj.tasks_done_amount
+    tasks_done_amount.short_description = 'Количество выполненных задач'
 
 
 @admin.register(CorrectorTask)
@@ -190,6 +196,8 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
             if person_corrected and company_corrected:
                 messages.add_message(request, messages.INFO, f'Задача выполнена')
                 obj.save()
+                corrector.score += 5
+                corrector.tasks_done += 1
             else:
                 messages.add_message(request, messages.ERROR, f'Задача не выполнена')
 

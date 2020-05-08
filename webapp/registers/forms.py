@@ -2,6 +2,24 @@ from django.forms import ModelForm, Form
 from django.forms import DateField, CharField, ChoiceField, TextInput, IntegerField, BooleanField
 
 from .models_base import Leaf, Document, DocumentParse, DocumentFile, ServiceItem
+from interface.models import ContactPerson
+
+
+class ContactPersonAddForm(ModelForm):
+    contactperson_new_id = IntegerField(help_text="Для ручного добавления контакта", required=False)
+    contactperson = CharField(required=False)
+
+    class Meta:
+        model = ContactPerson.register.through
+        fields = ('contactperson', 'contactperson_new_id')
+
+    def clean(self):
+        cleaned_data = super(ContactPersonAddForm, self).clean()
+        contactperson_new = cleaned_data['contactperson_new_id']
+        if contactperson_new:
+            cleaned_data['contactperson'] = ContactPerson.objects.get(id=contactperson_new)
+            self.instance.contactperson = cleaned_data['contactperson']
+        return cleaned_data
 
 
 class LeafSearchForm(Form):

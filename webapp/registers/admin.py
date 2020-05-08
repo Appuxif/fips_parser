@@ -10,7 +10,7 @@ from orders.django_admin_search import AdvancedSearchAdmin
 from orders.admin import process_buttons, get_export_resource, documentparse_lookup
 from .models_base import Leaf, Document, DocumentParse, DocumentFile, ServiceItem, document_parse_dict
 from .models import IzvServiceItem, DocumentIzvItem, DocumentIzv, ParserHistory
-from .forms import LeafSearchForm, DocumentSearchForm, DocumentParseSearchForm, fields_dict
+from .forms import LeafSearchForm, DocumentSearchForm, DocumentParseSearchForm, fields_dict, ContactPersonAddForm
 from accounts.models import UserQuery
 # from interface.models import RegisterContact, RegisterContactPerson
 from interface.models import ContactPerson, Company, RegisterCompanyRel
@@ -74,16 +74,18 @@ class CompanyInline(admin.StackedInline):
 
 class ContactPersonRegisterInline(admin.StackedInline):
     model = ContactPerson.register.through
-    readonly_fields = ('contactperson', 'document')
+    fields = ('contactperson_new_id', 'contactperson_id', 'contactperson', 'document',)
+    readonly_fields = ('contactperson_id', 'contactperson', 'document',)
     extra = 0
     verbose_name = 'Связанный контакт компании'
     verbose_name_plural = 'Связанные контакты компании'
+    form = ContactPersonAddForm
 
     def view_on_site(self, obj):
         return f'/admin/interface/contactperson/{obj.contactperson_id}/change/'
 
-    def has_add_permission(self, request, obj):
-        return False
+    # def has_add_permission(self, request, obj):
+    #     return False
 
 
 class DocumentIzvInLine(admin.StackedInline):

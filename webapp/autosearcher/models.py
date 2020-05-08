@@ -133,6 +133,10 @@ class Corrector(models.Model):
         verbose_name = 'Корректор'
         verbose_name_plural = 'Корректоры'
 
+    @property
+    def tasks_done_amount(self):
+        return self.correctortask_set.filter(task_done=True).count()
+
 
 # Задача для корректора.
 class CorrectorTask(models.Model):
@@ -174,3 +178,7 @@ class AutoSearchLog(models.Model):
         # if self.is_error:
         return str(self.log_file)
         # return f'/admin/autosearcher/autosearchlog/{self.id}/change/'
+
+    class Meta:
+        verbose_name = 'Лог автопоиска'
+        verbose_name_plural = 'Логи автопоиска'
