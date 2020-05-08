@@ -132,7 +132,7 @@ class ContactPersonOrderInline(admin.StackedInline):
     model = ContactPerson.order.through
     readonly_fields = ('contactperson', 'document')
     extra = 0
-
+    max_num = 5
     verbose_name = 'Связанный контакт компании (Заявки)'
     verbose_name_plural = 'Связанные контакты компании (Заявки)'
 
@@ -144,7 +144,7 @@ class ContactPersonRegisterInline(admin.StackedInline):
     model = ContactPerson.register.through
     readonly_fields = ('contactperson', 'document')
     extra = 0
-
+    max_num = 5
     verbose_name = 'Связанный контакт компании (Регистрации)'
     verbose_name_plural = 'Связанные контакты компании (Регистрации)'
 
