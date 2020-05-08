@@ -95,7 +95,9 @@ class AutoSearchTaskAdmin(admin.ModelAdmin):
     def save_related(self, request, form, formsets, change):
         super(AutoSearchTaskAdmin, self).save_related(request, form, formsets, change)
         queryset = get_task_queryset(form, formsets[:1])
-        print(queryset.annotate(name='person__full_name').filter(person__full_name__isnull=False).query)
+        # TODO: Подгрузка таблицы с контактами
+        # print(queryset.annotate(name='person__full_name').filter(person__full_name__isnull=False).query)
+        # print(queryset.prefetch_related('contactperson_set').filter(person__full_name__isnull=False).query)
         c = queryset.count()
         messages.add_message(request, messages.INFO, 'Найдено ' + str(c) + ' документов')
 
