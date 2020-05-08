@@ -105,7 +105,8 @@ def person_photo_path(instance, filename):
 
 
 class ContactPerson(models.Model):
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_query_name='person', verbose_name='Компания')  ##
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_query_name='person',
+                                verbose_name='Компания', null=True, blank=True)  ##
 
     category = models.CharField('Категория', max_length=50, default='DEFAULT')  # DEFAULT или REPRESENTATIVE (поверенный) ##
 

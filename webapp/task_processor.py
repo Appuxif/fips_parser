@@ -89,7 +89,7 @@ class Processor:
             tasks = self.CorrectorTask.objects.filter(document_id=document.id).first()
             if tasks is not None:
                 text = f'{i} {document} task exists'
-                self.vprint(text)
+                # self.vprint(text)
                 f.write(text + '\n')
                 # task_already_exists += str(document.number) + ', '
                 continue
@@ -99,7 +99,7 @@ class Processor:
             sign_char = company.sign_char if company else None
             if sign_char is None:
                 text = f'{i} {document} sign_char is not resolved'
-                self.vprint(text)
+                # self.vprint(text)
                 f.write(text + '\n')
                 continue
 
@@ -120,16 +120,16 @@ class Processor:
             else:
                 if all_correctors_done:
                     text = f'{i} {document} all correctors have overloaded task lists'
-                    self.vprint(text)
+                    # self.vprint(text)
                     f.write(text + '\n')
                     break
 
                 text = f'{i} {document} there is no corrector for {sign_char} {company.name[:5]}'
-                self.vprint(text)
+                # self.vprint(text)
                 f.write(text + '\n')
                 continue
-            text = f'{i} {document} corrector found {corrector} {tasks_total} {tasks_today}'
-            self.vprint(text)
+            text = f'{i} {document} corrector found "{corrector}" tasks {tasks_total} today {tasks_today}'
+            # self.vprint(text)
             f.write(text + '\n')
 
             # Добавить этому корректору задачу с документом

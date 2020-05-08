@@ -1145,13 +1145,15 @@ def get_or_create_company(self, document, document_person, save_anyway=True, mak
 def get_or_create_person(self, document, document_person, company):
     person = document_person.get('person', {})
     full_name = person.get('full_name', '')
-    if full_name and company and company.get('id'):
+    if full_name:
         # Поиск контакта для данной компании по имени в БД
         if person.get('rep_reg_number'):  # rep_reg_number - уникальный номер патентного поверенного
             q = f"SELECT id FROM interface_contactperson WHERE rep_reg_number = '{person['rep_reg_number']}'"
-        else:
+        elif company and company.get('id'):
             q = f"SELECT id FROM interface_contactperson " \
                 f"WHERE full_name = '{full_name}' AND company_id = '{company['id']}'"
+        else:
+            return None
         with self.get_workers().lock:
             person_ = DB().fetchone(q)
 
@@ -1167,7 +1169,7 @@ def get_or_create_person(self, document, document_person, company):
                 person['category'] = "'REPRESENTATIVE'"
             else:
                 person['category'] = "'DEFAULT'"
-            person['company_id'] = f"'{company['id']}'"
+            person['company_id'] = f"'{company['id']}'" if company and company.get('id') else 'NULL'
             person['email_verified'] = 'FALSE'
             person['email_correct'] = 'TRUE'
             person['date_corrected'] = 'NULL'
