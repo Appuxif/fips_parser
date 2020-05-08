@@ -2,6 +2,11 @@ from django.db import models
 from orders.models_base import Document as OrderDocument
 from registers.models_base import Document as RegisterDocument
 
+contact_categories = [
+    ('DEFAULT', 'Обычный'),
+    ('REPRESENTATIVE', 'Поверенный'),
+]
+
 
 # Объект прокси
 class Proxies(models.Model):
@@ -108,7 +113,7 @@ class ContactPerson(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_query_name='person',
                                 verbose_name='Компания', null=True, blank=True)  ##
 
-    category = models.CharField('Категория', max_length=50, default='DEFAULT')  # DEFAULT или REPRESENTATIVE (поверенный) ##
+    category = models.CharField('Категория', max_length=50, default='DEFAULT', choices=contact_categories)  # DEFAULT или REPRESENTATIVE (поверенный) ##
 
     email = models.CharField('Электронная почта', max_length=255, null=True, blank=True)  # ##
     email_verified = models.BooleanField('Почта верифицирована', default=False)  ##
