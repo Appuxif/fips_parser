@@ -117,6 +117,10 @@ class RegistersParser(Parser):
             if 'date_renewal' in izv and izv['date_renewal'] != 'NULL':
                 document_parse['date_exclusive'] = izv['date_renewal']
 
+            # Если в извещении есть правообладатель - то это последний и актуальный правообладатель, его нужно заменить
+            if 'copyright_holder' in izv and izv['copyright_holder'] != 'NULL':
+                document_parse['copyright_holder'] = izv['copyright_holder']
+
             parsed_unique = izv['izv_type'][1:-1] + '-' + izv['date_publish'].replace("'", '')
             # print(parsed_unique)
             if parsed_unique in izv_unique_list:
