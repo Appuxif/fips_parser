@@ -248,7 +248,8 @@ class DocumentIzvItemInline(admin.StackedInline):
 @admin.register(DocumentIzv)
 class DocumentIzvAdmin(admin.ModelAdmin):
     list_display = ('id', 'document', 'izv_type', 'date_publish')
-    exclude = ['document', 'unique_field']
+    exclude = ('unique_field', )
+    readonly_fields = ('document', 'document_parse')
     inlines = [DocumentIzvItemInline]
 
 

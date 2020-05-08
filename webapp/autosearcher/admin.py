@@ -1,6 +1,6 @@
 import traceback
 import sys
-from datetime import datetime, timezone, date
+from datetime import datetime, timezone, date, timedelta
 
 from django.contrib import admin, messages
 from django.db.models import Q
@@ -73,6 +73,14 @@ class AutoSearchLogInline(admin.TabularInline):
     extra = 0
     readonly_fields = ('is_error', 'log_file', 'message', 'date_created')
     ordering = ('-date_created', )
+    max_num = 3
+
+    def get_queryset(self, request):
+        queryset = super(AutoSearchLogInline, self).get_queryset(request)
+        first = queryset.first()
+        if first:
+            return queryset.filter(id__gte=first.id - 2)
+        return queryset
 
     def has_add_permission(self, request, obj):
         return False
@@ -87,6 +95,7 @@ class AutoSearchTaskAdmin(admin.ModelAdmin):
     def save_related(self, request, form, formsets, change):
         super(AutoSearchTaskAdmin, self).save_related(request, form, formsets, change)
         queryset = get_task_queryset(form, formsets[:1])
+        print(queryset.annotate(name='person__full_name').filter(person__full_name__isnull=False).query)
         c = queryset.count()
         messages.add_message(request, messages.INFO, 'Найдено ' + str(c) + ' документов')
 
