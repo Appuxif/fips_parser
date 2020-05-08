@@ -157,7 +157,7 @@ class ContactPersonAdmin(admin.ModelAdmin):
     list_display = ('id', 'full_name', 'company', 'rep_reg_number')
     exclude = ('order', 'register')
     readonly_fields = ('company', 'date_corrected')
-    inlines = (ContactPersonOrderInline, ContactPersonRegisterInline)
+    # inlines = (ContactPersonOrderInline, ContactPersonRegisterInline)
     save_on_top = True
     fieldsets = [
         (None, {'fields': ('company', )}),
