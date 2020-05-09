@@ -139,7 +139,7 @@ class ContactPerson(models.Model):
     # company_web = models.CharField(max_length=100, null=True, blank=True)
 
     personal_web = models.CharField('Персональный сайт', max_length=150, null=True, blank=True)  ##
-    office_address = models.CharField('Адрес офиса', max_length=255, null=True, blank=True)  # ! #  ##
+    office_address = models.CharField('Адрес офиса', max_length=1000, null=True, blank=True)  # ! #  ##
     home_phone = models.CharField('Домашний телефон', max_length=25, null=True, blank=True)  ##
     office_phone = models.CharField('Оффисный телефон', max_length=25, null=True, blank=True)  ##
     mobile_phone = models.CharField('Мобильный телефон', max_length=25, null=True, blank=True)  ##

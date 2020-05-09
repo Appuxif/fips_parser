@@ -13,16 +13,16 @@ class DocumentIzv(models.Model):
     izv_type = models.CharField('Тип извещения', max_length=500, blank=True)  # Тип извещения - самая первая строчка
 
     address = models.CharField('Адрес для переписки', max_length=500, null=True, blank=True)
-    last_copyright_holder = models.CharField('Прежний правообладатель', max_length=500, null=True, blank=True)
+    last_copyright_holder = models.CharField('Прежний правообладатель', max_length=1000, null=True, blank=True)
     last_copyright_holder_name = models.CharField('Прежнее наименование правообладателя',
-                                                  max_length=500, null=True, blank=True)
+                                                  max_length=1000, null=True, blank=True)
     copyright_holder = models.CharField('Правообладатель', max_length=500, null=True, blank=True)
     transferor = models.CharField('Лицо, передающее исключительное право', max_length=500, null=True, blank=True)
-    contract_type = models.CharField('Вид договора', max_length=500, null=True, blank=True)
+    contract_type = models.CharField('Вид договора', max_length=1000, null=True, blank=True)
     contract_terms = models.TextField('Указание условий договора', max_length=20000, null=True, blank=True)
-    grantor = models.CharField('Лицо, предоставляющее право использования', max_length=500, null=True, blank=True)
+    grantor = models.CharField('Лицо, предоставляющее право использования', max_length=1000, null=True, blank=True)
     granted = models.CharField('Лицо, которому предоставлено право использования',
-                               max_length=500, null=True, blank=True)
+                               max_length=1000, null=True, blank=True)
     licensee = models.CharField('Лицензиат', max_length=2000, null=True, blank=True)
     sublicensee = models.CharField('Сублицензиат', max_length=2000, null=True, blank=True)
     date_number_changes = models.CharField('Дата и номер государственной регистрации договора',

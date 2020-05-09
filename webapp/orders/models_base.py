@@ -52,7 +52,7 @@ class DocumentParse(models.Model):
 
     status = models.CharField('Статус', max_length=200)  # Спарсенный статус документа
     order_type = models.CharField('Тип', max_length=200)  # Тип документа (реестра) BibType
-    patent_atty = models.CharField('Патентный поверенный', max_length=200, null=True)
+    patent_atty = models.CharField('Патентный поверенный', max_length=1000, null=True)
     color = models.CharField('Цветовое сочетание', max_length=5000, null=True)
 
     order_number = models.CharField('Номер заявки', max_length=255, null=True)  # Номер документа в реестре
@@ -60,7 +60,7 @@ class DocumentParse(models.Model):
     order_register_number = models.CharField('Номер регистрации', max_length=255, null=True)  # Номер документа в реестре
     first_order_country_code = models.CharField('Код страны подачи первой заявки', max_length=10, null=True)  # Код страны подачи первой заявки
     volumetric = models.CharField('Объемный знак', max_length=50, null=True)  # Объемный знак
-    unprotected = models.CharField('Неохраняемые элементы товарного знака', max_length=10000, null=True)  # Неохраняемые элементы товарного знака
+    unprotected = models.CharField('Неохраняемые элементы товарного знака', max_length=20000, null=True)  # Неохраняемые элементы товарного знака
 
     date_refreshed = models.DateField('Дата обновления', null=True)  # Дата обновления документа. Парсится из статуса
     date_created = models.DateField('Дата поступления заявки', null=True)  # Дата поступления документа

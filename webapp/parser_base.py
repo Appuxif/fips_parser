@@ -669,8 +669,27 @@ def get_date_from_string(string):
         match = match.groupdict()
         date_splitted = [int(match['day']), int(match['month']), int(match['year'])]
         if date_splitted[1] == 2 and date_splitted[0] >= 29:
-            date_splitted[0] -= 1
-        return date(date_splitted[2], date_splitted[1], date_splitted[0])
+            date_splitted[0] = 28
+        try:
+            date_ =  date(date_splitted[2], date_splitted[1], date_splitted[0])
+        except ValueError as err:
+            err_str = str(err)
+            if 'month must be in' in err_str:
+                if date_splitted[1] > 12:
+                    date_splitted[1] = 12
+                elif date_splitted[1] < 1:
+                    date_splitted[1] = 1
+            elif 'day is out of range for month' in err_str:
+                if date_splitted[1] == 2 and date_splitted[0] > 28:
+                    date_splitted[0] = 28
+                elif date_splitted[0] > 30:
+                    date_splitted[0] = 30
+                elif date_splitted[0] < 1:
+                    date_splitted[0] = 1
+            else:
+                raise err
+            date_ = date(date_splitted[2], date_splitted[1], date_splitted[0])
+        return date_
     return None
 
 
