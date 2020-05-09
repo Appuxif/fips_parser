@@ -60,7 +60,7 @@ class DocumentParse(models.Model):
     order_register_number = models.CharField('Номер регистрации', max_length=255, null=True)  # Номер документа в реестре
     first_order_country_code = models.CharField('Код страны подачи первой заявки', max_length=10, null=True)  # Код страны подачи первой заявки
     volumetric = models.CharField('Объемный знак', max_length=50, null=True)  # Объемный знак
-    unprotected = models.CharField('Неохраняемые элементы товарного знака', max_length=20000, null=True)  # Неохраняемые элементы товарного знака
+    unprotected = models.TextField('Неохраняемые элементы товарного знака', max_length=20000, null=True)  # Неохраняемые элементы товарного знака
 
     date_refreshed = models.DateField('Дата обновления', null=True)  # Дата обновления документа. Парсится из статуса
     date_created = models.DateField('Дата поступления заявки', null=True)  # Дата поступления документа
