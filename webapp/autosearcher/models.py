@@ -97,7 +97,7 @@ class AutoSearchTaskItem(models.Model):
     filter_method = models.CharField('Метод для фильтрации', max_length=50,
                                      choices=filter_method_choices, null=True, blank=True)
     filter_method_raw = models.CharField('Метод для фильтрации', max_length=50, null=True, blank=True)
-    filter_value = models.TextField('Значение для фильтрации', max_length=2000,
+    filter_value = models.CharField('Значение для фильтрации', max_length=1000,
                                     help_text='Если дата, то в формате YYYY-MM-DD')
     except_field = models.BooleanField('Кроме', default=False)
     # raw_filter = models.CharField('Полученное выражение для фильтра', max_length=1000)
