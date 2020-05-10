@@ -212,6 +212,7 @@ class MailingItem(models.Model):
     contactperson_id = models.IntegerField('ID контакта', null=True, blank=True)
     document_id = models.IntegerField('ID документа', null=True, blank=True)
     documentparse_id = models.IntegerField('ID парсинга документа', null=True, blank=True)
+    status = models.CharField('Статус', max_length=50, null=True, blank=True)
 
     def __str__(self):
         return 'Item ' + str(self.mailingtask)

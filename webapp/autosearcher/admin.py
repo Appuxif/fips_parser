@@ -1,9 +1,9 @@
 import traceback
 import sys
 from datetime import datetime, timezone, date, timedelta
-
+from django.db import connection
 from django.contrib import admin, messages
-from django.db.models import Q
+from django.db.models import Q, Count, FilteredRelation
 from django.contrib.auth.models import User
 from django.contrib.admin.models import LogEntry, ContentType
 from multiprocessing.connection import Client
@@ -16,7 +16,9 @@ from .models import AutoSearchTask, AutoSearchTaskItem, \
 # from orders.models_base import Document as OrderDocument
 # from registers.models_base import Document as RegisterDocument
 
-# Register your models here.
+
+document_dict = {0: OrderDocument,
+                 1: RegisterDocument}
 
 
 # Составляет запрос для фильтрации элементов из БД, используя элементы задачи
@@ -92,18 +94,30 @@ class AutoSearchTaskAdmin(admin.ModelAdmin):
     inlines = (AutoSearchTaskItemInline, AutoSearchLogInline)
     list_display = ('__str__', 'registry_type', 'next_action', 'last_launch', 'auto_renew', 'is_active')
     save_on_top = True
-    readonly_fields = ('documents_count', )
+    readonly_fields = ('documents_count', 'actual_query')
+
+    my_queryset = None
 
     # Подсчитывает количество документов по заданным фильтрам
     def documents_count(self, obj):
         q = Q()
         q &= get_q_from_queryset(obj.autosearchtaskitem_set.all())
-        if obj.registry_type == 0:
-            Document = OrderDocument
-        else:
-            Document = RegisterDocument
+        self.my_queryset = q
+        Document = document_dict[obj.registry_type]
         return Document.objects.filter(q).count()
     documents_count.short_description = "Найдено документов"
+
+    # Построение запроса для получения списка в AMS
+    def actual_query(self, obj):
+        q = self.my_queryset
+        if q is None:
+            return ''
+        Document = document_dict[obj.registry_type]
+        # f = FilteredRelation('workstaterow', condition=Q(workstaterow__date__gte='2020-04-27') & Q(workstaterow__date__lte='2020-05-01'))
+        # qq = Document.objects.filter(q).annotate(date=f)
+        # print(qq.first().date)
+        return Document.objects.filter(q).query
+    actual_query.short_description = 'SQL'
 
     # def save_related(self, request, form, formsets, change):
     #     super(AutoSearchTaskAdmin, self).save_related(request, form, formsets, change)
@@ -235,18 +249,62 @@ class AutoSearchLogAdmin(admin.ModelAdmin):
 @admin.register(MailingTask)
 class MailingTaskAdmin(admin.ModelAdmin):
     list_display = ('autosearchtask', 'next_action', 'last_launch', 'auto_renew', 'is_active')
-    readonly_fields = ('actual_query',)
+    readonly_fields = ('actual_query', 'contacts_amount', 'documents_count')
+
+    get_ams_query = None
 
     # Построение запроса для получения списка в AMS
     def actual_query(self, obj):
-        selected = 't2.*'
-        q = f'SELECT {selected} FROM autosearcher_mailingitem t1 ' \
-            f'LEFT JOIN interface_contactperson t2 ON t1.contactperson_id = t2.id'
+        q = self.get_ams_query or get_ams_query(obj, join_document=True, join_documentparse=True)
+        self.get_ams_query = q
+        # Проверка получившегося запроса.
+        with connection.cursor() as cur:
+            cur.execute(q + ' LIMIT 1')
+            # rows = cur.fetchone()
+            # print(cur.description)
+        # print(rows)
         return q
-    actual_query.short_description = 'Запрос для получения списка'
+    actual_query.short_description = 'Запрос для получения списка в AMS'
+
+    def contacts_amount(self, obj):
+        q = get_ams_query(obj, 'count(*) as amount', True, True)
+        with connection.cursor() as cur:
+            cur.execute(q)
+            row = cur.fetchone()
+        return row[0]
+    contacts_amount.short_description = 'Найдено контактов'
+
+    # Подсчитывает количество документов по заданным фильтрам
+    def documents_count(self, obj):
+        return AutoSearchTaskAdmin.documents_count(self, obj.autosearchtask)
+    documents_count.short_description = "Найдено документов"
 
 
 # TODO: Для отладки
 @admin.register(MailingItem)
 class MailingItemAdmin(admin.ModelAdmin):
     list_display = ('mailingtask', 'contactperson_id', 'document_id', 'documentparse_id', )
+
+
+# Получение запроса
+def get_ams_query(obj, selected=None, join_document=False, join_documentparse=False):
+    queryset = obj.mailingitem_set.all()
+
+    selected = selected or 't2.email, t2.full_name, t2.last_name, t2.first_name, t2.middle_name'
+    joined = f' LEFT JOIN interface_contactperson t2 ON t1.contactperson_id = t2.id'
+    table = 'orders' if obj.autosearchtask.registry_type == 0 else 'registers'
+
+    # Если есть запросы, включающие ID документа,
+    if join_document and queryset.filter(document_id__isnull=False).exists():
+        selected += ', t3.*'
+        joined += f' LEFT JOIN {table}_document t3 ON t1.document_id = t3.id'
+
+    # Если есть запросы, включающие ID парсинга документа
+    if join_documentparse and queryset.filter(documentparse_id__isnull=False).exists():
+        selected += ', t4.*'
+        joined += f' LEFT JOIN {table}_documentparse t4 ON t1.documentparse_id = t4.id'
+
+    q = f'SELECT {selected} FROM autosearcher_mailingitem t1'
+    q += joined
+    q += f" WHERE t1.mailingtask_id = '{obj.id}'"
+    return q
