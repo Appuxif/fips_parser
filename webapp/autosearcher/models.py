@@ -78,7 +78,7 @@ class AutoSearchTask(models.Model):
     last_launch = models.DateTimeField('Дата предыдущего срабатывания', null=True, blank=True)
 
     auto_renew = models.BooleanField('Автопродление', default=False)
-    is_active = models.BooleanField('Задача активна', default=True)
+    is_active = models.BooleanField('Задача активна', default=False)
 
     def __str__(self):
         return str(self.task_name)
@@ -182,3 +182,39 @@ class AutoSearchLog(models.Model):
     class Meta:
         verbose_name = 'Лог автопоиска'
         verbose_name_plural = 'Логи автопоиска'
+
+
+# Задача для формирования списка рассылки по расписанию
+class MailingTask(models.Model):
+    autosearchtask = models.ForeignKey(AutoSearchTask, on_delete=models.CASCADE, verbose_name='Задача Автопоиска')
+    renew_in_days = models.IntegerField('Следующее срабатывание через (дней)', null=True, blank=True)
+    renew_in_hours = models.IntegerField('Следующее срабатывание через (часов)', null=True, blank=True)
+    next_action = models.DateTimeField('Дата следующего срабатывания', null=True)
+    last_launch = models.DateTimeField('Дата предыдущего срабатывания', null=True, blank=True)
+
+    auto_renew = models.BooleanField('Автопродление', default=False)
+    is_active = models.BooleanField('Задача активна', default=False)
+
+    def __str__(self):
+        return 'Рассылка для ' + str(self.autosearchtask.task_name)
+
+    class Meta:
+        verbose_name = "Задача Списка Рассылок"
+        verbose_name_plural = "Задачи Списка Рассылок"
+
+
+# Элемент таблицы со списками для рассылки
+class MailingItem(models.Model):
+    # autosearchtask = models.ForeignKey(AutoSearchTask, on_delete=models.CASCADE, verbose_name='Задача Автопоиска')
+    mailingtask = models.ForeignKey(AutoSearchTask, on_delete=models.CASCADE, verbose_name='Задача Автопоиска рассылок')
+    contactperson_id = models.IntegerField('ID контакта', null=True, blank=True)
+    document_id = models.IntegerField('ID документа', null=True, blank=True)
+    documentparse_id = models.IntegerField('ID парсинга документа', null=True, blank=True)
+    distribution_query = models.TextField('Запрос для списка контактов', null=True, blank=True)
+
+    def __str__(self):
+        return 'Item ' + str(self.mailingtask)
+
+    class Meta:
+        verbose_name = "Элемент списка рассылок"
+        verbose_name_plural = "Элементы списка рассылок"

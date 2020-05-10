@@ -10,7 +10,8 @@ from multiprocessing.connection import Client
 
 from .models import AutoSearchTask, AutoSearchTaskItem, \
     OrderDocument, RegisterDocument, \
-    Corrector, CorrectorTask, AutoSearchLog
+    Corrector, CorrectorTask, AutoSearchLog, \
+    MailingTask, MailingItem
 # from interface.models import OrderDocument, RegisterDocument,
 # from orders.models_base import Document as OrderDocument
 # from registers.models_base import Document as RegisterDocument
@@ -89,17 +90,29 @@ class AutoSearchLogInline(admin.TabularInline):
 @admin.register(AutoSearchTask)
 class AutoSearchTaskAdmin(admin.ModelAdmin):
     inlines = (AutoSearchTaskItemInline, AutoSearchLogInline)
-    list_display = ('__str__', 'registry_type', 'next_action', 'last_launch', 'auto_renew')
+    list_display = ('__str__', 'registry_type', 'next_action', 'last_launch', 'auto_renew', 'is_active')
     save_on_top = True
+    readonly_fields = ('documents_count', )
 
-    def save_related(self, request, form, formsets, change):
-        super(AutoSearchTaskAdmin, self).save_related(request, form, formsets, change)
-        queryset = get_task_queryset(form, formsets[:1])
-        # TODO: Подгрузка таблицы с контактами
-        # print(queryset.annotate(name='person__full_name').filter(person__full_name__isnull=False).query)
-        # print(queryset.prefetch_related('contactperson_set').filter(person__full_name__isnull=False).query)
-        c = queryset.count()
-        messages.add_message(request, messages.INFO, 'Найдено ' + str(c) + ' документов')
+    # Подсчитывает количество документов по заданным фильтрам
+    def documents_count(self, obj):
+        q = Q()
+        q &= get_q_from_queryset(obj.autosearchtaskitem_set.all())
+        if obj.registry_type == 0:
+            Document = OrderDocument
+        else:
+            Document = RegisterDocument
+        return Document.objects.filter(q).count()
+    documents_count.short_description = "Найдено документов"
+
+    # def save_related(self, request, form, formsets, change):
+    #     super(AutoSearchTaskAdmin, self).save_related(request, form, formsets, change)
+    #     queryset = get_task_queryset(form, formsets[:1])
+    #     # TODO: Подгрузка таблицы с контактами
+    #     # print(queryset.annotate(name='person__full_name').filter(person__full_name__isnull=False).query)
+    #     # print(queryset.prefetch_related('contactperson_set').filter(person__full_name__isnull=False).query)
+    #     c = queryset.count()
+    #     messages.add_message(request, messages.INFO, 'Найдено ' + str(c) + ' документов')
 
     def save_model(self, request, obj, form, change):
         if obj.is_active:
@@ -217,3 +230,14 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
 class AutoSearchLogAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'is_error', 'date_created')
     readonly_fields = ('task', 'is_error', 'log_file', 'message', 'date_created')
+
+
+@admin.register(MailingTask)
+class MailingTaskAdmin(admin.ModelAdmin):
+    list_display = ('autosearchtask', 'next_action', 'last_launch', 'auto_renew', 'is_active')
+
+
+# TODO: Для отладки
+@admin.register(MailingItem)
+class MailingItemAdmin(admin.ModelAdmin):
+    list_display = ('mailingtask', 'contactperson_id', 'document_id', 'documentparse_id', )
