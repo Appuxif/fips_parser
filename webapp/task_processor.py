@@ -108,20 +108,24 @@ class Processor:
             if old_contact:
                 # Если этот контакт уже есть в списке, то формируем дополнительный столбец
                 # с указанием других номеров документов
-                new_contact
+                documents_list = old_contact.documents_list or ''
+                documents_list = documents_list.split(', ') + [document.number]
+                old_contact.documents_list = ', '.join(documents_list)
+                old_contact.save()
                 text = f'{i} {document} contact {person.email} already exists'
                 # self.vprint(text)
                 f.write(text + '\n')
                 continue
-            new_contact = {'contactperson_id': person.id,
-                           'document_id': document.id,
-                           'documentparse_id': document.documentparse.id}
-            # Если контакта нет в списке, то добавляем его
-            task.mailingitem_set.create(**new_contact)
-            text = f'{i} {document} contact {person.email} added'
-            # self.vprint(text)
-            f.write(text + '\n')
-            emails_added += 1
+            else:
+                new_contact['document_id'] = document.id
+                new_contact['documentparse_id'] = document.documentparse.id
+                new_contact['documents_list'] = str(document.number)
+                # Если контакта нет в списке, то добавляем его
+                task.mailingitem_set.create(**new_contact)
+                text = f'{i} {document} contact {person.email} added'
+                # self.vprint(text)
+                f.write(text + '\n')
+                emails_added += 1
 
         text = f'Emails added {emails_added}\n'
         log_object.message = (log_object.message or '') + text
