@@ -214,6 +214,8 @@ class MailingItem(models.Model):
     documentparse_id = models.IntegerField('ID парсинга документа', null=True, blank=True)
     status = models.CharField('Статус', max_length=50, null=True, blank=True)
 
+    documents_list = models.CharField('Дополнительный список документов', max_length=2000, null=True, blank=True)
+
     def __str__(self):
         return 'Item ' + str(self.mailingtask)
 

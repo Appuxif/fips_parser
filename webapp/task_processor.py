@@ -72,24 +72,24 @@ class Processor:
         emails = []
         emails_added = 0
         for i, document in enumerate(documents.iterator()):
-            # Ищем контакты среди прикрепленных к документу контактов
-            persons = document.contactperson_set.all()
+            type = 'order' if task.autosearchtask.registry_type == 0 else 'register'
+            filter = {type + 'companyrel__company_is_holder': True, type + 'companyrel__document': document}
 
-            # Если нет контактов, прикрепленных к документу,
-            # то следует искать контакты в компании, являющейся правообладателем
-            if persons.count() == 0:
-                type = 'order' if task.autosearchtask.registry_type == 0 else 'register'
-                filter = {type + 'companyrel__company_is_holder': True, type + 'companyrel__document': document}
-
-                # Находим компанию правообладателя
-                holder = document.company_set.filter(**filter).first()
-                if holder is None or not holder.contactperson_set.exists():
-                    text = f'{i} {document} there are no persons'
-                    # self.vprint(text)
-                    f.write(text + '\n')
-                    continue
-
+            # Находим компанию правообладателя
+            holder = document.company_set.filter(**filter).first()
+            if holder is None or not holder.contactperson_set.exists():
+                # Ищем контакты среди прикрепленных к документу контактов
+                persons = document.contactperson_set.all()
+            else:
                 persons = holder.contactperson_set.all()
+
+            # Если нет контактов, прикрепленных к компании документа,
+            # то следует искать контакты в компании, являющейся правообладателем
+            if not persons.exists():
+                text = f'{i} {document} there are no persons'
+                # self.vprint(text)
+                f.write(text + '\n')
+                continue
 
             # Ищем среди найденных контактов такой контакт, который имеет верифицированный имейл
             for person in persons:
@@ -103,21 +103,21 @@ class Processor:
 
             # Если найден контакт с верифицированным имейлом, добавляем этот контакт в список для рассылки
             # предварительно, проверяем такой контакт в списке на наличие
-            new_contact = {'contactperson_id': person.id,
-                           'document_id': document.id,
-                           'documentparse_id': document.documentparse.id}
-            if task.mailingitem_set.filter(**new_contact).exists():
+            new_contact = {'contactperson_id': person.id}
+            old_contact = task.mailingitem_set.filter(**new_contact).first()
+            if old_contact:
+                # Если этот контакт уже есть в списке, то формируем дополнительный столбец
+                # с указанием других номеров документов
+                new_contact
                 text = f'{i} {document} contact {person.email} already exists'
                 # self.vprint(text)
                 f.write(text + '\n')
                 continue
-
+            new_contact = {'contactperson_id': person.id,
+                           'document_id': document.id,
+                           'documentparse_id': document.documentparse.id}
             # Если контакта нет в списке, то добавляем его
-            task.mailingitem_set.create(
-                contactperson_id=person.id,
-                document_id=document.id,
-                documentparse_id=document.documentparse.id,
-            )
+            task.mailingitem_set.create(**new_contact)
             text = f'{i} {document} contact {person.email} added'
             # self.vprint(text)
             f.write(text + '\n')

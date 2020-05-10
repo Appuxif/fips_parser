@@ -304,7 +304,7 @@ class MailingItemAdmin(admin.ModelAdmin):
 def get_ams_query(obj, selected=None, join_document=False, join_documentparse=False):
     queryset = obj.mailingitem_set.all()
 
-    selected = selected or 't2.email, t2.full_name, t2.last_name, t2.first_name, t2.middle_name'
+    selected = selected or 't2.id, t2.email, t2.full_name, t2.last_name, t2.first_name, t2.middle_name'
     joined = f' LEFT JOIN interface_contactperson t2 ON t1.contactperson_id = t2.id'
     table = 'orders' if obj.autosearchtask.registry_type == 0 else 'registers'
 
