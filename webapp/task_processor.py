@@ -53,10 +53,12 @@ class Processor:
         if sleep_time:
             sleep(sleep_time)
         self.vprint('Загрузка списка задач из БД')
-        self.tasks = {task.id: task for task in self.AutoSearchTask.objects.all() if task.is_active}
-        self.mailings = {task.id: task for task in self.MailingTask.objects.all() if task.is_active}
+        # self.tasks = {task.id: task for task in self.AutoSearchTask.objects.all() if task.is_active}
+        self.tasks = [task for task in self.AutoSearchTask.objects.all() if task.is_active]
+        self.tasks += [task for task in self.MailingTask.objects.all() if task.is_active]
+        # self.mailings = {task.id: task for task in self.MailingTask.objects.all() if task.is_active}
         self.vprint(self.tasks)
-        self.vprint(self.mailings)
+        # self.vprint(self.mailings)
 
     def process_mailing(self, task, documents, f, log_object):
         documents_count = documents.count()
@@ -272,12 +274,14 @@ class Processor:
                 self.load_tasks()
                 self.need_to_refresh = False
 
-            for task_id, task in self.tasks.items():
+            # for task_id, task in self.tasks.items():
+            for task in self.tasks:
                 if not task.is_active:
                     self.need_to_refresh = True
                     continue
                 log_object = self.AutoSearchLog(task=task)
-                self.vprint('Задача', task_id)
+                # self.vprint('Задача', task_id)
+                self.vprint(task)
                 now = datetime.now()
                 now_str = now.strftime('%Y-%m-%d_%H-%M-%S')
                 filename = 'task_' + str(task.id) + '_' + now_str + '.txt'
