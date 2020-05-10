@@ -213,6 +213,7 @@ class MailingItem(models.Model):
     document_id = models.IntegerField('ID документа', null=True, blank=True)
     documentparse_id = models.IntegerField('ID парсинга документа', null=True, blank=True)
     status = models.CharField('Статус', max_length=50, null=True, blank=True)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     documents_list = models.CharField('Дополнительный список документов', max_length=2000, null=True, blank=True)
 
