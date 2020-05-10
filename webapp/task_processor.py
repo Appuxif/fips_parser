@@ -279,7 +279,8 @@ class Processor:
                 if not task.is_active:
                     self.need_to_refresh = True
                     continue
-                log_object = self.AutoSearchLog(task=task)
+                obj = task.autosearchtask if hasattr(task, 'autosearchtask') else task
+                log_object = self.AutoSearchLog(task=obj)
                 # self.vprint('Задача', task_id)
                 self.vprint(task)
                 now = datetime.now()
