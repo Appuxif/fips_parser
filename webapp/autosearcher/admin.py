@@ -235,8 +235,9 @@ class AutoSearchLogAdmin(admin.ModelAdmin):
 @admin.register(MailingTask)
 class MailingTaskAdmin(admin.ModelAdmin):
     list_display = ('autosearchtask', 'next_action', 'last_launch', 'auto_renew', 'is_active')
-    readonly_fields = ('distribution_query', 'actual_query')
+    readonly_fields = ('actual_query',)
 
+    # Построение запроса для получения списка в AMS
     def actual_query(self, obj):
         selected = 't2.*'
         q = f'SELECT {selected} FROM autosearcher_mailingitem t1 ' \
