@@ -77,14 +77,20 @@ class Processor:
 
             # Находим компанию правообладателя
             holder = document.company_set.filter(**filter).first()
-            if holder is None or not holder.contactperson_set.exists():
-                # Ищем контакты среди прикрепленных к документу контактов
-                persons = document.contactperson_set.all()
-            else:
-                persons = holder.contactperson_set.all()
-
+            persons = None
             # Если нет контактов, прикрепленных к компании документа,
             # то следует искать контакты в компании, являющейся правообладателем
+            if holder:
+                persons = holder.contactperson_set.filter(email__isnull=False, email_verified=True, email_correct=True)
+            else:
+                persons = None
+
+            # Если среди компании не найдены контакты
+            if persons is None or not persons.exists():
+                # Ищем контакты среди прикрепленных к документу контактов
+                persons = document.contactperson_set.filter(email__isnull=False, email_verified=True, email_correct=True)
+
+            # Если теперь нет нужных контактов, то пропускаем документ
             if not persons.exists():
                 text = f'{i} {document} there are no persons'
                 # self.vprint(text)
@@ -92,14 +98,22 @@ class Processor:
                 continue
 
             # Ищем среди найденных контактов такой контакт, который имеет верифицированный имейл
-            for person in persons:
-                if person.email and person.email_verified and person.email_correct:
+            # Сначала находим контакт руководителя
+            categories = ['DIRECTOR', 'EXECUTOR', 'DEFAULT', 'REPRESENTATIVE']
+            for cat in categories:
+                person = persons.filter(category=cat).first()
+                if person and person.email and person.email_verified and person.email_correct:
                     break
             else:
-                text = f'{i} {document} there are no verified emails'
-                # self.vprint(text)
-                f.write(text + '\n')
-                continue
+                # Поиск среди неучтенных. Вообще, такого не должно быть, но мало ли
+                for person in persons.exclude(category_in=categories):
+                    if person.email and person.email_verified and person.email_correct:
+                        break
+                else:
+                    text = f'{i} {document} there are no verified emails'
+                    # self.vprint(text)
+                    f.write(text + '\n')
+                    continue
 
             # Если найден контакт с верифицированным имейлом, добавляем этот контакт в список для рассылки
             # предварительно, проверяем такой контакт в списке на наличие
@@ -117,6 +131,7 @@ class Processor:
                 f.write(text + '\n')
                 continue
             else:
+                # Если контакта еще нет в списке, то создаем его
                 new_contact['document_id'] = document.id
                 new_contact['documentparse_id'] = document.documentparse.id
                 new_contact['documents_list'] = str(document.number)
