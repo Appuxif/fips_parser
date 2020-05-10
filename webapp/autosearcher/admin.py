@@ -235,6 +235,7 @@ class AutoSearchLogAdmin(admin.ModelAdmin):
 @admin.register(MailingTask)
 class MailingTaskAdmin(admin.ModelAdmin):
     list_display = ('autosearchtask', 'next_action', 'last_launch', 'auto_renew', 'is_active')
+    readonly_fields = ('distribution_query', )
 
 
 # TODO: Для отладки

@@ -208,7 +208,7 @@ class MailingTask(models.Model):
 # Элемент таблицы со списками для рассылки
 class MailingItem(models.Model):
     # autosearchtask = models.ForeignKey(AutoSearchTask, on_delete=models.CASCADE, verbose_name='Задача Автопоиска')
-    mailingtask = models.ForeignKey(AutoSearchTask, on_delete=models.CASCADE, verbose_name='Задача Автопоиска рассылок')
+    mailingtask = models.ForeignKey(MailingTask, on_delete=models.CASCADE, verbose_name='Задача Автопоиска рассылок')
     contactperson_id = models.IntegerField('ID контакта', null=True, blank=True)
     document_id = models.IntegerField('ID документа', null=True, blank=True)
     documentparse_id = models.IntegerField('ID парсинга документа', null=True, blank=True)
