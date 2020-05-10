@@ -237,6 +237,13 @@ class MailingTaskAdmin(admin.ModelAdmin):
     list_display = ('autosearchtask', 'next_action', 'last_launch', 'auto_renew', 'is_active')
     readonly_fields = ('distribution_query', )
 
+    def actual_query(self, obj):
+        selected = 't2.*'
+        q = f'SELECT {selected} FROM autosearcher_mailingitem t1 ' \
+            f'LEFT JOIN interface_contactperson t2 ON t1.contactperson_id = t2.id'
+        return q
+    actual_query.short_description = 'Запрос для получения списка'
+
 
 # TODO: Для отладки
 @admin.register(MailingItem)
