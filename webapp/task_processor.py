@@ -239,7 +239,7 @@ class Processor:
 
             # Запрос в БД для фильтрации документов
             q = self.get_q_from_queryset(queryset)
-            document = self.OrderDocument if task.registry_type == 0 else self.RegisterDocument
+            document = self.OrderDocument if obj.registry_type == 0 else self.RegisterDocument
             documents = document.objects.filter(q)
 
             # Распределение документов по корректорам
@@ -297,10 +297,12 @@ class Processor:
                     try:
                         self.process_task(task, f, log_object)
                     except:
+                        task.is_active = False
+                        task.save()
                         traceback.print_exc(file=f)
                         traceback.print_exc(file=sys.stdout)
                         log_object.is_error = True
-                        self.vprint('parser_processor Ошибка парсера', task)
+                        self.vprint('parser_processor Ошибка парсера "', task, '"')
                     finally:
                         log_object.save()
 
