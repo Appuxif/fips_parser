@@ -135,6 +135,11 @@ class Processor:
                 new_contact['document_id'] = document.id
                 new_contact['documentparse_id'] = document.documentparse.id
                 new_contact['documents_list'] = str(document.number)
+                document_image = document.documentfile_set.filter(name='image').first()
+                if document_image:
+                    direct_url = document_image.direct_url
+                    direct_url = direct_url if direct_url.startswith('http') else 'https://new.fips.ru' + direct_url
+                    new_contact['document_image'] = direct_url
                 # Если контакта нет в списке, то добавляем его
                 task.mailingitem_set.create(**new_contact)
                 text = f'{i} {document} contact {person.email} added'
