@@ -110,7 +110,7 @@ class Processor:
                 # с указанием других номеров документов
                 documents_list = old_contact.documents_list or ''
                 documents_list = documents_list.split(', ') + [document.number]
-                old_contact.documents_list = ', '.join(documents_list)
+                old_contact.documents_list = ', '.join(documents_list)[:1999]
                 old_contact.save()
                 text = f'{i} {document} contact {person.email} already exists'
                 # self.vprint(text)
@@ -128,6 +128,7 @@ class Processor:
                 emails_added += 1
 
         text = f'Emails added {emails_added}\n'
+        f.write(text + '\n')
         log_object.message = (log_object.message or '') + text
         self.vprint(log_object.message)
 

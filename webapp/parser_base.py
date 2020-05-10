@@ -377,7 +377,7 @@ class Parser:
 
                     proxy = dict(proxy)
                     proxy['in_use'] = 'TRUE'
-                    proxy['status'] = 'NULL'
+                    proxy['status'] = ''
                     # print(today, proxy['date_last_used'])
                     # print(two_days_ago, proxy['date_last_used'])
                     if proxy['date_last_used'] < today:
