@@ -73,11 +73,10 @@ class Processor:
         emails_added = 0
         for i, document in enumerate(documents.iterator()):
             type = 'order' if task.autosearchtask.registry_type == 0 else 'register'
-            filter = {type + 'companyrel__company_is_holder': True, type + 'companyrel__document': document}
-
+            filter = {type + 'companyrel__company_is_holder': True,
+                      type + 'companyrel__document': document}
             # Находим компанию правообладателя
             holder = document.company_set.filter(**filter).first()
-            persons = None
             # Если нет контактов, прикрепленных к компании документа,
             # то следует искать контакты в компании, являющейся правообладателем
             if holder:

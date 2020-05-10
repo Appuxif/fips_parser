@@ -309,33 +309,33 @@ def parse_contacts_from_izv(self, document, izv, history):
         company = get_or_create_company(self, document, copyright_holder, False, make_holder=True)
         person = get_or_create_person(self, document, copyright_holder, company)
 
-    # Парсинг предыдущего правообладателя
-    last_copyright_holder = parse_applicant(izv, 'last_copyright_holder')
-    if last_copyright_holder:
-        # print('izv last_copyright_holder', last_copyright_holder, '\n')
-        company = get_or_create_company(self, document, last_copyright_holder, False)
-        person = get_or_create_person(self, document, last_copyright_holder, company)
+    # # Парсинг предыдущего правообладателя
+    # last_copyright_holder = parse_applicant(izv, 'last_copyright_holder')
+    # if last_copyright_holder:
+    #     # print('izv last_copyright_holder', last_copyright_holder, '\n')
+    #     company = get_or_create_company(self, document, last_copyright_holder, False)
+    #     person = get_or_create_person(self, document, last_copyright_holder, company)
 
-    # Парсинг предыдущего правообладателя 2
-    last_copyright_holder_name = parse_applicant(izv, 'last_copyright_holder_name')
-    if last_copyright_holder_name:
-        # print('izv last_copyright_holder_name', last_copyright_holder_name, '\n')
-        company = get_or_create_company(self, document, last_copyright_holder_name, False)
-        person = get_or_create_person(self, document, last_copyright_holder_name, company)
+    # # Парсинг предыдущего правообладателя 2
+    # last_copyright_holder_name = parse_applicant(izv, 'last_copyright_holder_name')
+    # if last_copyright_holder_name:
+    #     # print('izv last_copyright_holder_name', last_copyright_holder_name, '\n')
+    #     company = get_or_create_company(self, document, last_copyright_holder_name, False)
+    #     person = get_or_create_person(self, document, last_copyright_holder_name, company)
 
     # Парсинг предоставляющего право
-    grantor = parse_applicant(izv, 'grantor')
-    if grantor:
-        # print('izv grantor', grantor, '\n')
-        company = get_or_create_company(self, document, grantor, False)
-        person = get_or_create_person(self, document, grantor, company)
+    # grantor = parse_applicant(izv, 'grantor')
+    # if grantor:
+    #     # print('izv grantor', grantor, '\n')
+    #     company = get_or_create_company(self, document, grantor, False)
+    #     person = get_or_create_person(self, document, grantor, company)
 
     # Парсинг принимающего право
-    granted = parse_applicant(izv, 'granted')
-    if granted:
-        # print('izv granted', granted, '\n')
-        company = get_or_create_company(self, document, granted, False)
-        person = get_or_create_person(self, document, granted, company)
+    # granted = parse_applicant(izv, 'granted')
+    # if granted:
+    #     # print('izv granted', granted, '\n')
+    #     company = get_or_create_company(self, document, granted, False)
+    #     person = get_or_create_person(self, document, granted, company)
 
     # Парсинг адреса для переписки
     correspondence_address = parse_applicant(izv, 'address')
