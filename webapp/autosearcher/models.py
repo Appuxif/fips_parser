@@ -195,6 +195,8 @@ class MailingTask(models.Model):
     auto_renew = models.BooleanField('Автопродление', default=False)
     is_active = models.BooleanField('Задача активна', default=False)
 
+    distribution_query = models.TextField('Запрос для списка контактов', null=True, blank=True)
+
     def __str__(self):
         return 'Рассылка для ' + str(self.autosearchtask.task_name)
 
@@ -210,7 +212,6 @@ class MailingItem(models.Model):
     contactperson_id = models.IntegerField('ID контакта', null=True, blank=True)
     document_id = models.IntegerField('ID документа', null=True, blank=True)
     documentparse_id = models.IntegerField('ID парсинга документа', null=True, blank=True)
-    distribution_query = models.TextField('Запрос для списка контактов', null=True, blank=True)
 
     def __str__(self):
         return 'Item ' + str(self.mailingtask)
