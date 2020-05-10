@@ -137,7 +137,7 @@ class Processor:
                 new_contact['documents_list'] = str(document.number)
                 document_image = document.documentfile_set.filter(name='image').first()
                 if document_image:
-                    new_contact['document_image'] = 'http://91.240.84.15/' + document_image.link
+                    new_contact['document_image'] = 'http://91.240.84.15' + document_image.link
                 # Если контакта нет в списке, то добавляем его
                 task.mailingitem_set.create(**new_contact)
                 text = f'{i} {document} contact {person.email} added'
