@@ -190,6 +190,7 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
         except User.corrector.RelatedObjectDoesNotExist:
             corrector = None
         # TODO: Добавить проверку менеждера
+        # Проверка выполнения задачи при сохранени объекта
         if obj.task_done and obj.corrector == corrector:
             # Определяем БД для документов
             Document = OrderDocument if obj.document_registry == 0 else RegisterDocument
@@ -278,6 +279,19 @@ class MailingTaskAdmin(admin.ModelAdmin):
     def documents_count(self, obj):
         return AutoSearchTaskAdmin.documents_count(self, obj.autosearchtask)
     documents_count.short_description = "Найдено документов"
+
+    def save_model(self, request, obj, form, change):
+        if obj.is_active:
+            try:
+                socket_path = '/var/www/fips_parser/tasks_processor.sock'
+                with Client(socket_path) as conn:
+                    conn.send('self.load_tasks(5)')
+            except FileNotFoundError:
+                print('MailingTaskAdmin save_model Сокет не найден')
+            except:
+                print('MailingTaskAdmin save_model Ошибка подключения')
+                traceback.print_exc(file=sys.stdout)
+        return super(MailingTaskAdmin, self).save_model(request, obj, form, change)
 
 
 # TODO: Для отладки
