@@ -986,7 +986,7 @@ def parse_applicant(document_parse, type):
             sur_found = first_found = second_found = middle_found = False
 
             # if re.match(r'.*(ул\.|г\.|обл\.|д\.|кв\.|\d).*', item):
-            if re.match(r'.*(федерация|республика|корпус|пркт|проспект|улица|ул\.|город|г\.|область|обл\.|\d|[a-z]).*',
+            if re.match(r'.*(федерация|республика|корпус|пркт|пр-кт|проспект|улица|ул\.|город|г\.|область|обл\.|\d|[a-z]).*',
                         item.lower()):
                 # print('пропущено', item)
                 continue

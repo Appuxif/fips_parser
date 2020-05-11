@@ -1,0 +1,213 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block extrahead %}{{ block.super }}
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+{{ media }}
+{% endblock %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}">{% endblock %}
+
+{% block coltype %}colM{% endblock %}
+
+{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} change-form{% endblock %}
+
+{% if not is_popup %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+&rsaquo; {% if has_view_permission %}<a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }}{% endif %}
+&rsaquo; {% if add %}{% blocktrans with name=opts.verbose_name %}Add {{ name }}{% endblocktrans %}{% else %}{{ original|truncatewords:"18" }}{% endif %}
+</div>
+{% endblock %}
+{% endif %}
+
+{% block content %}<div id="content-main">
+{% block object-tools %}
+{% if change %}{% if not is_popup %}
+  <ul class="object-tools">
+    {% block object-tools-items %}
+      {% change_form_object_tools %}
+    {% endblock %}
+  </ul>
+{% endif %}{% endif %}
+{% endblock %}
+<form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" method="post" id="{{ opts.model_name }}_form" novalidate>{% csrf_token %}{% block form_top %}{% endblock %}
+<div>
+{% if is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1">{% endif %}
+{% if to_field %}<input type="hidden" name="{{ to_field_var }}" value="{{ to_field }}">{% endif %}
+{% if save_on_top %}{% block submit_buttons_top %}{% submit_row %}{% endblock %}{% endif %}
+{% if errors %}
+    <p class="errornote">
+    {% if errors|length == 1 %}{% trans "Please correct the error below." %}{% else %}{% trans "Please correct the errors below." %}{% endif %}
+    </p>
+    {{ adminform.form.non_field_errors }}
+{% endif %}
+
+{% if adminform.form.logo.value %}
+    <a href="/media/{{ adminform.form.logo.value }}" target="_blank"><img src="/media/{{ adminform.form.logo.value }}" alt="file" width="300px"></a>
+{% endif %}
+
+{% block field_sets %}
+{% for fieldset in adminform %}
+  {% include "admin/includes/fieldset.html" %}
+{% endfor %}
+{% endblock %}
+
+<h3>Информация о документе</h3>
+<fieldset class="module aligned">
+    {% if document_form.applicant and document_form.applicant.value %}
+    <div class="form-row">
+        <div class="fieldBox">
+            {{ document_form.applicant.label_tag }}
+            <div class="readonly">{{ document_form.applicant.value }}</div>
+        </div>
+    </div>
+    {% endif %}
+    {% if document_form.copyright_holder and document_form.copyright_holder.value %}
+        <div class="form-row">
+            <div class="fieldBox">
+                {{ document_form.copyright_holder.label_tag }}
+                <div class="readonly">{{ document_form.copyright_holder.value }}</div>
+            </div>
+        </div>
+    {% endif %}
+    <div class="form-row">
+        <div class="fieldBox">
+            {{ document_form.address.label_tag }}
+            <div class="readonly">{{ document_form.address.value }}</div>
+        </div>
+    </div>
+    {% if document_form.patent_atty and document_form.patent_atty.value %}
+        <div class="form-row">
+            <div class="fieldBox">
+            {{ document_form.patent_atty.label_tag }}
+            <div class="readonly">{{ document_form.patent_atty.value }}</div>
+            </div>
+        </div>
+    {% endif %}
+    {% if document_image %}
+        <div class="form-row">
+            <a href="{{ document_image }}" target="_blank"><img src="{{ document_image }}" alt="file" width="150px"></a>
+        </div>
+    {% endif %}
+    <div class="form-row">
+        {% for file in document_files %}
+            <a href="{{ file }}" target="_blank"><img src="{{ file }}" alt="file" width="150px"></a>
+        {% endfor %}
+    </div>
+</fieldset>
+
+
+{% block after_field_sets %}{% endblock %}
+
+{% block inline_field_sets %}
+{% for inline_admin_formset in inline_admin_formsets %}
+    {% include inline_admin_formset.opts.template %}
+{% endfor %}
+{% endblock %}
+
+{% block after_related_objects %}{% endblock %}
+
+{% block submit_buttons_bottom %}{% submit_row %}{% endblock %}
+
+{% block admin_change_form_document_ready %}
+    <script type="text/javascript"
+            id="django-admin-form-add-constants"
+            src="{% static 'admin/js/change_form.js' %}"
+            {% if adminform and add %}
+                data-model-name="{{ opts.model_name }}"
+            {% endif %}>
+    </script>
+{% endblock %}
+
+{# JavaScript for prepopulated fields #}
+{% prepopulated_fields_js %}
+
+</div>
+</form>
+
+{# Форма компании-правообладателя #}
+<form enctype="multipart/form-data" action="" method="post" id="company_form" novalidate>
+    {% csrf_token %}
+    <h3>Компания-правообладатель</h3>
+    <div><a href="/admin/interface/company/{{company.id}}/change/" target="_blank">Перейти на страницу компании</a></div>
+    <p class="deletelink-box"><a href="/admin/interface/company/{{company.id}}/delete/" class="deletelink">Удалить компанию</a></p>
+
+    {% if company_form.logo.value %}
+        <div class="module custom_change_form">
+        <div class="form-row">
+            {{ company_form.logo.label_tag }}
+            <a href="/media/{{ company_form.logo.value }}" target="_blank"><img src="/media/{{ company_form.logo.value }}" alt="file" width="150px"></a>
+        </div>
+        </div>
+    {% endif %}
+    <div class="form-row">
+        <div class="fieldBox">
+            <label>ID Компании</label>
+            <div class="readonly">{{ company.id }}</div>
+        </div>
+    </div>
+    <div class="module custom_change_form">
+        {% for field in company_form %}
+            <div class="form-row">
+            {{ field.label_tag }}
+            {{ field }}
+            </div>
+        {% endfor %}
+    </div>
+    <div class="submit-row">
+        <input type="submit" value="Сохранить Компанию" class="default" name="_continue">
+    </div>
+</form>
+
+<link rel="stylesheet" href="/static/css/task_styles.css">
+
+{# Формы контактов #}
+<form enctype="multipart/form-data" action="" method="post" id="persons_form" novalidate>
+    {% csrf_token %}
+    {{ contact_formset.management_form }}
+    <h3>Контакты документа</h3>
+    {% for form in contact_formset %}
+        <h4>Контакт {{ forloop.counter }}</h4>
+        {% if form.id.value %}
+            <div><a href="/admin/interface/contactperson/{{form.id.value}}/change/" target="_blank">Перейти на страницу контакта</a>
+            <a href="/admin/interface/company/{{form.company.value}}/change/" target="_blank">Перейти на страницу компании</a></div>
+        <p class="deletelink-box"><a href="/admin/interface/contactperson/{{form.id.value}}/delete/" class="deletelink">Удалить Контакт</a></p>
+            {{ form.delete.label_tag }}
+            {{ form.delete }}
+        {% else %}
+            <div class="form-row">
+                {{ form.new_id.label_tag }}
+                {{ form.new_id }}
+                {{ form.new_id.help_text }}
+            </div>
+        {% endif %}
+        <div class="module custom_change_form">
+            {% if form.photo.value %}
+                <div class="module custom_change_form">
+                <div class="form-row">
+                    {{ form.photo.label_tag }}
+                    <a href="/media/{{ form.photo.value }}" target="_blank"><img src="/media/{{ form.photo.value }}" alt="file" width="150px"></a>
+                </div>
+                </div>
+            {% endif %}
+            {% for field in form %}
+                {% if forloop.revcounter0 < 3 %}
+                {% else %}
+                <div class="form-row">
+                    {{ field.label_tag }}
+                    {{ field }}
+                </div>
+                {% endif %}
+            {% endfor %}
+            {{form.id}}
+        </div>
+    {% endfor %}
+    <div class="submit-row">
+        <input type="submit" value="Сохранить Контакты" class="default" name="_continue">
+    </div>
+</form>
+</div>
+{% endblock %}

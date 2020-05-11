@@ -45,6 +45,7 @@
     {{ adminform.form.non_field_errors }}
 {% endif %}
 
+{# Кастомное отображение изображения #}
 {% if adminform.form.logo.value %}
     <a href="/media/{{ adminform.form.logo.value }}" target="_blank"><img src="/media/{{ adminform.form.logo.value }}" alt="file" width="300px"></a>
 {% endif %}

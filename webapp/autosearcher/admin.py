@@ -6,12 +6,17 @@ from django.contrib import admin, messages
 from django.db.models import Q, Count, FilteredRelation
 from django.contrib.auth.models import User
 from django.contrib.admin.models import LogEntry, ContentType
+from django.forms import modelform_factory, modelformset_factory
 from multiprocessing.connection import Client
 
 from .models import AutoSearchTask, AutoSearchTaskItem, \
     OrderDocument, RegisterDocument, \
     Corrector, CorrectorTask, AutoSearchLog, \
     MailingTask, MailingItem
+from interface.models import ContactPerson, Company
+# from .forms import OrderDocumentParseForm, RegisterDocumentParseForm, \
+#     OrderDocumentParse, RegisterDocumentParse
+from .forms import OrderDocumentParse, RegisterDocumentParse, ContactPersonTaskForm
 # from interface.models import OrderDocument, RegisterDocument,
 # from orders.models_base import Document as OrderDocument
 # from registers.models_base import Document as RegisterDocument
@@ -174,6 +179,97 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'corrector', 'document_registry', 'document_id',
                     'task_done', 'date_created')
     save_on_top = True
+    change_form_template = 'admin/custom_change_form_autosearchtask.html'
+
+    # Кастомный функционал страницы
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        # Поиск объектов, связанных с этой задачей
+        task = CorrectorTask.objects.get(id=object_id)
+        if task.document_registry == 0:
+            Document = OrderDocument
+            DocumentParse = OrderDocumentParse
+            filter_type = 'order'
+        else:
+            Document = RegisterDocument
+            DocumentParse = RegisterDocumentParse
+            filter_type = 'register'
+        document = Document.objects.get(id=task.document_id)
+        company_filter = {filter_type + '__id': document.id,
+                          filter_type + 'companyrel__company_is_holder': True}
+        # Кастомные формы объектов
+        DocumentParseForm = modelform_factory(DocumentParse, fields=('applicant', 'address', 'copyright_holder', 'patent_atty'))
+        CompanyForm = modelform_factory(Company, fields=('id', 'form', 'form_correct', 'name', 'name_correct',
+                                                         'name_latin', 'address', 'address_latin', 'sign_char', 'web',
+                                                         'inn', 'kpp', 'ogrn', 'logo'))
+        ContactFormset = modelformset_factory(ContactPerson, form=ContactPersonTaskForm)
+
+        company = Company.objects.filter(**company_filter).first()
+        # Размещение изображений и факсимильных файлов
+        link = document.documentfile_set.filter(name='image').first()
+        if link:
+            extra_context['document_image'] = link.link
+        files = document.documentfile_set.exclude(name='image')
+        if files.exists():
+            extra_context['document_files'] = [f.link for f in files.all()]
+
+        # Если был POST запрос, то нужно сохранить кастомные формы
+        if request.method == 'POST':
+            print(request.POST)
+            if request.POST.get('_continue', '') == 'Сохранить Компанию':
+                company_form = CompanyForm(request.POST, request.FILES, instance=company)
+                if company_form.is_valid():
+                    company = company_form.save()
+
+            if request.POST.get('_continue', '') == 'Сохранить Контакты':
+                contact_formset = ContactFormset(request.POST, request.FILES)
+                print(contact_formset.is_valid())
+                for i, form in enumerate(contact_formset.forms):
+                    # print(form.has_changed())
+                    print(form.cleaned_data)
+                    if form.has_changed():
+                        form_is_valid = form.is_valid()
+                        person = form.cleaned_data.get(f'id')
+                        delete = form.cleaned_data['delete']
+                        print(person)
+                        # При откреплении контакта от документа
+                        if delete and person:
+                            document.contactperson_set.remove(person)
+                            continue
+
+                        # Если контакт был отредактирован
+                        if person and form_is_valid:
+                            form.save()
+                            continue
+
+                        # При прикреплении уже существующего контакта к документу
+                        new_id = form.cleaned_data['new_id']
+                        if new_id:
+                            person = ContactPerson.objects.get(id=new_id)
+                            document.contactperson_set.add(person)
+                            continue
+
+                        # При создании нового контакта
+                        if form_is_valid:
+                            a = form.save()
+                            document.contactperson_set.add(a)
+        elif request.method == 'GET':
+            pass
+
+        contact_formset_filter = {filter_type + '__id': document.id}
+
+        extra_context['document_form'] = DocumentParseForm(instance=document.documentparse)
+        extra_context['company_form'] = CompanyForm(request.POST or None, instance=company)
+        extra_context['company'] = company
+        contactpersons = ContactPerson.objects.filter(**contact_formset_filter)
+        contactpersons_initial = [{'company': company, filter_type: document, 'company_id': company.id}]*contactpersons.count()
+        extra_context['contact_formset'] = ContactFormset(queryset=contactpersons.all(),
+                                                          initial=contactpersons_initial)
+
+        # print('document', document)
+        # print('company', company)
+        # print('contact_formset', extra_context['contact_formset'])
+        return super(CorrectorTaskAdmin, self).change_view(request, object_id, form_url, extra_context)
 
     def get_queryset(self, request):
         qs = super(CorrectorTaskAdmin, self).get_queryset(request)
@@ -196,8 +292,8 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
             Document = OrderDocument if obj.document_registry == 0 else RegisterDocument
             # Получаем документ из задания
             doc = Document.objects.get(id=obj.document_id)
-            print(doc)
-            print(doc.company_set.all())
+            # print(doc)
+            # print(doc.company_set.all())
 
             corrector_logs = LogEntry.objects.filter(user_id=corrector.user.id)
             now = datetime.now(tz=timezone.utc)
@@ -217,7 +313,7 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                 # print('company_corrector_logs', company_corrector_logs)
                 # print('company.date_corrected', company.date_corrected)
 
-            print(doc.contactperson_set.all())
+            # print(doc.contactperson_set.all())
             # Проверяем все контакты компании на корректировку
             person_corrected = True
             for person in doc.contactperson_set.all():
@@ -234,11 +330,13 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
 
             if person_corrected and company_corrected:
                 messages.add_message(request, messages.INFO, f'Задача выполнена')
-                obj.save()
+                obj.task_done = True
                 corrector.score += 5
                 corrector.tasks_done += 1
             else:
+                obj.task_done = False
                 messages.add_message(request, messages.ERROR, f'Задача не выполнена')
+            obj.save()
 
 
 @admin.register(AutoSearchLog)
@@ -304,8 +402,9 @@ class MailingItemAdmin(admin.ModelAdmin):
 def get_ams_query(obj, selected=None, join_document=False, join_documentparse=False):
     queryset = obj.mailingitem_set.all()
 
-    selected = selected or 't1.id, t1.document_image, t2.id, t2.email, t2.full_name, ' \
-                           't2.last_name, t2.first_name, t2.middle_name'
+    # selected = selected or 't1.id, t1.document_image, t2.id, t2.email, t2.full_name, ' \
+    #                        't2.last_name, t2.first_name, t2.middle_name'
+    selected = selected or 't1.id, t1.document_image, t2.*'
     joined = f' LEFT JOIN interface_contactperson t2 ON t1.contactperson_id = t2.id'
     table = 'orders' if obj.autosearchtask.registry_type == 0 else 'registers'
 

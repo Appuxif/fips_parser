@@ -1,0 +1,28 @@
+.custom_change_form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    /*justify-content: center;*/
+}
+
+.custom_change_form * {
+    box-sizing: border-box;
+}
+
+.custom_change_form .form-row {
+    max-width: 500px;
+}
+
+.custom_change_form label{
+    width: 100%;
+    display: block;
+}
+
+.custom_change_form input[type="text"], .custom_change_form input[type="number"], .custom_change_form select {
+    width: 400px;
+    min-width: 200px;
+    display: block;
+}
+.custom_change_form input[type="checkbox"] {
+    display: block;
+}
