@@ -191,7 +191,9 @@ class MailingTask(models.Model):
     renew_in_hours = models.IntegerField('Следующее срабатывание через (часов)', null=True, blank=True)
     next_action = models.DateTimeField('Дата следующего срабатывания', null=True)
     last_launch = models.DateTimeField('Дата предыдущего срабатывания', null=True, blank=True)
-
+    categories = models.CharField('Порядок выбор адресатов', max_length=255, null=True, blank=True,
+                                  default='DIRECTOR, EXECUTOR, DEFAULT, REPRESENTATIVE',
+                                  help_text='DIRECTOR, EXECUTOR, DEFAULT, REPRESENTATIVE')
     auto_renew = models.BooleanField('Автопродление', default=False)
     is_active = models.BooleanField('Задача активна', default=False)
 

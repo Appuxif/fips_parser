@@ -71,6 +71,13 @@ class Processor:
 
         emails = []
         emails_added = 0
+
+        categories = re.split(', |,', task.categories)
+        text = f'Categories {task.categories}'
+        self.vprint(text)
+        f.write(text + '\n')
+        log_object.message = (log_object.message or '') + text + '\n'
+
         for i, document in enumerate(documents.iterator()):
             type = 'order' if task.autosearchtask.registry_type == 0 else 'register'
             filter = {type + 'companyrel__company_is_holder': True,
@@ -98,21 +105,15 @@ class Processor:
 
             # Ищем среди найденных контактов такой контакт, который имеет верифицированный имейл
             # Сначала находим контакт руководителя
-            categories = ['DIRECTOR', 'EXECUTOR', 'DEFAULT', 'REPRESENTATIVE']
             for cat in categories:
                 person = persons.filter(category=cat).first()
                 if person and person.email and person.email_verified and person.email_correct:
                     break
             else:
-                # Поиск среди неучтенных. Вообще, такого не должно быть, но мало ли
-                for person in persons.exclude(category_in=categories):
-                    if person.email and person.email_verified and person.email_correct:
-                        break
-                else:
-                    text = f'{i} {document} there are no verified emails'
-                    # self.vprint(text)
-                    f.write(text + '\n')
-                    continue
+                text = f'{i} {document} there are no verified emails'
+                # self.vprint(text)
+                f.write(text + '\n')
+                continue
 
             # Если найден контакт с верифицированным имейлом, добавляем этот контакт в список для рассылки
             # предварительно, проверяем такой контакт в списке на наличие
