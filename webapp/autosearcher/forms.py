@@ -9,7 +9,7 @@ from interface.models import ContactPerson, Company
 
 class ContactPersonTaskForm(forms.ModelForm):
     company = forms.IntegerField(required=False, label='ID Компании')
-    new_id = forms.IntegerField(required=False, help_text='Для ручного добавления контакта')
+    new_id = forms.IntegerField(required=False, help_text='Для ручного добавления существующего контакта')
     delete = forms.BooleanField(required=False, initial=False, label='Открепить контакт')
     id = forms.HiddenInput()
 

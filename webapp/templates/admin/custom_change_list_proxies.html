@@ -1,0 +1,16 @@
+{% extends "admin/change_list.html" %}
+{% load admin_list advanced_search_form %}
+
+
+{% block search %}
+
+  {% search_form cl %}
+  <hr />
+    <form action="./" method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ proxy_add_form }}
+        <input type="submit">
+    </form>
+    <hr />
+
+{% endblock %}

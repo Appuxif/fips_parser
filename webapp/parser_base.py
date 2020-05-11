@@ -851,14 +851,20 @@ def load_proxies_to_db_from_file(filename=None):
         values = []
         for proxy in proxies:
             # match = re.match(r'(.*)(?P<value>(?P<day>\d{2})\.(?P<month>\d{2})\.(?P<year>\d{4}))(.*)', proxy)
-            match = re.match(r'(?P<scheme>https*://)(?P<host>\d+\.\d+\.\d+\.\d+):(?P<port>\d+)', proxy)
+            match = re.match(r'(?P<scheme>https?://)(?P<user>.*[^:]):(?P<pass>.*[^@])@'
+                             r'(?P<host>\d+\.\d+\.\d+\.\d+):(?P<port>\d+)', proxy)
+            match = match or re.match(r'(?P<scheme>https*://)(?P<host>\d+\.\d+\.\d+\.\d+):(?P<port>\d+)', proxy)
             g = match.groupdict()
-            values.append(
-                f"('{g['scheme']}', '{g['host']}', '{g['port']}', FALSE, TRUE, FALSE)"
-            )
+            scheme = f"'{g['scheme']}'" if g.get('scheme') else 'NULL'
+            user = f"'{g['user']}'" if g.get('user') else 'NULL'
+            password = f"'{g['pass']}'" if g.get('pass') else 'NULL'
+            host = f"'{g['host']}'" if g.get('host') else 'NULL'
+            port = f"'{g['port']}'" if g.get('port') else 'NULL'
+            values.append(f"({scheme}, {user}, {password}, {host}, {port}, FALSE, TRUE, FALSE)")
             print(match.groupdict())
         if values:
-            q = "INSERT INTO interface_proxies (scheme, host, port, is_banned, is_working, in_use) VALUES "
+            q = "INSERT INTO interface_proxies (scheme, user, password, host, port, is_banned, is_working, in_use) " \
+                "VALUES "
             q += ', '.join(values)
             print(q)
             DB().executeone(q)

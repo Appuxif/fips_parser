@@ -13,6 +13,7 @@ import requests
 from .models import ContactPerson, Company, RegisterCompanyRel, OrderCompanyRel, \
     ParserSetting, Proxies, EmailApiKey, EmailApiKeyLog
 from interface.change_message_utils import construct_change_message
+from .forms import AddProxyForm
 
 # from orders.admin import CompanyInline as OrderCompanyInline
 # from registers.admin import CompanyInline as RegisterCompanyInline
@@ -210,7 +211,19 @@ class RegisterCompanyRelAdmin(admin.ModelAdmin):
 class ProxiesAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'is_banned', 'is_working', 'in_use', 'date_last_used', 'documents_parsed', 'status')
     list_editable = ('is_banned', 'is_working', 'in_use', 'status')
+    change_list_template = 'admin/custom_change_list_proxies.html'
 
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        if request.method == 'POST':
+            form = AddProxyForm(request.POST, request.FILES)
+            if form.is_valid():
+                proxies = form.cleaned_data['proxies']
+                proxies = proxies.read().splitlines()
+                print(proxies[:2])
+                messages.add_message(request, messages.INFO, 'Получен')
+        extra_context['proxy_add_form'] = AddProxyForm()
+        return super(ProxiesAdmin, self).changelist_view(request, extra_context)
 
 # Для управления парсером. Отправляет запрос на обновление конфига парсеров процессу парсингов
 @admin.register(ParserSetting)

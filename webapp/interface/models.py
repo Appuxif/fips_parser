@@ -15,7 +15,7 @@ class Proxies(models.Model):
     scheme = models.CharField(max_length=10, default='http://', blank=True)
     user = models.CharField(max_length=100, null=True, blank=True)
     password = models.CharField(max_length=100, null=True, blank=True)
-    host = models.CharField(max_length=100)
+    host = models.CharField(max_length=100, unique=True)
     port = models.PositiveIntegerField()
 
     is_banned = models.BooleanField(default=False)
@@ -31,6 +31,9 @@ class Proxies(models.Model):
             s = s[:-1] + [str(self.user), ':', str(self.password), '@'] + ['/']
         s = s[:-1] + [str(self.host), ':', str(self.port)] + s[-1:]
         return ''.join(s)
+
+    class Meta:
+        unique_together = ['host', 'port']
 
 
 def company_logo_path(instance, filename):
