@@ -1,5 +1,6 @@
 import traceback
 import sys
+import re
 from django.contrib import admin, messages
 from multiprocessing.connection import Client
 from django.contrib.admin.models import LogEntry
@@ -220,8 +221,19 @@ class ProxiesAdmin(admin.ModelAdmin):
             if form.is_valid():
                 proxies = form.cleaned_data['proxies']
                 proxies = proxies.read().splitlines()
-                print(proxies[:2])
-                messages.add_message(request, messages.INFO, 'Получен')
+                proxies_list = []
+                count_before = Proxies.objects.count()
+                for proxy in proxies:
+                    proxy = proxy.decode()
+                    match = re.match(r'(?P<scheme>https?://)(?P<user>.*[^:]):(?P<pass>.*[^@])@'
+                                     r'(?P<host>\d+\.\d+\.\d+\.\d+):(?P<port>\d+)', proxy)
+                    match = match or re.match(r'(?P<scheme>https*://)(?P<host>\d+\.\d+\.\d+\.\d+):(?P<port>\d+)', proxy)
+                    g = match.groupdict()
+                    proxies_list.append(Proxies(**g))
+                Proxies.objects.bulk_create(proxies_list, ignore_conflicts=True)
+                count_after = Proxies.objects.count()
+                messages.add_message(request, messages.INFO, f'Получено прокси {len(proxies)}')
+                messages.add_message(request, messages.INFO, f'Добавлено новых прокси {count_after - count_before}')
         extra_context['proxy_add_form'] = AddProxyForm()
         return super(ProxiesAdmin, self).changelist_view(request, extra_context)
 
