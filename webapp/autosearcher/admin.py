@@ -186,9 +186,9 @@ class CorrectorAdmin(admin.ModelAdmin):
 
 @admin.register(CorrectorTask)
 class CorrectorTaskAdmin(admin.ModelAdmin):
-    readonly_fields = ('note', 'datetime_created', 'date_task_done', )
     list_display = ('__str__', 'datetime_created', 'date_task_done', 'task_done', 'task_cannot_be_done')
     fields = ('document_number', 'datetime_created', 'date_task_done', 'task_cannot_be_done')
+    readonly_fields = ('note', 'datetime_created', 'date_task_done', 'document_number')
     # save_on_top = True
     view_on_site = False
     change_form_template = 'admin/custom_change_form_autosearchtask.html'
