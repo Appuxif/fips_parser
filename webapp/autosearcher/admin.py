@@ -104,7 +104,7 @@ class AutoSearchTaskAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'registry_type', 'next_action', 'last_launch', 'auto_renew', 'is_active')
     save_on_top = True
     readonly_fields = ('documents_count', 'actual_query')
-
+    save_as = True
     my_queryset = None
 
     # Подсчитывает количество документов по заданным фильтрам
@@ -190,7 +190,7 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'corrector', 'document_registry', 'document_id',
                     'task_done', 'date_created')
     save_on_top = True
-    save_as = True
+
     change_form_template = 'admin/custom_change_form_autosearchtask.html'
 
     # Кастомный функционал страницы
