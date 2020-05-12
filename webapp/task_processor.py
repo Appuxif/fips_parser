@@ -78,6 +78,10 @@ class Processor:
         f.write(text + '\n')
         log_object.message = (log_object.message or '') + text + '\n'
 
+        # Предварительно удаляем старый список для этой задачи
+        # TODO: Возможно, это не надо
+        task.mailingitem_set.all().delete()
+
         for i, document in enumerate(documents.iterator()):
             type = 'order' if task.autosearchtask.registry_type == 0 else 'register'
             filter = {type + 'companyrel__company_is_holder': True,
@@ -123,9 +127,11 @@ class Processor:
                 # Если этот контакт уже есть в списке, то формируем дополнительный столбец
                 # с указанием других номеров документов
                 documents_list = old_contact.documents_list or ''
-                documents_list = documents_list.split(', ') + [document.number]
-                old_contact.documents_list = ', '.join(documents_list)[:1999]
-                old_contact.save()
+                # Проверка содержимого на количество символов и на наличие документа в списке
+                if len(documents_list) < 1950 and document.number not in documents_list:
+                    documents_list = documents_list.split(', ') + [document.number]
+                    old_contact.documents_list = ', '.join(documents_list)[:1999]
+                    old_contact.save()
                 text = f'{i} {document} contact {person.email} already exists'
                 # self.vprint(text)
                 f.write(text + '\n')
