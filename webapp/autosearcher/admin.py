@@ -197,12 +197,21 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
             DocumentParse = RegisterDocumentParse
             filter_type = 'register'
         document = Document.objects.get(id=task.document_id)
+
         company_filter = {filter_type + '__id': document.id,
                           filter_type + 'companyrel__company_is_holder': True}
         # Кастомные формы объектов
         DocumentParseForm = modelform_factory(DocumentParse, fields=('applicant', 'address', 'copyright_holder', 'patent_atty'))
 
         company = Company.objects.filter(**company_filter).first()
+
+        # Проверяем у документа наличие прикрепленных контактов
+        # TODO: Временное решение
+        if document.contactperson_set.count() == 0:
+            # Если контактов нет, то добавляем контакты из компании-правообладателя
+            for p in company.contactperson_set.all():
+                document.contactperson_set.add(p)
+
         # Размещение изображений и факсимильных файлов
         link = document.documentfile_set.filter(name='image').first()
         if link:
@@ -307,7 +316,7 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
         extra_context['company_form'] = CompanyForm(request.POST or None, instance=company)
         extra_context['company'] = company
         contactpersons = ContactPerson.objects.filter(**contact_formset_filter)
-        contactpersons_initial = [{'company': company, filter_type: document, 'company_id': company.id}]*contactpersons.count()
+        contactpersons_initial = [{'company': company.id, filter_type: document, 'company_id': company.id}]*(contactpersons.count() + 1)
         extra_context['contact_formset'] = ContactFormset(queryset=contactpersons.all(),
                                                           initial=contactpersons_initial)
 
