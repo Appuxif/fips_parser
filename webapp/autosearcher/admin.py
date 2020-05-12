@@ -1,6 +1,8 @@
 import traceback
 import sys
 from datetime import datetime, timezone, date, timedelta
+from time import sleep
+
 from django.db import connection
 from django.contrib import admin, messages
 from django.db.models import Q, Count, FilteredRelation
@@ -181,6 +183,7 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'corrector', 'document_registry', 'document_id',
                     'task_done', 'date_created')
     save_on_top = True
+
     change_form_template = 'admin/custom_change_form_autosearchtask.html'
 
     # Кастомный функционал страницы
@@ -211,6 +214,12 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
             # Если контактов нет, то добавляем контакты из компании-правообладателя
             for p in company.contactperson_set.all():
                 document.contactperson_set.add(p)
+            if document.documentparse.patent_atty:
+                document.document_parsed = False
+                document.order_done = False
+                document.date_parsed = None
+                document.save()
+                sleep(3)
 
         # Размещение изображений и факсимильных файлов
         link = document.documentfile_set.filter(name='image').first()
