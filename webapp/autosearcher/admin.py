@@ -138,17 +138,17 @@ class AutoSearchTaskAdmin(admin.ModelAdmin):
     #     messages.add_message(request, messages.INFO, 'Найдено ' + str(c) + ' документов')
 
     def save_model(self, request, obj, form, change):
-        if obj.is_active:
-            try:
-                socket_path = '/var/www/fips_parser/tasks_processor.sock'
-                with Client(socket_path) as conn:
-                    # conn.send('self.load_tasks(5)')
-                    conn.send('self.need_to_refresh=True')
-            except FileNotFoundError:
-                print('AutoSearchTaskAdmin save_model Сокет не найден')
-            except:
-                print('AutoSearchTaskAdmin save_model Ошибка подключения')
-                traceback.print_exc(file=sys.stdout)
+        # if obj.is_active:
+        try:
+            socket_path = '/var/www/fips_parser/tasks_processor.sock'
+            with Client(socket_path) as conn:
+                # conn.send('self.load_tasks(5)')
+                conn.send('self.need_to_refresh=True')
+        except FileNotFoundError:
+            print('AutoSearchTaskAdmin save_model Сокет не найден')
+        except:
+            print('AutoSearchTaskAdmin save_model Ошибка подключения')
+            traceback.print_exc(file=sys.stdout)
         return super(AutoSearchTaskAdmin, self).save_model(request, obj, form, change)
 
 
@@ -468,17 +468,17 @@ class MailingTaskAdmin(admin.ModelAdmin):
     documents_count.short_description = "Найдено документов"
 
     def save_model(self, request, obj, form, change):
-        if obj.is_active:
-            try:
-                socket_path = '/var/www/fips_parser/tasks_processor.sock'
-                with Client(socket_path) as conn:
-                    # conn.send('self.load_tasks(5)')
-                    conn.send('self.need_to_refresh=True')
-            except FileNotFoundError:
-                print('MailingTaskAdmin save_model Сокет не найден')
-            except:
-                print('MailingTaskAdmin save_model Ошибка подключения')
-                traceback.print_exc(file=sys.stdout)
+        # if obj.is_active:
+        try:
+            socket_path = '/var/www/fips_parser/tasks_processor.sock'
+            with Client(socket_path) as conn:
+                # conn.send('self.load_tasks(5)')
+                conn.send('self.need_to_refresh=True')
+        except FileNotFoundError:
+            print('MailingTaskAdmin save_model Сокет не найден')
+        except:
+            print('MailingTaskAdmin save_model Ошибка подключения')
+            traceback.print_exc(file=sys.stdout)
         return super(MailingTaskAdmin, self).save_model(request, obj, form, change)
 
 
