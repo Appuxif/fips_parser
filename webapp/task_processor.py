@@ -102,7 +102,7 @@ class Processor:
 
             # Если теперь нет нужных контактов, то пропускаем документ
             if not persons.exists():
-                text = f'{i} {document} there are no persons'
+                text = f'{i} {document.id} {document} there are no persons'
                 # self.vprint(text)
                 f.write(text + '\n')
                 continue
@@ -114,7 +114,7 @@ class Processor:
                 if person and person.email and person.email_verified and person.email_correct:
                     break
             else:
-                text = f'{i} {document} there are no verified emails'
+                text = f'{i} {document.id} {document} there are no verified emails'
                 # self.vprint(text)
                 f.write(text + '\n')
                 continue
@@ -132,7 +132,7 @@ class Processor:
                     documents_list = documents_list.split(', ') + [document.number]
                     old_contact.documents_list = ', '.join(documents_list)[:1999]
                     old_contact.save()
-                text = f'{i} {document} contact {person.email} already exists'
+                text = f'{i} {document.id} {document} contact {person.email} already exists'
                 # self.vprint(text)
                 f.write(text + '\n')
                 continue
@@ -146,7 +146,7 @@ class Processor:
                     new_contact['document_image'] = 'http://91.240.84.15' + document_image.link
                 # Если контакта нет в списке, то добавляем его
                 task.mailingitem_set.create(**new_contact)
-                text = f'{i} {document} contact {person.email} added'
+                text = f'{i} {document.id} {document} contact {person.email} added'
                 # self.vprint(text)
                 f.write(text + '\n')
                 emails_added += 1
@@ -204,7 +204,7 @@ class Processor:
             company = document.company_set.filter(**filter).first()
             sign_char = company.sign_char if company else None
             if sign_char is None:
-                text = f'{i} {document} sign_char is not resolved'
+                text = f'{i} {document.id} {document} sign_char is not resolved'
                 # self.vprint(text)
                 f.write(text + '\n')
                 continue
@@ -226,16 +226,16 @@ class Processor:
                         break
             else:
                 if all_correctors_done:
-                    text = f'{i} {document} all correctors have overloaded task lists'
+                    text = f'{i} {document.id} {document} all correctors have overloaded task lists'
                     # self.vprint(text)
                     f.write(text + '\n')
                     break
 
-                text = f'{i} {document} there is no corrector for {sign_char} {company.name[:5]}'
+                text = f'{i} {document.id} {document} there is no corrector for {sign_char} {company.name[:5]}'
                 # self.vprint(text)
                 f.write(text + '\n')
                 continue
-            text = f'{i} {document} corrector found "{corrector}" tasks {tasks_total} today {tasks_today}'
+            text = f'{i} {document.id} {document} corrector found "{corrector}" tasks {tasks_total} today {tasks_today}'
             # self.vprint(text)
             f.write(text + '\n')
 
