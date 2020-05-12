@@ -194,7 +194,7 @@ class Processor:
             # Проверяем, что для этого докуента не было создано задачи
             tasks = self.CorrectorTask.objects.filter(document_id=document.id).first()
             if tasks is not None:
-                text = f'{i} {document} task exists'
+                text = f'{i} {document.id} {document} task exists'
                 # self.vprint(text)
                 f.write(text + '\n')
                 # task_already_exists += str(document.number) + ', '
@@ -243,11 +243,11 @@ class Processor:
                     f.write(text + '\n')
                     break
 
-                text = f'{i} {document.id} {document} there is no corrector for {sign_char} {company.name[:10]}'
+                text = f'{i} {document.id} {document} there is no corrector for {sign_char} "{company.name[:10]}"'
                 # self.vprint(text)
                 f.write(text + '\n')
                 continue
-            text = f'{i} {document.id} {document} corrector found "{corrector}" tasks {tasks_total} today {tasks_today}'
+            text = f'{i} {document.id} {document} corrector found "{corrector}" tasks {tasks_total} tasks_today {tasks_today}'
             # self.vprint(text)
             f.write(text + '\n')
 
