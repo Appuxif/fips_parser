@@ -168,7 +168,8 @@ class CorrectorTaskInline(admin.TabularInline):
 class CorrectorAdmin(admin.ModelAdmin):
     # inlines = (CorrectorTaskInline, )  # TODO: Может стоит убрать
     save_on_top = True
-    fields = ('user', 'sign_chars', 'company_startswith', 'tasks_day_amount', 'tasks_max', 'score', 'tasks_done_amount')
+    fields = ('user', 'sign_chars', 'company_startswith', 'tasks_day_amount', 'tasks_max',
+              'score', 'tasks_done_amount', 'is_active')
     readonly_fields = ('tasks_done_amount', )
 
     def tasks_done_amount(self, obj):
