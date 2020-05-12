@@ -171,7 +171,7 @@ class CorrectorAdmin(admin.ModelAdmin):
     fields = ('user', 'sign_chars', 'company_startswith', 'tasks_day_amount', 'tasks_max',
               'score', 'tasks_done_amount', 'tasks_not_done_amount', 'is_active')
     readonly_fields = ('tasks_done_amount', 'tasks_not_done_amount')
-    list_display = ('__str__', 'tasks_day_amount', 'tasks_max', 'score', 'tasks_done_amount',
+    list_display = ('__str__', 'tasks_day_amount', 'tasks_max', 'tasks_done_amount',
                     'tasks_not_done_amount', 'is_active')
 
     def tasks_done_amount(self, obj):
