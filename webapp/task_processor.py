@@ -82,8 +82,8 @@ class Processor:
         # TODO: Возможно, это не надо
         task.mailingitem_set.all().delete()
 
+        type = 'order' if task.autosearchtask.registry_type == 0 else 'register'
         for i, document in enumerate(documents.iterator()):
-            type = 'order' if task.autosearchtask.registry_type == 0 else 'register'
             filter = {type + 'companyrel__company_is_holder': True,
                       type + 'companyrel__document': document}
             # Находим компанию правообладателя
@@ -166,6 +166,9 @@ class Processor:
         if documents_count == 0:
             return
 
+        type = 'order' if task.autosearchtask.registry_type == 0 else 'register'
+        filter = {type + 'companyrel__company_is_holder': True}
+
         # Фильтр корректоров по общему количеству невыполненных задач
         correctors = self.Corrector.objects.annotate(tasks_count=Count('task', filter=Q(task__task_done=False))).order_by('tasks_count')
         correctors = correctors.filter(is_active=True)
@@ -198,7 +201,7 @@ class Processor:
                 continue
 
             # Находим компанию - правообладателя
-            company = document.company_set.filter(ordercompanyrel__company_is_holder=True).first()
+            company = document.company_set.filter(**filter).first()
             sign_char = company.sign_char if company else None
             if sign_char is None:
                 text = f'{i} {document} sign_char is not resolved'
