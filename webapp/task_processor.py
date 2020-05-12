@@ -168,6 +168,7 @@ class Processor:
 
         # Фильтр корректоров по общему количеству невыполненных задач
         correctors = self.Corrector.objects.annotate(tasks_count=Count('task', filter=Q(task__task_done=False))).order_by('tasks_count')
+        correctors = correctors.filter(is_active=True)
         correctors_count = correctors.count()
         self.vprint(correctors_count, 'correctors found')
 
