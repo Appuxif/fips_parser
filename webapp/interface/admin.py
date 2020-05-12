@@ -109,7 +109,7 @@ class CompanyAdmin(admin.ModelAdmin):
     # inlines = [ContactPersonInline, OrderCompanyInline, RegisterCompanyInline]
     inlines = [ContactPersonInline]
     exclude = ('order', 'register')
-    list_display = ('__str__', 'sign_char', 'form', 'form_correct', 'name', 'name_correct', 'address')
+    list_display = ('__str__', 'sign_char', 'form_correct', 'name_correct', 'address')
     readonly_fields = ('name', 'form', 'date_corrected')
     # Шаблон, на котором добавлено лого компании
     change_form_template = 'admin/custom_change_form_company.html'

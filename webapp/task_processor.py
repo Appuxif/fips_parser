@@ -166,8 +166,8 @@ class Processor:
         if documents_count == 0:
             return
 
-        # Фильтр корректоров по общему количеству задач
-        correctors = self.Corrector.objects.annotate(tasks_count=Count('task')).order_by('tasks_count')
+        # Фильтр корректоров по общему количеству невыполненных задач
+        correctors = self.Corrector.objects.annotate(tasks_count=Count('task', filter=Q(task__task_done=False))).order_by('tasks_count')
         correctors_count = correctors.count()
         self.vprint(correctors_count, 'correctors found')
 
@@ -212,12 +212,13 @@ class Processor:
                 # Проверяем наличие кода страны и текущее количество задач
                 tasks_today = correctors_dict[corrector.id]['today']
                 tasks_total = correctors_dict[corrector.id]['total']
+                c_chars = corrector.company_startswith or 'a-яa-z'
 
                 # Проверяем количество задач, добавленных сегодня
                 if tasks_total <= corrector.tasks_max and tasks_today <= corrector.tasks_day_amount:
                     # Проверяем начальную букву в названии компании документа
                     all_correctors_done = False
-                    if sign_char in corrector.sign_chars and re.match(r'^[а-я]', company.name, re.I):
+                    if sign_char in corrector.sign_chars and re.match(r'^[' + c_chars + ']', company.name, re.I):
                         break
             else:
                 if all_correctors_done:

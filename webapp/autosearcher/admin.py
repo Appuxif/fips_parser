@@ -219,7 +219,7 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                 document.order_done = False
                 document.date_parsed = None
                 document.save()
-                sleep(3)
+                sleep(5)
 
         # Размещение изображений и факсимильных файлов
         link = document.documentfile_set.filter(name='image').first()
