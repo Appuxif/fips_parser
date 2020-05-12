@@ -149,7 +149,7 @@ class CorrectorTask(models.Model):
     corrector = models.ForeignKey(Corrector, on_delete=models.CASCADE, related_query_name='task')
     document_registry = models.IntegerField('Тип реестра', choices=registry_type_choices, default=0)
     document_id = models.CharField('ID документа задачи', max_length=30, null=True, blank=True)
-    datetime_created = models.DateTimeField('Дата и время создания задачи', auto_now_add=True)
+    datetime_created = models.DateTimeField('Дата создания задачи', auto_now_add=True)
     date_created = models.DateField('Дата создания задачи', auto_now_add=True)
     date_task_done = models.DateTimeField('Дата завершения задачи', null=True, blank=True)
     task_done = models.BooleanField('Задача завершена', default=False)

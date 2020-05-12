@@ -127,7 +127,7 @@ class CompanyAdmin(admin.ModelAdmin):
         for obj in formsets[0].queryset:
             # print(obj, obj.email)
             if obj.email and not obj.email_verified:
-                verify_email(request, obj)
+                email_verified = verify_email(request, obj)
                 obj.save()
 
 
@@ -186,7 +186,7 @@ class ContactPersonAdmin(admin.ModelAdmin):
         #     pass
         # Верификация имейла
         if obj.email and not obj.email_verified:
-            verify_email(request, obj)
+            email_verified = verify_email(request, obj)
         return super(ContactPersonAdmin, self).save_model(request, obj, form, change)
 
     # Кастомное логирование при изменениях в заявках
@@ -312,3 +312,4 @@ def verify_email(request, obj, ):
         EmailApiKeyLog.objects.create(email_verified=obj.email,
                                       email_is_valid=False,
                                       result='Нет доступных API ключей для верификации почты')
+    return obj.email_verified

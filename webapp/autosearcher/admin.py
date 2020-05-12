@@ -254,6 +254,7 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
             if request.POST.get('_continue', '') == 'Сохранить Контакты':
                 contact_formset = ContactFormset(request.POST, request.FILES)
                 # print(contact_formset.is_valid())
+                email_verified = False
                 for i, form in enumerate(contact_formset.forms):
                     # print(form.has_changed())
                     # print(form.cleaned_data)
@@ -283,7 +284,7 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                         if person and form_is_valid:
                             person = form.save()
                             if person.email and not person.email_verified:
-                                verify_email(request, person)
+                                email_verified = verify_email(request, person)
                                 person.save()
                             # Логируем изменения
                             change_message = construct_change_message(form, [], False)
@@ -314,7 +315,7 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                             person = form.save()
                             document.contactperson_set.add(person)
                             if person.email and not person.email_verified:
-                                verify_email(request, person)
+                                email_verified = verify_email(request, person)
                                 person.save()
                             # Логируем изменения
                             change_message = []
@@ -330,6 +331,17 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                             change_message = construct_change_message(form, [], False)
                             logs = self.log_addition(request, person, change_message)
                             # print('logs 2', logs)
+
+                # Если почта была верифицирована, то задача считается завершенной, начисляем балл за задачу
+                if email_verified:
+                    class FakeForm:
+                        cleaned_data = {}
+                        pass
+                    f = FakeForm()
+                    f.cleaned_data['task_done'] = True
+                    make_task_done(f, task)
+                    task.save()
+                    corrector_add_score(request, task)
         elif request.method == 'GET':
             pass
 
@@ -359,24 +371,9 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
         return qs
 
     def save_model(self, request, obj, form, change):
-        today = datetime.now(tz=timezone.utc)
-        obj_task_done = form.cleaned_data.get('task_done')
-        obj_date_task_done = obj.date_task_done
-        if obj_task_done and obj_date_task_done is None:
-            obj.date_task_done = today
+        make_task_done(form, obj)
         super(CorrectorTaskAdmin, self).save_model(request, obj, form, change)
-        try:
-            user = request.user
-            corrector = user.corrector
-            if obj_task_done and obj_date_task_done is None:
-                delta = today - obj.datetime_created
-                add_score = 5 - delta.days if delta.days < 3 else 2
-                corrector.score += add_score
-                corrector.save()
-                messages.add_message(request, messages.INFO, f'Начислено баллов {add_score}')
-                # user.save()
-        except User.corrector.RelatedObjectDoesNotExist:
-            corrector = None
+        corrector_add_score(request, obj)
         # TODO: Добавить проверку менеждера
         # Проверка выполнения задачи при сохранени объекта
         # if obj.task_done and obj.corrector == corrector:
@@ -515,3 +512,28 @@ def get_ams_query(obj, selected=None, join_document=False, join_documentparse=Fa
     q += joined
     q += f" WHERE t1.mailingtask_id = '{obj.id}'"
     return q
+
+
+def make_task_done(form, obj):
+    today = datetime.now(tz=timezone.utc)
+    obj_task_done = form.cleaned_data.get('task_done')
+    obj_date_task_done = obj.date_task_done
+    if obj_task_done and obj_date_task_done is None:
+        obj.date_task_done = today
+    obj.task_done = True
+
+
+def corrector_add_score(request, obj):
+    try:
+        user = request.user
+        corrector = user.corrector
+        if obj.task_done and obj.date_task_done is None:
+            today = datetime.now(tz=timezone.utc)
+            delta = today - obj.datetime_created
+            add_score = 5 - delta.days if delta.days < 3 else 2
+            corrector.score += add_score
+            corrector.save()
+            messages.add_message(request, messages.INFO, f'Начислено баллов {add_score}')
+            # user.save()
+    except User.corrector.RelatedObjectDoesNotExist:
+        pass
