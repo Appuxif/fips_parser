@@ -138,6 +138,10 @@ class Corrector(models.Model):
     def tasks_done_amount(self):
         return self.correctortask_set.filter(task_done=True).count()
 
+    @property
+    def tasks_not_done_amount(self):
+        return self.correctortask_set.filter(task_done=False).count()
+
 
 # Задача для корректора.
 class CorrectorTask(models.Model):
