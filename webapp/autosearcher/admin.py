@@ -258,79 +258,81 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                 for i, form in enumerate(contact_formset.forms):
                     # print(form.has_changed())
                     # print(form.cleaned_data)
-                    if form.has_changed():
-                        form_is_valid = form.is_valid()
-                        person = form.cleaned_data.get(f'id')
-                        delete = form.cleaned_data['delete']
-                        # print(person)
-                        # При откреплении контакта от документа
-                        if delete and person:
-                            document.contactperson_set.remove(person)
-                            # Логируем изменения
-                            change_message = []
-                            # change_message = construct_change_message(form, [], False)
-                            change_message.append({
-                                'changed': {
-                                    'name': 'Связь Контакт - Документ',
-                                    'object': str(person),
-                                    'fields': ['unpinned Contact ' + str(person.id)]
-                                }
-                            })
-                            logs = self.log_change(request, document, change_message)
-                            # print('logs', logs)
-                            continue
+                    if not form.has_changed():
+                        continue
 
-                        # Если контакт был отредактирован
-                        if person and form_is_valid:
-                            person = form.save()
-                            if person.email and not person.email_verified:
-                                email_verified = verify_email(request, person) or email_verified
-                                person.save()
-                            # Логируем изменения
-                            change_message = construct_change_message(form, [], False)
-                            self.log_change(request, form.instance, change_message)
-                            continue
+                    form_is_valid = form.is_valid()
+                    person = form.cleaned_data.get(f'id')
+                    delete = form.cleaned_data['delete']
+                    # print(person)
+                    # При откреплении контакта от документа
+                    if delete and person:
+                        document.contactperson_set.remove(person)
+                        # Логируем изменения
+                        change_message = []
+                        # change_message = construct_change_message(form, [], False)
+                        change_message.append({
+                            'changed': {
+                                'name': 'Связь Контакт - Документ',
+                                'object': str(person),
+                                'fields': ['unpinned Contact ' + str(person.id)]
+                            }
+                        })
+                        logs = self.log_change(request, document, change_message)
+                        # print('logs', logs)
+                        continue
 
-                        # При прикреплении уже существующего контакта к документу
-                        new_id = form.cleaned_data['new_id']
-                        if new_id:
-                            person = ContactPerson.objects.get(id=new_id)
-                            document.contactperson_set.add(person)
-                            # Логируем изменения
-                            change_message = []
-                            # change_message = construct_change_message(form, [], False)
-                            change_message.append({
-                                'changed': {
-                                    'name': 'Связь Контакт - Документ',
-                                    'object': str(person),
-                                    'fields': ['pinned Contact ' + str(person.id)]
-                                }
-                            })
-                            logs = self.log_change(request, document, change_message)
-                            # print('logs', logs)
-                            continue
+                    # Если контакт был отредактирован
+                    if person and form_is_valid:
+                        person = form.save()
+                        if person.email and not person.email_verified:
+                            email_verified = verify_email(request, person) or email_verified
+                            person.save()
+                        # Логируем изменения
+                        change_message = construct_change_message(form, [], False)
+                        self.log_change(request, form.instance, change_message)
+                        continue
 
-                        # При создании нового контакта
-                        if form_is_valid and form.cleaned_data.get('full_name'):
-                            person = form.save()
-                            document.contactperson_set.add(person)
-                            if person.email and not person.email_verified:
-                                email_verified = verify_email(request, person) or email_verified
-                                person.save()
-                            # Логируем изменения
-                            change_message = []
-                            change_message.append({
-                                'changed': {
-                                    'name': 'Связь Контакт - Документ',
-                                    'object': str(person),
-                                    'fields': ['pinned Contact ' + str(person.id)]
-                                }
-                            })
-                            logs = self.log_change(request, document, change_message)
-                            # print('logs 1', logs)
-                            change_message = construct_change_message(form, [], False)
-                            logs = self.log_addition(request, person, change_message)
-                            # print('logs 2', logs)
+                    # При прикреплении уже существующего контакта к документу
+                    new_id = form.cleaned_data['new_id']
+                    if new_id:
+                        person = ContactPerson.objects.get(id=new_id)
+                        document.contactperson_set.add(person)
+                        # Логируем изменения
+                        change_message = []
+                        # change_message = construct_change_message(form, [], False)
+                        change_message.append({
+                            'changed': {
+                                'name': 'Связь Контакт - Документ',
+                                'object': str(person),
+                                'fields': ['pinned Contact ' + str(person.id)]
+                            }
+                        })
+                        logs = self.log_change(request, document, change_message)
+                        # print('logs', logs)
+                        continue
+
+                    # При создании нового контакта
+                    if form_is_valid and form.cleaned_data.get('full_name'):
+                        person = form.save()
+                        document.contactperson_set.add(person)
+                        if person.email and not person.email_verified:
+                            email_verified = verify_email(request, person) or email_verified
+                            person.save()
+                        # Логируем изменения
+                        change_message = []
+                        change_message.append({
+                            'changed': {
+                                'name': 'Связь Контакт - Документ',
+                                'object': str(person),
+                                'fields': ['pinned Contact ' + str(person.id)]
+                            }
+                        })
+                        logs = self.log_change(request, document, change_message)
+                        # print('logs 1', logs)
+                        change_message = construct_change_message(form, [], False)
+                        logs = self.log_addition(request, person, change_message)
+                        # print('logs 2', logs)
 
                 # Если почта была верифицирована, то задача считается завершенной, начисляем балл за задачу
                 if email_verified:
@@ -339,9 +341,10 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                         pass
                     f = FakeForm()
                     f.cleaned_data['task_done'] = True
+                    task.task_done = True
+                    corrector_add_score(request, task)
                     make_task_done(f, task)
                     task.save()
-                    corrector_add_score(request, task)
         elif request.method == 'GET':
             pass
 
@@ -371,9 +374,9 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
         return qs
 
     def save_model(self, request, obj, form, change):
+        corrector_add_score(request, obj)
         make_task_done(form, obj)
         super(CorrectorTaskAdmin, self).save_model(request, obj, form, change)
-        corrector_add_score(request, obj)
         # TODO: Добавить проверку менеждера
         # Проверка выполнения задачи при сохранени объекта
         # if obj.task_done and obj.corrector == corrector:
@@ -525,9 +528,9 @@ def make_task_done(form, obj):
 
 def corrector_add_score(request, obj):
     try:
-        user = request.user
-        corrector = user.corrector
         if obj.task_done and obj.date_task_done is None:
+            user = request.user
+            corrector = user.corrector
             today = datetime.now(tz=timezone.utc)
             delta = today - obj.datetime_created
             add_score = 5 - delta.days if delta.days < 3 else 2
