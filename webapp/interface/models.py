@@ -168,7 +168,7 @@ class ContactPerson(models.Model):
 
     def __str__(self):
         if self.full_name:
-            return str(self.full_name)
+            return str(self.full_name) + ' ' + str(self.id)
         return 'Контакт ' + str(self.id) + ' компании ' + str(self.company)
 
     def get_absolute_url(self):
