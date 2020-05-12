@@ -354,12 +354,25 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
             pass
         return qs
 
-    # def save_model(self, request, obj, form, change):
-    #     # super(CorrectorTaskAdmin, self).save_model(request, obj, form, change)
-    #     try:
-    #         corrector = request.user.corrector
-    #     except User.corrector.RelatedObjectDoesNotExist:
-    #         corrector = None
+    def save_model(self, request, obj, form, change):
+        today = datetime.now(tz=timezone.utc)
+        obj_task_done = form.cleaned_data.get('task_done')
+        obj_date_task_done = obj.date_task_done
+        if obj_task_done and obj_date_task_done is None:
+            obj.date_task_done = today
+        super(CorrectorTaskAdmin, self).save_model(request, obj, form, change)
+        try:
+            user = request.user
+            corrector = user.corrector
+            if obj_task_done and obj_date_task_done is None:
+                delta = today - obj.datetime_created
+                add_score = 5 - delta.days if delta.days < 3 else 2
+                corrector.score += add_score
+                corrector.save()
+                messages.add_message(request, messages.INFO, f'Начислено баллов {add_score}')
+                # user.save()
+        except User.corrector.RelatedObjectDoesNotExist:
+            corrector = None
         # TODO: Добавить проверку менеждера
         # Проверка выполнения задачи при сохранени объекта
         # if obj.task_done and obj.corrector == corrector:
