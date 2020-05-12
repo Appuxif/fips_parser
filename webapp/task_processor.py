@@ -206,6 +206,7 @@ class Processor:
                 text = f'{i} {document.id} {document} company-holder is not found'
                 # self.vprint(text)
                 f.write(text + '\n')
+                continue
 
             # sign_char = company.sign_char if company else None
             sign_char = re.match(r'.*(?P<sign>[A-Z]{2}).*', document.documentparse.applicant) \
