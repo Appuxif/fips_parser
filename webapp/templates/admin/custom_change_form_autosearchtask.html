@@ -33,27 +33,6 @@
   </ul>
 {% endif %}{% endif %}
 {% endblock %}
-<form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" method="post" id="{{ opts.model_name }}_form" novalidate>{% csrf_token %}{% block form_top %}{% endblock %}
-<div>
-{% if is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1">{% endif %}
-{% if to_field %}<input type="hidden" name="{{ to_field_var }}" value="{{ to_field }}">{% endif %}
-{% if save_on_top %}{% block submit_buttons_top %}{% submit_row %}{% endblock %}{% endif %}
-{% if errors %}
-    <p class="errornote">
-    {% if errors|length == 1 %}{% trans "Please correct the error below." %}{% else %}{% trans "Please correct the errors below." %}{% endif %}
-    </p>
-    {{ adminform.form.non_field_errors }}
-{% endif %}
-
-{% if adminform.form.logo.value %}
-    <a href="/media/{{ adminform.form.logo.value }}" target="_blank"><img src="/media/{{ adminform.form.logo.value }}" alt="file" width="300px"></a>
-{% endif %}
-
-{% block field_sets %}
-{% for fieldset in adminform %}
-  {% include "admin/includes/fieldset.html" %}
-{% endfor %}
-{% endblock %}
 
 <h3>Информация о документе</h3>
 <fieldset class="module aligned">
@@ -98,42 +77,12 @@
         {% endfor %}
     </div>
 </fieldset>
-
-
-{% block after_field_sets %}{% endblock %}
-
-{% block inline_field_sets %}
-{% for inline_admin_formset in inline_admin_formsets %}
-    {% include inline_admin_formset.opts.template %}
-{% endfor %}
-{% endblock %}
-
-{% block after_related_objects %}{% endblock %}
-
-{% block submit_buttons_bottom %}{% submit_row %}{% endblock %}
-
-{% block admin_change_form_document_ready %}
-    <script type="text/javascript"
-            id="django-admin-form-add-constants"
-            src="{% static 'admin/js/change_form.js' %}"
-            {% if adminform and add %}
-                data-model-name="{{ opts.model_name }}"
-            {% endif %}>
-    </script>
-{% endblock %}
-
-{# JavaScript for prepopulated fields #}
-{% prepopulated_fields_js %}
-
-</div>
-</form>
-
 {# Форма компании-правообладателя #}
 <form enctype="multipart/form-data" action="" method="post" id="company_form" novalidate>
     {% csrf_token %}
     <h3>Компания-правообладатель</h3>
     <div><a href="/admin/interface/company/{{company.id}}/change/" target="_blank">Перейти на страницу компании</a></div>
-    <p class="deletelink-box"><a href="/admin/interface/company/{{company.id}}/delete/" class="deletelink" target="_blank">Удалить компанию</a></p>
+{#    <p class="deletelink-box"><a href="/admin/interface/company/{{company.id}}/delete/" class="deletelink" target="_blank">Удалить компанию</a></p>#}
 
     {% if company_form.logo.value %}
         <div class="module custom_change_form">
@@ -212,6 +161,56 @@
     <div class="submit-row">
         <input type="submit" value="Сохранить Контакты" class="default" name="_continue">
     </div>
+</form>
+
+<form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" method="post" id="{{ opts.model_name }}_form" novalidate>{% csrf_token %}{% block form_top %}{% endblock %}
+<div>
+{% if is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1">{% endif %}
+{% if to_field %}<input type="hidden" name="{{ to_field_var }}" value="{{ to_field }}">{% endif %}
+{% if save_on_top %}{% block submit_buttons_top %}{% submit_row %}{% endblock %}{% endif %}
+{% if errors %}
+    <p class="errornote">
+    {% if errors|length == 1 %}{% trans "Please correct the error below." %}{% else %}{% trans "Please correct the errors below." %}{% endif %}
+    </p>
+    {{ adminform.form.non_field_errors }}
+{% endif %}
+
+{% if adminform.form.logo.value %}
+    <a href="/media/{{ adminform.form.logo.value }}" target="_blank"><img src="/media/{{ adminform.form.logo.value }}" alt="file" width="300px"></a>
+{% endif %}
+
+{% block field_sets %}
+{% for fieldset in adminform %}
+  {% include "admin/includes/fieldset.html" %}
+{% endfor %}
+{% endblock %}
+
+{% block after_field_sets %}{% endblock %}
+
+{% block inline_field_sets %}
+{% for inline_admin_formset in inline_admin_formsets %}
+    {% include inline_admin_formset.opts.template %}
+{% endfor %}
+{% endblock %}
+
+{% block after_related_objects %}{% endblock %}
+
+{% block submit_buttons_bottom %}{% submit_row %}{% endblock %}
+
+{% block admin_change_form_document_ready %}
+    <script type="text/javascript"
+            id="django-admin-form-add-constants"
+            src="{% static 'admin/js/change_form.js' %}"
+            {% if adminform and add %}
+                data-model-name="{{ opts.model_name }}"
+            {% endif %}>
+    </script>
+{% endblock %}
+
+{# JavaScript for prepopulated fields #}
+{% prepopulated_fields_js %}
+
+</div>
 </form>
 </div>
 {% endblock %}

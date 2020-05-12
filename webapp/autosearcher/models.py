@@ -153,21 +153,33 @@ class CorrectorTask(models.Model):
     date_created = models.DateField('Дата создания задачи', auto_now_add=True)
     date_task_done = models.DateTimeField('Дата завершения задачи', null=True, blank=True)
     task_done = models.BooleanField('Задача завершена', default=False)
+    task_cannot_be_done = models.BooleanField('Задача не может быть завершена', default=False)
     note = models.CharField('Примечание', max_length=255, null=True, blank=True)
 
     def __str__(self):
-        return 'Task for ' + str(self.corrector)
+        return str(self.corrector) + ' ' + str(self.document_registry_name) + ' ' + self.document_number
 
     class Meta:
         verbose_name = 'Задача корректора'
         verbose_name_plural = 'Задачи корректора'
 
     def get_absolute_url(self):
+        registry = self.document_registry_name
+        return f'/admin/{registry}/document/{self.document_id}/change/'
+
+    @property
+    def document_number(self):
+        Document = OrderDocument if self.document_registry == 0 else RegisterDocument
+        doc = Document.objects.get(id=self.document_id)
+        return str(doc.number)
+
+    @property
+    def document_registry_name(self):
         registry = 'orders'
         for reg in registry_type_choices:
             if reg[0] == self.document_registry:
                 registry = reg[1]
-        return f'/admin/{registry}/document/{self.document_id}/change/'
+        return registry
 
 
 class AutoSearchLog(models.Model):
