@@ -133,7 +133,7 @@
     {% csrf_token %}
     <h3>Компания-правообладатель</h3>
     <div><a href="/admin/interface/company/{{company.id}}/change/" target="_blank">Перейти на страницу компании</a></div>
-    <p class="deletelink-box"><a href="/admin/interface/company/{{company.id}}/delete/" class="deletelink">Удалить компанию</a></p>
+    <p class="deletelink-box"><a href="/admin/interface/company/{{company.id}}/delete/" class="deletelink" target="_blank">Удалить компанию</a></p>
 
     {% if company_form.logo.value %}
         <div class="module custom_change_form">
@@ -174,7 +174,7 @@
         {% if form.id.value %}
             <div><a href="/admin/interface/contactperson/{{form.id.value}}/change/" target="_blank">Перейти на страницу контакта</a>
             <a href="/admin/interface/company/{{form.company.value}}/change/" target="_blank">Перейти на страницу компании</a></div>
-        <p class="deletelink-box"><a href="/admin/interface/contactperson/{{form.id.value}}/delete/" class="deletelink">Удалить Контакт</a></p>
+        <p class="deletelink-box"><a href="/admin/interface/contactperson/{{form.id.value}}/delete/" class="deletelink" target="_blank">Удалить Контакт</a></p>
             {{ form.delete.label_tag }}
             {{ form.delete }}
         {% else %}

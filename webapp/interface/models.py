@@ -41,15 +41,15 @@ def company_logo_path(instance, filename):
 
 
 class Company(models.Model):
-    form = models.CharField(max_length=50, null=True, blank=True)  # ! # Организационная форма ООО
-    form_correct = models.CharField(max_length=50, null=True, blank=True)
+    form = models.CharField('Орг. форма', max_length=50, null=True, blank=True)  # ! # Организационная форма ООО
+    form_correct = models.CharField('Орг. форма', max_length=50, null=True, blank=True)
     name = models.CharField('Наименование компании', max_length=255, blank=True)
     name_correct = models.CharField('Наименование компании', max_length=255, null=True, blank=True)
     name_latin = models.CharField('Наименование компании латинское', max_length=255, null=True, blank=True)
     address = models.CharField('Адрес компании', max_length=1000, null=True, blank=True)
     address_latin = models.CharField('Адрес компании латинский', max_length=1000, null=True, blank=True)
     sign_char = models.CharField('Код страны', max_length=5, null=True, blank=True)
-    web = models.CharField(max_length=100, null=True, blank=True)
+    web = models.CharField('WEB', max_length=100, null=True, blank=True)
     inn = models.CharField('ИНН', max_length=100, null=True, blank=True)
     kpp = models.CharField('КПП', max_length=100, null=True, blank=True)
     ogrn = models.CharField('ОГРН', max_length=100, null=True, blank=True)

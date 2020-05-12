@@ -16,7 +16,8 @@ from .models import AutoSearchTask, AutoSearchTaskItem, \
 from interface.models import ContactPerson, Company
 # from .forms import OrderDocumentParseForm, RegisterDocumentParseForm, \
 #     OrderDocumentParse, RegisterDocumentParse
-from .forms import OrderDocumentParse, RegisterDocumentParse, ContactPersonTaskForm
+from .forms import OrderDocumentParse, RegisterDocumentParse, ContactPersonTaskForm, CompanyForm, ContactFormset
+from interface.change_message_utils import construct_change_message
 # from interface.models import OrderDocument, RegisterDocument,
 # from orders.models_base import Document as OrderDocument
 # from registers.models_base import Document as RegisterDocument
@@ -181,6 +182,15 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
     save_on_top = True
     change_form_template = 'admin/custom_change_form_autosearchtask.html'
 
+    # Кастомное логирование при изменениях в заявках
+    # def construct_change_message(self, request, form, formsets, add=False):
+    #     super(CorrectorTaskAdmin, self).construct_change_message()
+        # if request.method == 'POST':
+        #     if request.POST.get('_continue', '') == 'Сохранить Компанию':
+        #         form = CompanyForm(request.POST, request.FILES, instance=company)
+        # change_message = construct_change_message(form, formsets, add)
+        # return change_message
+
     # Кастомный функционал страницы
     def change_view(self, request, object_id, form_url='', extra_context=None):
         extra_context = extra_context or {}
@@ -199,10 +209,6 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                           filter_type + 'companyrel__company_is_holder': True}
         # Кастомные формы объектов
         DocumentParseForm = modelform_factory(DocumentParse, fields=('applicant', 'address', 'copyright_holder', 'patent_atty'))
-        CompanyForm = modelform_factory(Company, fields=('id', 'form', 'form_correct', 'name', 'name_correct',
-                                                         'name_latin', 'address', 'address_latin', 'sign_char', 'web',
-                                                         'inn', 'kpp', 'ogrn', 'logo'))
-        ContactFormset = modelformset_factory(ContactPerson, form=ContactPersonTaskForm)
 
         company = Company.objects.filter(**company_filter).first()
         # Размещение изображений и факсимильных файлов
@@ -220,6 +226,9 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                 company_form = CompanyForm(request.POST, request.FILES, instance=company)
                 if company_form.is_valid():
                     company = company_form.save()
+                    # Логируем изменения
+                    change_message = construct_change_message(company_form, [], False)
+                    logs = self.log_change(request, company, change_message)
 
             if request.POST.get('_continue', '') == 'Сохранить Контакты':
                 contact_formset = ContactFormset(request.POST, request.FILES)
@@ -235,11 +244,26 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                         # При откреплении контакта от документа
                         if delete and person:
                             document.contactperson_set.remove(person)
+                            # Логируем изменения
+                            change_message = []
+                            # change_message = construct_change_message(form, [], False)
+                            change_message.append({
+                                'changed': {
+                                    'name': 'Связь Контакт - Документ',
+                                    'object': str(person),
+                                    'fields': ['unpinned Contact ' + str(person.id)]
+                                }
+                            })
+                            logs = self.log_change(request, document, change_message)
+                            print('logs', logs)
                             continue
 
                         # Если контакт был отредактирован
                         if person and form_is_valid:
                             form.save()
+                            # Логируем изменения
+                            change_message = construct_change_message(form, [], False)
+                            self.log_change(request, form.instance, change_message)
                             continue
 
                         # При прикреплении уже существующего контакта к документу
@@ -247,12 +271,38 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                         if new_id:
                             person = ContactPerson.objects.get(id=new_id)
                             document.contactperson_set.add(person)
+                            # Логируем изменения
+                            change_message = []
+                            # change_message = construct_change_message(form, [], False)
+                            change_message.append({
+                                'changed': {
+                                    'name': 'Связь Контакт - Документ',
+                                    'object': str(person),
+                                    'fields': ['pinned Contact ' + str(person.id)]
+                                }
+                            })
+                            logs = self.log_change(request, document, change_message)
+                            print('logs', logs)
                             continue
 
                         # При создании нового контакта
                         if form_is_valid:
-                            a = form.save()
-                            document.contactperson_set.add(a)
+                            person = form.save()
+                            document.contactperson_set.add(person)
+                            # Логируем изменения
+                            change_message = []
+                            change_message.append({
+                                'changed': {
+                                    'name': 'Связь Контакт - Документ',
+                                    'object': str(person),
+                                    'fields': ['pinned Contact ' + str(person.id)]
+                                }
+                            })
+                            logs = self.log_change(request, document, change_message)
+                            print('logs 1', logs)
+                            change_message = construct_change_message(form, [], False)
+                            logs = self.log_addition(request, person, change_message)
+                            print('logs 2', logs)
         elif request.method == 'GET':
             pass
 
