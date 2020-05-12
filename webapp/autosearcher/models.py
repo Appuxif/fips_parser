@@ -125,7 +125,8 @@ class Corrector(models.Model):
     score = models.IntegerField('Баллы корректора', default=0, blank=True)
     tasks_done = models.IntegerField('Задач выполнено', default=0, blank=True)
     task_last_added_date = models.DateTimeField(null=True, blank=True)
-    is_active = models.BooleanField('Корректор активен', default=False)
+    is_active = models.BooleanField('Корректор активен', default=True,
+                                    help_text='Определяет, будет ли корректор участвовать в распределении')
 
     def __str__(self):
         return str(self.user.username)

@@ -83,24 +83,24 @@ class ContactPersonInline(admin.StackedInline):
     #     return fields
 
 
-class OrderCompanyInline(admin.StackedInline):
-    model = OrderCompanyRel
-    extra = 0
-    readonly_fields = ('company', 'document')
-    max_num = 5
+# class OrderCompanyInline(admin.StackedInline):
+#     model = OrderCompanyRel
+#     extra = 0
+#     readonly_fields = ('company', 'document')
+#     max_num = 5
+#
+#     def has_add_permission(self, request, obj):
+#         return False
 
-    def has_add_permission(self, request, obj):
-        return False
 
-
-class RegisterCompanyInline(admin.StackedInline):
-    model = RegisterCompanyRel
-    extra = 0
-    readonly_fields = ('company', 'document')
-    max_num = 5
-
-    def has_add_permission(self, request, obj):
-        return False
+# class RegisterCompanyInline(admin.StackedInline):
+#     model = RegisterCompanyRel
+#     extra = 0
+#     readonly_fields = ('company', 'document')
+#     max_num = 5
+#
+#     def has_add_permission(self, request, obj):
+#         return False
 
 
 # Отображение компании в БД
@@ -195,19 +195,18 @@ class ContactPersonAdmin(admin.ModelAdmin):
         return change_message
 
 
-# TODO: Для отладки. Потом удалить
-@admin.register(OrderCompanyRel)
-class OrderCompanyRelAdmin(admin.ModelAdmin):
-    readonly_fields = ('document',)
+# # TODO: Для отладки. Потом удалить
+# @admin.register(OrderCompanyRel)
+# class OrderCompanyRelAdmin(admin.ModelAdmin):
+#     readonly_fields = ('document',)
 
 
-# TODO: Для отладки. Потом удалить
-@admin.register(RegisterCompanyRel)
-class RegisterCompanyRelAdmin(admin.ModelAdmin):
-    readonly_fields = ('document',)
+# # TODO: Для отладки. Потом удалить
+# @admin.register(RegisterCompanyRel)
+# class RegisterCompanyRelAdmin(admin.ModelAdmin):
+#     readonly_fields = ('document',)
 
 
-# TODO: Для отладки. Потом удалить
 @admin.register(Proxies)
 class ProxiesAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'is_banned', 'is_working', 'in_use', 'date_last_used', 'documents_parsed', 'status')

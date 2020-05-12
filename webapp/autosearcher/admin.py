@@ -171,6 +171,8 @@ class CorrectorAdmin(admin.ModelAdmin):
     fields = ('user', 'sign_chars', 'company_startswith', 'tasks_day_amount', 'tasks_max',
               'score', 'tasks_done_amount', 'tasks_not_done_amount', 'is_active')
     readonly_fields = ('tasks_done_amount', 'tasks_not_done_amount')
+    list_display = ('__str__', 'tasks_day_amount', 'tasks_max', 'score', 'tasks_done_amount',
+                    'tasks_not_done_amount', 'is_active')
 
     def tasks_done_amount(self, obj):
         return obj.tasks_done_amount
@@ -307,6 +309,9 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                         if form_is_valid and form.cleaned_data.get('full_name'):
                             person = form.save()
                             document.contactperson_set.add(person)
+                            if person.email and not person.email_verified:
+                                verify_email(request, person)
+                                person.save()
                             # Логируем изменения
                             change_message = []
                             change_message.append({
