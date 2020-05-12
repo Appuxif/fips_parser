@@ -13,6 +13,48 @@
 <div id="content-main">
 
 {% if app_list %}
+{#    Если пользователь - корректор, то выводим лишь одну вкладку с задачами#}
+    {% if user.corrector %}
+    {% for app in app_list %}
+        {% if app.app_label == 'autosearcher' %}
+        <div class="app-{{ app.app_label }} module">
+        <table>
+        <caption>
+            <a href="{{ app.app_url }}" class="section" title="{% blocktrans with name=app.name %}Models in the {{ name }} application{% endblocktrans %}">{{ app.name }}</a>
+        </caption>
+        {% for model in app.models %}
+            {% if model.object_name == 'CorrectorTask' %}
+            <tr class="model-{{ model.object_name|lower }}">
+            {% if model.admin_url %}
+                <th scope="row"><a href="{{ model.admin_url }}">{{ model.name }}</a></th>
+            {% else %}
+                <th scope="row">{{ forloop.counter }} {{ model.name }}</th>
+            {% endif %}
+
+            {% if model.add_url %}
+                <td><a href="{{ model.add_url }}" class="addlink">{% trans 'Add' %}</a></td>
+            {% else %}
+                <td>&nbsp;</td>
+            {% endif %}
+
+            {% if model.admin_url %}
+                {% if model.view_only %}
+                <td><a href="{{ model.admin_url }}" class="viewlink">{% trans 'View' %}</a></td>
+                {% else %}
+                <td><a href="{{ model.admin_url }}" class="changelink">{% trans 'Change' %}</a></td>
+                {% endif %}
+            {% else %}
+                <td>&nbsp;</td>
+            {% endif %}
+            </tr>
+            {% endif %}
+        {% endfor %}
+        </table>
+        </div>
+
+        {% endif %}
+    {% endfor %}
+    {% else %}
     {% for app in app_list %}
         <div class="app-{{ app.app_label }} module">
         <table>
@@ -47,6 +89,8 @@
         </table>
         </div>
     {% endfor %}
+
+    {% endif %}
 {% else %}
     <p>{% trans 'You don’t have permission to view or edit anything.' %}</p>
 {% endif %}
@@ -55,6 +99,8 @@
 
 {% block sidebar %}
 <div id="content-related">
+    {% if user.corrector %}
+    {% else %}
     <div class="module">
         {% load last_documents %}
         {% get_last_documents %}
@@ -76,6 +122,7 @@
         {% endfor %}
         </ul>
     </div>
+    {% endif %}
     <div class="module" id="recent-actions-module">
         <h2>{% trans 'Recent actions' %}</h2>
         <h3>{% trans 'My actions' %}</h3>
