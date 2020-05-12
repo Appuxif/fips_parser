@@ -142,7 +142,8 @@ class AutoSearchTaskAdmin(admin.ModelAdmin):
             try:
                 socket_path = '/var/www/fips_parser/tasks_processor.sock'
                 with Client(socket_path) as conn:
-                    conn.send('self.load_tasks(5)')
+                    # conn.send('self.load_tasks(5)')
+                    conn.send('self.need_to_refresh=True')
             except FileNotFoundError:
                 print('AutoSearchTaskAdmin save_model Сокет не найден')
             except:
@@ -471,7 +472,8 @@ class MailingTaskAdmin(admin.ModelAdmin):
             try:
                 socket_path = '/var/www/fips_parser/tasks_processor.sock'
                 with Client(socket_path) as conn:
-                    conn.send('self.load_tasks(5)')
+                    # conn.send('self.load_tasks(5)')
+                    conn.send('self.need_to_refresh=True')
             except FileNotFoundError:
                 print('MailingTaskAdmin save_model Сокет не найден')
             except:
