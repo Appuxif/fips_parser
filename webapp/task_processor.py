@@ -202,12 +202,18 @@ class Processor:
 
             # Находим компанию - правообладателя
             company = document.company_set.filter(**filter).first()
-            sign_char = company.sign_char if company else None
+            # sign_char = company.sign_char if company else None
+            sign_char = re.match(r'.*(?P<sign>[A-Z]{2}).*', document.applicant) \
+                if task.registry_type == 0 else\
+                re.match(r'.*(?P<sign>[A-Z]{2}).*', document.copyright_holder)
+
             if sign_char is None:
                 text = f'{i} {document.id} {document} sign_char is not resolved'
                 # self.vprint(text)
                 f.write(text + '\n')
                 continue
+            else:
+                sign_char = sign_char.groupdict().get('sign')
 
             # Если код страны определен, то ищем для него подходящего корректора
             all_correctors_done = True
@@ -231,7 +237,7 @@ class Processor:
                     f.write(text + '\n')
                     break
 
-                text = f'{i} {document.id} {document} there is no corrector for {sign_char} {company.name[:5]}'
+                text = f'{i} {document.id} {document} there is no corrector for {sign_char} {company.name[:10]}'
                 # self.vprint(text)
                 f.write(text + '\n')
                 continue
