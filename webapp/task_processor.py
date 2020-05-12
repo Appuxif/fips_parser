@@ -166,7 +166,7 @@ class Processor:
         if documents_count == 0:
             return
 
-        type = 'order' if task.autosearchtask.registry_type == 0 else 'register'
+        type = 'order' if task.registry_type == 0 else 'register'
         filter = {type + 'companyrel__company_is_holder': True}
 
         # Фильтр корректоров по общему количеству невыполненных задач
