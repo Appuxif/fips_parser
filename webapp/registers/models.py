@@ -73,7 +73,7 @@ class IzvServiceItem(models.Model):
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_query_name='izvserviceitem')
     document_izv = models.ForeignKey(DocumentIzv, on_delete=models.CASCADE,
                                      to_field='unique_field', related_query_name='izvserviceitem')
-    number = models.CharField('Номер класса', max_length=50)  # Номер класса
+    number = models.CharField('Номер класса', max_length=255)  # Номер класса
     text = models.TextField(max_length=30000)  # Текст класса
 
     class Meta:
