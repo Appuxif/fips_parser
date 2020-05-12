@@ -88,7 +88,7 @@ class DocumentParse(models.Model):
 class ServiceItem(models.Model):
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_query_name='serviceitem')
     document_parse = models.ForeignKey(DocumentParse, on_delete=models.CASCADE, related_query_name='serviceitem')
-    number = models.CharField('Номер класса', max_length=5)  # Номер класса
+    number = models.CharField('Номер класса', max_length=255)  # Номер класса
     text = models.TextField(max_length=30000)  # Текст класса
 
     class Meta:
