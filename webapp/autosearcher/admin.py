@@ -182,15 +182,6 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
     save_on_top = True
     change_form_template = 'admin/custom_change_form_autosearchtask.html'
 
-    # Кастомное логирование при изменениях в заявках
-    # def construct_change_message(self, request, form, formsets, add=False):
-    #     super(CorrectorTaskAdmin, self).construct_change_message()
-        # if request.method == 'POST':
-        #     if request.POST.get('_continue', '') == 'Сохранить Компанию':
-        #         form = CompanyForm(request.POST, request.FILES, instance=company)
-        # change_message = construct_change_message(form, formsets, add)
-        # return change_message
-
     # Кастомный функционал страницы
     def change_view(self, request, object_id, form_url='', extra_context=None):
         extra_context = extra_context or {}
@@ -221,7 +212,7 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
 
         # Если был POST запрос, то нужно сохранить кастомные формы
         if request.method == 'POST':
-            print(request.POST)
+            # print(request.POST)
             if request.POST.get('_continue', '') == 'Сохранить Компанию':
                 company_form = CompanyForm(request.POST, request.FILES, instance=company)
                 if company_form.is_valid():
@@ -232,15 +223,15 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
 
             if request.POST.get('_continue', '') == 'Сохранить Контакты':
                 contact_formset = ContactFormset(request.POST, request.FILES)
-                print(contact_formset.is_valid())
+                # print(contact_formset.is_valid())
                 for i, form in enumerate(contact_formset.forms):
                     # print(form.has_changed())
-                    print(form.cleaned_data)
+                    # print(form.cleaned_data)
                     if form.has_changed():
                         form_is_valid = form.is_valid()
                         person = form.cleaned_data.get(f'id')
                         delete = form.cleaned_data['delete']
-                        print(person)
+                        # print(person)
                         # При откреплении контакта от документа
                         if delete and person:
                             document.contactperson_set.remove(person)
@@ -255,7 +246,7 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                                 }
                             })
                             logs = self.log_change(request, document, change_message)
-                            print('logs', logs)
+                            # print('logs', logs)
                             continue
 
                         # Если контакт был отредактирован
@@ -282,7 +273,7 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                                 }
                             })
                             logs = self.log_change(request, document, change_message)
-                            print('logs', logs)
+                            # print('logs', logs)
                             continue
 
                         # При создании нового контакта
@@ -299,10 +290,10 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                                 }
                             })
                             logs = self.log_change(request, document, change_message)
-                            print('logs 1', logs)
+                            # print('logs 1', logs)
                             change_message = construct_change_message(form, [], False)
                             logs = self.log_addition(request, person, change_message)
-                            print('logs 2', logs)
+                            # print('logs 2', logs)
         elif request.method == 'GET':
             pass
 
@@ -321,6 +312,8 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
         # print('contact_formset', extra_context['contact_formset'])
         return super(CorrectorTaskAdmin, self).change_view(request, object_id, form_url, extra_context)
 
+    # Отображение задач только для текущего корректора. Если в задачи зайдет не корректор, то буду
+    # отображены все возможные задачи
     def get_queryset(self, request):
         qs = super(CorrectorTaskAdmin, self).get_queryset(request)
         try:
@@ -329,64 +322,64 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
             pass
         return qs
 
-    def save_model(self, request, obj, form, change):
-        # super(CorrectorTaskAdmin, self).save_model(request, obj, form, change)
-        try:
-            corrector = request.user.corrector
-        except User.corrector.RelatedObjectDoesNotExist:
-            corrector = None
+    # def save_model(self, request, obj, form, change):
+    #     # super(CorrectorTaskAdmin, self).save_model(request, obj, form, change)
+    #     try:
+    #         corrector = request.user.corrector
+    #     except User.corrector.RelatedObjectDoesNotExist:
+    #         corrector = None
         # TODO: Добавить проверку менеждера
         # Проверка выполнения задачи при сохранени объекта
-        if obj.task_done and obj.corrector == corrector:
-            # Определяем БД для документов
-            Document = OrderDocument if obj.document_registry == 0 else RegisterDocument
-            # Получаем документ из задания
-            doc = Document.objects.get(id=obj.document_id)
-            # print(doc)
-            # print(doc.company_set.all())
-
-            corrector_logs = LogEntry.objects.filter(user_id=corrector.user.id)
-            now = datetime.now(tz=timezone.utc)
-            today = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
-
-            # Проверяем все компании документа на корректировку
-            company_corrected = True
-            for company in doc.company_set.all():
-                # Ищем изменения в компании от этого пользователя в логах
-                company_content_type = ContentType.objects.get(model='company')
-                company_corrector_logs = corrector_logs.filter(content_type_id=company_content_type.id)
-                company_corrector_logs = company_corrector_logs.filter(object_id=company.id)
-                company_corrector_logs = company_corrector_logs.filter(action_time__gte=obj.datetime_created)
-                if len(company_corrector_logs) == 0:
-                    company_corrected = False
-                    messages.add_message(request, messages.ERROR, f'Компания {company} не была откорректирована')
-                # print('company_corrector_logs', company_corrector_logs)
-                # print('company.date_corrected', company.date_corrected)
-
-            # print(doc.contactperson_set.all())
-            # Проверяем все контакты компании на корректировку
-            person_corrected = True
-            for person in doc.contactperson_set.all():
-                # Ищем изменения в контакте от этого пользователя в логах
-                person_content_type = ContentType.objects.get(model='contactperson')
-                person_corrector_logs = corrector_logs.filter(content_type_id=person_content_type.id)
-                person_corrector_logs = person_corrector_logs.filter(object_id=person.id)
-                person_corrector_logs = person_corrector_logs.filter(action_time__gte=obj.datetime_created)
-                if len(person_corrector_logs) == 0:
-                    company_corrected = False
-                    messages.add_message(request, messages.ERROR, f'Контакт {person} не был откорректирован')
-                # print('company_corrector_logs', person_corrector_logs)
-                # print('company.date_corrected', person.date_corrected)
-
-            if person_corrected and company_corrected:
-                messages.add_message(request, messages.INFO, f'Задача выполнена')
-                obj.task_done = True
-                corrector.score += 5
-                corrector.tasks_done += 1
-            else:
-                obj.task_done = False
-                messages.add_message(request, messages.ERROR, f'Задача не выполнена')
-            obj.save()
+        # if obj.task_done and obj.corrector == corrector:
+        #     # Определяем БД для документов
+        #     Document = OrderDocument if obj.document_registry == 0 else RegisterDocument
+        #     # Получаем документ из задания
+        #     doc = Document.objects.get(id=obj.document_id)
+        #     # print(doc)
+        #     # print(doc.company_set.all())
+        #
+        #     corrector_logs = LogEntry.objects.filter(user_id=corrector.user.id)
+        #     now = datetime.now(tz=timezone.utc)
+        #     today = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+        #
+        #     # Проверяем все компании документа на корректировку
+        #     company_corrected = True
+        #     for company in doc.company_set.all():
+        #         # Ищем изменения в компании от этого пользователя в логах
+        #         company_content_type = ContentType.objects.get(model='company')
+        #         company_corrector_logs = corrector_logs.filter(content_type_id=company_content_type.id)
+        #         company_corrector_logs = company_corrector_logs.filter(object_id=company.id)
+        #         company_corrector_logs = company_corrector_logs.filter(action_time__gte=obj.datetime_created)
+        #         if len(company_corrector_logs) == 0:
+        #             company_corrected = False
+        #             messages.add_message(request, messages.ERROR, f'Компания {company} не была откорректирована')
+        #         # print('company_corrector_logs', company_corrector_logs)
+        #         # print('company.date_corrected', company.date_corrected)
+        #
+        #     # print(doc.contactperson_set.all())
+        #     # Проверяем все контакты компании на корректировку
+        #     person_corrected = True
+        #     for person in doc.contactperson_set.all():
+        #         # Ищем изменения в контакте от этого пользователя в логах
+        #         person_content_type = ContentType.objects.get(model='contactperson')
+        #         person_corrector_logs = corrector_logs.filter(content_type_id=person_content_type.id)
+        #         person_corrector_logs = person_corrector_logs.filter(object_id=person.id)
+        #         person_corrector_logs = person_corrector_logs.filter(action_time__gte=obj.datetime_created)
+        #         if len(person_corrector_logs) == 0:
+        #             company_corrected = False
+        #             messages.add_message(request, messages.ERROR, f'Контакт {person} не был откорректирован')
+        #         # print('company_corrector_logs', person_corrector_logs)
+        #         # print('company.date_corrected', person.date_corrected)
+        #
+        #     if person_corrected and company_corrected:
+        #         messages.add_message(request, messages.INFO, f'Задача выполнена')
+        #         obj.task_done = True
+        #         corrector.score += 5
+        #         corrector.tasks_done += 1
+        #     else:
+        #         obj.task_done = False
+        #         messages.add_message(request, messages.ERROR, f'Задача не выполнена')
+        #     obj.save()
 
 
 @admin.register(AutoSearchLog)

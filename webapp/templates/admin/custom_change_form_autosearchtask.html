@@ -145,16 +145,20 @@
     {% endif %}
     <div class="form-row">
         <div class="fieldBox">
-            <label>ID Компании</label>
-            <div class="readonly">{{ company.id }}</div>
+            <label>ID Компании</label> {{ company.id }} <br>
+            <label>Распознанная орг. форма</label> {{ company.form }}<br>
+            <label>Распознанное наименование</label> {{ company.name }}<br>
         </div>
     </div>
     <div class="module custom_change_form">
         {% for field in company_form %}
-            <div class="form-row">
-            {{ field.label_tag }}
-            {{ field }}
-            </div>
+            {% if forloop.counter0 < 2 %}
+            {% else %}
+                <div class="form-row">
+                {{ field.label_tag }}
+                {{ field }}
+                </div>
+            {% endif %}
         {% endfor %}
     </div>
     <div class="submit-row">

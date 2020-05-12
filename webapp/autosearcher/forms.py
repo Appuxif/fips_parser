@@ -30,7 +30,7 @@ class ContactPersonTaskForm(forms.ModelForm):
         return cleaned_data
 
 
-CompanyForm = forms.modelform_factory(Company, fields=('id', 'form', 'form_correct', 'name', 'name_correct',
+CompanyForm = forms.modelform_factory(Company, fields=('id', 'form', 'name', 'form_correct', 'name_correct',
                                                        'name_latin', 'address', 'address_latin', 'sign_char', 'web',
                                                        'inn', 'kpp', 'ogrn', 'logo'))
 ContactFormset = forms.modelformset_factory(ContactPerson, form=ContactPersonTaskForm)
