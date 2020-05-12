@@ -254,49 +254,46 @@ class Processor:
 
     def process_task(self, task, f, log_object):
         now = datetime.now(tz=timezone.utc)
-        delta = now - task.next_action
-        self.vprint(task.id, delta.total_seconds())
-        # Значение должно быть положительным, чтобы сработал триггер
-        if delta.total_seconds() >= 0:
-            # self.vprint('Начинаем задачу', task.task_name)
-            self.vprint('Начинаем задачу', task)
-            task_is_mailing = hasattr(task, 'autosearchtask')
+        # self.vprint(task.id, delta.total_seconds())
+        # self.vprint('Начинаем задачу', task.task_name)
+        self.vprint('Начинаем задачу', task)
+        task_is_mailing = hasattr(task, 'autosearchtask')
 
-            # Если есть такой аттрибут, то это точно задача формирования рассылки
-            obj = task.autosearchtask if task_is_mailing else task
+        # Если есть такой аттрибут, то это точно задача формирования рассылки
+        obj = task.autosearchtask if task_is_mailing else task
 
-            # Список элементов задачи
-            queryset = obj.autosearchtaskitem_set.all()
+        # Список элементов задачи
+        queryset = obj.autosearchtaskitem_set.all()
 
-            # Запрос в БД для фильтрации документов
-            q = self.get_q_from_queryset(queryset)
-            document = self.OrderDocument if obj.registry_type == 0 else self.RegisterDocument
-            documents = document.objects.filter(q)
+        # Запрос в БД для фильтрации документов
+        q = self.get_q_from_queryset(queryset)
+        document = self.OrderDocument if obj.registry_type == 0 else self.RegisterDocument
+        documents = document.objects.filter(q)
 
-            # Распределение документов по корректорам
-            if task_is_mailing:
-                self.process_mailing(task, documents, f, log_object)
-            else:
-                self.process_documents(task, documents, f, log_object)
+        # Распределение документов по корректорам
+        if task_is_mailing:
+            self.process_mailing(task, documents, f, log_object)
+        else:
+            self.process_documents(task, documents, f, log_object)
 
-            # Если задача автообновляемая, то нужно продлить даты до следующего периода
-            if task.auto_renew:
-                td = timedelta(days=task.renew_in_days or 0, hours=task.renew_in_hours or 0)
-                task.next_action += td
-                for item in queryset:
-                    # Если значение в формате даты, то сдвигаем дату
-                    if re.match('\d{4}-\d{2}-\d{2}', item.filter_value):
-                        date_ = date.fromisoformat(item.filter_value) + td
-                        item.filter_value = date_.strftime('%Y-%m-%d')
-                        item.save()
-            # Если задача не автообновляемая, то убираем галочку "Задача активна"
-            else:
-                task.is_active = False
+        # Если задача автообновляемая, то нужно продлить даты до следующего периода
+        if task.auto_renew:
+            td = timedelta(days=task.renew_in_days or 0, hours=task.renew_in_hours or 0)
+            task.next_action += td
+            for item in queryset:
+                # Если значение в формате даты, то сдвигаем дату
+                if re.match('\d{4}-\d{2}-\d{2}', item.filter_value):
+                    date_ = date.fromisoformat(item.filter_value) + td
+                    item.filter_value = date_.strftime('%Y-%m-%d')
+                    item.save()
+        # Если задача не автообновляемая, то убираем галочку "Задача активна"
+        else:
+            task.is_active = False
 
-            task.last_launch = now
-            task.save()
-            # self.vprint('Задача', task.task_name, 'завершена')
-            self.vprint('Задача', task, 'завершена')
+        task.last_launch = now
+        task.save()
+        # self.vprint('Задача', task.task_name, 'завершена')
+        self.vprint('Задача', task, 'завершена')
 
     # Основной процесс для обработки задач
     def go_processor(self):
@@ -311,31 +308,34 @@ class Processor:
                     self.need_to_refresh = True
                     continue
                 obj = task.autosearchtask if hasattr(task, 'autosearchtask') else task
-                log_object = self.AutoSearchLog(task=obj)
                 # self.vprint('Задача', task_id)
-                self.vprint(task)
-                now = datetime.now()
-                now_str = now.strftime('%Y-%m-%d_%H-%M-%S')
-                filename = 'task_' + str(task.id) + '_' + now_str + '.txt'
-                filepath = os.path.join('.', 'media', 'logs')
-                if not os.path.exists(filepath):
-                    os.makedirs(filepath)
-                error_filename = os.path.join(filepath, filename)
-                log_file = '/media/logs/' + filename
-                log_object.log_file = log_file
-
-                with open(error_filename, 'w', encoding='utf-8') as f:
-                    try:
-                        self.process_task(task, f, log_object)
-                    except:
-                        task.is_active = False
-                        task.save()
-                        traceback.print_exc(file=f)
-                        traceback.print_exc(file=sys.stdout)
-                        log_object.is_error = True
-                        self.vprint('parser_processor Ошибка парсера "', task, '"')
-                    finally:
-                        log_object.save()
+                # self.vprint(task)
+                now = datetime.now(tz=timezone.utc)
+                delta = now - task.next_action
+                self.vprint(task.id, delta.total_seconds())
+                # Значение должно быть положительным, чтобы сработал триггер
+                if delta.total_seconds() >= 0:
+                    now_str = now.strftime('%Y-%m-%d_%H-%M-%S')
+                    filename = 'task_' + str(task.id) + '_' + now_str + '.txt'
+                    filepath = os.path.join('.', 'media', 'logs')
+                    if not os.path.exists(filepath):
+                        os.makedirs(filepath)
+                    error_filename = os.path.join(filepath, filename)
+                    log_file = '/media/logs/' + filename
+                    log_object = self.AutoSearchLog(task=obj)
+                    log_object.log_file = log_file
+                    with open(error_filename, 'w', encoding='utf-8') as f:
+                        try:
+                            self.process_task(task, f, log_object)
+                        except:
+                            task.is_active = False
+                            task.save()
+                            traceback.print_exc(file=f)
+                            traceback.print_exc(file=sys.stdout)
+                            log_object.is_error = True
+                            self.vprint('parser_processor Ошибка парсера "', task, '"')
+                        finally:
+                            log_object.save()
 
             sleep(5)
 
