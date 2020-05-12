@@ -284,7 +284,7 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                         if person and form_is_valid:
                             person = form.save()
                             if person.email and not person.email_verified:
-                                email_verified = verify_email(request, person)
+                                email_verified = verify_email(request, person) or email_verified
                                 person.save()
                             # Логируем изменения
                             change_message = construct_change_message(form, [], False)
@@ -315,7 +315,7 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                             person = form.save()
                             document.contactperson_set.add(person)
                             if person.email and not person.email_verified:
-                                email_verified = verify_email(request, person)
+                                email_verified = verify_email(request, person) or email_verified
                                 person.save()
                             # Логируем изменения
                             change_message = []
