@@ -191,7 +191,7 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'corrector', 'document_registry', 'document_id',
                     'task_done', 'date_created')
     save_on_top = True
-
+    view_on_site = False
     change_form_template = 'admin/custom_change_form_autosearchtask.html'
 
     # Кастомный функционал страницы

@@ -327,7 +327,7 @@ class Processor:
                 # self.vprint(task)
                 now = datetime.now(tz=timezone.utc)
                 delta = now - task.next_action
-                self.vprint(task.id, delta.total_seconds())
+                # self.vprint(task.id, delta.total_seconds())
                 # Значение должно быть положительным, чтобы сработал триггер
                 if delta.total_seconds() >= 0:
                     now_str = now.strftime('%Y-%m-%d_%H-%M-%S')
