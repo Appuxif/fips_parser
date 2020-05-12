@@ -169,12 +169,16 @@ class CorrectorAdmin(admin.ModelAdmin):
     # inlines = (CorrectorTaskInline, )  # TODO: Может стоит убрать
     save_on_top = True
     fields = ('user', 'sign_chars', 'company_startswith', 'tasks_day_amount', 'tasks_max',
-              'score', 'tasks_done_amount', 'is_active')
+              'score', 'tasks_done_amount', 'tasks_not_done_amount', 'is_active')
     readonly_fields = ('tasks_done_amount', )
 
     def tasks_done_amount(self, obj):
         return obj.tasks_done_amount
     tasks_done_amount.short_description = 'Количество выполненных задач'
+
+    def tasks_not_done_amount(self, obj):
+        return obj.correctortask_set.filter(task_done=False).count()
+    tasks_not_done_amount.short_description = 'Количество невыполненных задач'
 
 
 @admin.register(CorrectorTask)
