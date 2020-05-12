@@ -18,6 +18,7 @@ from interface.models import ContactPerson, Company
 #     OrderDocumentParse, RegisterDocumentParse
 from .forms import OrderDocumentParse, RegisterDocumentParse, ContactPersonTaskForm, CompanyForm, ContactFormset
 from interface.change_message_utils import construct_change_message
+from interface.admin import verify_email
 # from interface.models import OrderDocument, RegisterDocument,
 # from orders.models_base import Document as OrderDocument
 # from registers.models_base import Document as RegisterDocument
@@ -251,7 +252,10 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
 
                         # Если контакт был отредактирован
                         if person and form_is_valid:
-                            form.save()
+                            person = form.save()
+                            if person.email and not person.email_verified:
+                                verify_email(request, person)
+                                person.save()
                             # Логируем изменения
                             change_message = construct_change_message(form, [], False)
                             self.log_change(request, form.instance, change_message)

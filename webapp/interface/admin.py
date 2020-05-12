@@ -125,7 +125,7 @@ class CompanyAdmin(admin.ModelAdmin):
     def save_related(self, request, form, formsets, change):
         super(CompanyAdmin, self).save_related(request, form, formsets, change)
         for obj in formsets[0].queryset:
-            print(obj, obj.email)
+            # print(obj, obj.email)
             if obj.email and not obj.email_verified:
                 verify_email(request, obj)
                 obj.save()
