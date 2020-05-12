@@ -202,6 +202,11 @@ class Processor:
 
             # Находим компанию - правообладателя
             company = document.company_set.filter(**filter).first()
+            if company is None:
+                text = f'{i} {document.id} {document} company-holder is not found'
+                # self.vprint(text)
+                f.write(text + '\n')
+
             # sign_char = company.sign_char if company else None
             sign_char = re.match(r'.*(?P<sign>[A-Z]{2}).*', document.documentparse.applicant) \
                 if task.registry_type == 0 else\
