@@ -290,7 +290,7 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                             continue
 
                         # При создании нового контакта
-                        if form_is_valid:
+                        if form_is_valid and form.cleaned_data.get('full_name'):
                             person = form.save()
                             document.contactperson_set.add(person)
                             # Логируем изменения
