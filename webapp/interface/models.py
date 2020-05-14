@@ -25,6 +25,8 @@ class Proxies(models.Model):
     documents_parsed = models.IntegerField(default=0, null=True, blank=True)
     date_last_used = models.DateField(auto_now=True)
 
+    errors_in_a_row = models.SmallIntegerField('Количество ошибок подряд', null=True, blank=True, default=0)
+
     def __str__(self):
         s = [str(self.scheme), '']
         if self.user and self.password:
