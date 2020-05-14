@@ -29,6 +29,10 @@ class AdvancedSearchAdmin(ModelAdmin):
             override django admin 'get_queryset'
         """
         queryset = super().get_queryset(request)
+        # Чтобы результат фильтрации не мешал просматрить документы вне этой фильтрации
+        if 'change' in request.path or 'add' in request.path or 'delete' in request.path:
+            return queryset
+
         try:
             return queryset.filter(
                 self.advanced_search_query(request)
