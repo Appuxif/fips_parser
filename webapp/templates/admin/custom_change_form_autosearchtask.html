@@ -34,6 +34,7 @@
 {% endif %}{% endif %}
 {% endblock %}
 
+{% if document_form %}
 <h3>Информация о документе</h3>
 <fieldset class="module aligned">
     {% if document_form.applicant and document_form.applicant.value %}
@@ -66,17 +67,38 @@
             </div>
         </div>
     {% endif %}
-    {% if document_image %}
+    {% if document_images %}
         <div class="form-row">
+        {% for document_image in document_images %}
             <a href="{{ document_image }}" target="_blank"><img src="{{ document_image }}" alt="file" width="150px"></a>
+        {% endfor %}
         </div>
     {% endif %}
-    <div class="form-row">
+    {% if document_images_extra %}
+        <div class="form-row">
+        {% for document_image in document_images_extra %}
+            <a href="{{ document_image }}" target="_blank"><img src="{{ document_image }}" alt="file" width="150px"></a>
+        {% endfor %}
+        </div>
+    {% endif %}
+    {% if document_files %}
+        <div class="form-row">
         {% for file in document_files %}
             <a href="{{ file }}" target="_blank"><img src="{{ file }}" alt="file" width="150px"></a>
         {% endfor %}
-    </div>
+        </div>
+    {% endif %}
+    {% if document_files_extra %}
+        <div class="form-row">
+        {% for file in document_files_extra %}
+            <a href="{{ file }}" target="_blank"><img src="{{ file }}" alt="file" width="150px"></a>
+        {% endfor %}
+        </div>
+    {% endif %}
 </fieldset>
+{% endif %}
+
+{% if company_form %}
 {# Форма компании-правообладателя #}
 <form enctype="multipart/form-data" action="" method="post" id="company_form" novalidate>
     {% csrf_token %}
@@ -114,9 +136,10 @@
         <input type="submit" value="Сохранить Компанию" class="default" name="_continue">
     </div>
 </form>
-
+{% endif %}
 <link rel="stylesheet" href="/static/css/task_styles.css">
 
+{% if contact_formset %}
 {# Формы контактов #}
 <form enctype="multipart/form-data" action="" method="post" id="persons_form" novalidate>
     {% csrf_token %}
@@ -162,6 +185,7 @@
         <input type="submit" value="Сохранить Контакты" class="default" name="_continue">
     </div>
 </form>
+{% endif %}
 
 <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" method="post" id="{{ opts.model_name }}_form" novalidate>{% csrf_token %}{% block form_top %}{% endblock %}
 <div>

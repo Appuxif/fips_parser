@@ -187,8 +187,9 @@ class CorrectorAdmin(admin.ModelAdmin):
 @admin.register(CorrectorTask)
 class CorrectorTaskAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'datetime_created', 'date_task_done', 'task_done', 'task_cannot_be_done')
-    fields = ('document_number', 'datetime_created', 'date_task_done', 'task_cannot_be_done')
-    readonly_fields = ('note', 'datetime_created', 'date_task_done', 'document_number')
+    fields = ('document_number', 'datetime_created', 'date_task_done', 'task_cannot_be_done', 'note')
+    # readonly_fields = ('note', 'datetime_created', 'date_task_done', 'document_number')
+    readonly_fields = ('datetime_created', 'date_task_done', 'document_number')
     # save_on_top = True
     view_on_site = False
     change_form_template = 'admin/custom_change_form_autosearchtask.html'
@@ -233,12 +234,27 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                 sleep(5)
 
         # Размещение изображений и факсимильных файлов
-        link = document.documentfile_set.filter(name='image').first()
-        if link:
-            extra_context['document_image'] = link.link
-        files = document.documentfile_set.exclude(name='image')
-        if files.exists():
-            extra_context['document_files'] = [f.link for f in files.all()]
+        # link = document.documentfile_set.filter(name='image').first()
+        # if link:
+        #     extra_context['document_images'] = [link.link]
+        # files = document.documentfile_set.exclude(name='image')
+        # if files.exists():
+        #     extra_context['document_files'] = [f.link for f in files.all()]
+
+        # Поиск изображений и факсимильных файлов для связанных с компанией документов
+        for doc in list(company.order.all()[:3]) + list(company.register.all()[:3]):
+            if doc == document:
+                f1 = 'document_images'
+                f2 = 'document_files'
+            else:
+                f1 = 'document_images_extra'
+                f2 = 'document_files_extra'
+            link = doc.documentfile_set.filter(name='image').first()
+            if link:
+                extra_context[f1] = extra_context.get(f1, []) + [link.link]
+            files = doc.documentfile_set.exclude(name='image')
+            if files.exists():
+                extra_context[f2] = extra_context.get(f2, []) + [f.link for f in files.all()]
 
         # Если был POST запрос, то нужно сохранить кастомные формы
         if request.method == 'POST':
@@ -353,7 +369,7 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
         extra_context['document_form'] = DocumentParseForm(instance=document.documentparse)
         extra_context['company_form'] = CompanyForm(request.POST or None, instance=company)
         extra_context['company'] = company
-        contactpersons = ContactPerson.objects.filter(**contact_formset_filter)
+        contactpersons = ContactPerson.objects.filter(**contact_formset_filter).exclude(category='REPRESENTATIVE')
         contactpersons_initial = [{'company': company.id, filter_type: document, 'company_id': company.id}]*(contactpersons.count() + 1)
         extra_context['contact_formset'] = ContactFormset(queryset=contactpersons.all(),
                                                           initial=contactpersons_initial)
@@ -372,6 +388,16 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
         except User.corrector.RelatedObjectDoesNotExist:
             pass
         return qs
+
+    def get_readonly_fields(self, request, obj=None):
+        if 'add' in request.path:
+            return ('datetime_created', 'date_task_done', 'document_number')
+        return super(CorrectorTaskAdmin, self).get_readonly_fields(request, obj)
+
+    def get_fields(self, request, obj=None):
+        if 'add' in request.path:
+            return ('corrector', 'document_registry', 'document_id', 'note')
+        return super(CorrectorTaskAdmin, self).get_fields(request, obj)
 
     def save_model(self, request, obj, form, change):
         corrector_add_score(request, obj)

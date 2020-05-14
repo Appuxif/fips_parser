@@ -392,7 +392,7 @@ class Parser:
                     # with self.get_workers().lock:
                     #     use_proxies(in_use)
                     proxies_in_use.append(in_use)
-                self._print('Запуск парсинга с прокси', proxy)
+                self._print('Запуск парсинга с прокси', proxy['host'], proxy['port'])
                 self.get_workers().add_task(self.start_parse_all_documents, (proxy,), proxy['host'])
                 sleep(1)
 

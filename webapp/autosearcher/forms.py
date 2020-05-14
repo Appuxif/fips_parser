@@ -7,10 +7,18 @@ from registers.models_base import DocumentParse as RegisterDocumentParse
 from interface.models import ContactPerson, Company
 
 
+contact_categories = [
+    ('DEFAULT', 'Общий'),
+    ('DIRECTOR', 'Руководитель'),
+    ('EXECUTOR', 'Исполнитель'),
+]
+
+
 class ContactPersonTaskForm(forms.ModelForm):
     company = forms.IntegerField(required=False, label='ID Компании')
     new_id = forms.IntegerField(required=False, help_text='Для ручного добавления существующего контакта')
     delete = forms.BooleanField(required=False, initial=False, label='Открепить контакт')
+    category = forms.ChoiceField(required=False, choices=contact_categories)
     id = forms.HiddenInput()
 
     class Meta:
