@@ -209,8 +209,9 @@ class ContactPersonAdmin(admin.ModelAdmin):
 
 @admin.register(Proxies)
 class ProxiesAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'is_banned', 'is_working', 'in_use', 'date_last_used', 'documents_parsed', 'status')
-    list_editable = ('is_banned', 'is_working', 'in_use', 'status')
+    list_display = ('__str__', 'is_banned', 'is_working', 'in_use', 'date_last_used', 'documents_parsed',
+                    'status', 'errors_in_a_row')
+    list_editable = ('is_banned', 'is_working')
     change_list_template = 'admin/custom_change_list_proxies.html'
 
     def changelist_view(self, request, extra_context=None):

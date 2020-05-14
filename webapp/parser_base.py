@@ -617,7 +617,9 @@ class Parser:
                         self._print(text, 'Поток закрыт')
                         history['message'] += f'Блокировка прокси {proxy["id"]}\n'
                         proxy['status'] = text
-                        proxy['is_banned'] = 'TRUE'
+                        # proxy['is_banned'] = 'TRUE'
+                        # Следующее использование прокси через 31 день
+                        proxy['datetime_delayed'] = f"ADDDATE(NOW(), 31)"
                         return False
 
                     elif 'Документ с данным номером отсутствует' in text:

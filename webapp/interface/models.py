@@ -14,19 +14,20 @@ contact_categories = [
 
 # Объект прокси
 class Proxies(models.Model):
-    scheme = models.CharField(max_length=10, default='http://', blank=True)
-    user = models.CharField(max_length=100, null=True, blank=True)
-    password = models.CharField(max_length=100, null=True, blank=True)
-    host = models.CharField(max_length=100, unique=True)
-    port = models.PositiveIntegerField()
+    scheme = models.CharField('Протокол', max_length=10, default='http://', blank=True, help_text='http:// или https://')
+    user = models.CharField('Логин', max_length=100, null=True, blank=True)
+    password = models.CharField('Пароль', max_length=100, null=True, blank=True)
+    host = models.CharField('Хост или IP', max_length=100, unique=True)
+    port = models.PositiveIntegerField('Порт')
 
-    is_banned = models.BooleanField(default=False)
-    is_working = models.BooleanField(default=True)
-    in_use = models.BooleanField(default=False)
-    status = models.CharField(max_length=255, null=True, blank=True)
-    documents_parsed = models.IntegerField(default=0, null=True, blank=True)
-    date_last_used = models.DateField(auto_now=True)
-    datetime_delayed = models.DateTimeField(null=True, blank=True, default=datetime(2000, 1, 1))
+    is_banned = models.BooleanField('Прокси забанен', default=False)
+    is_working = models.BooleanField('Прокси рабочий', default=True)
+    in_use = models.BooleanField('Используется', default=False)
+    status = models.CharField('Статус', max_length=255, null=True, blank=True)
+    documents_parsed = models.IntegerField('Спарсено документов', default=0, null=True, blank=True)
+    date_last_used = models.DateField('Дата последнего использования', auto_now=True)
+    datetime_delayed = models.DateTimeField('Дата-время задержки использования', null=True, blank=True,
+                                            default=datetime(2000, 1, 1))
 
     errors_in_a_row = models.SmallIntegerField('Ошибки подряд', null=True, blank=True, default=0)
 
