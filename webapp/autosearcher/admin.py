@@ -234,27 +234,23 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                 sleep(5)
 
         # Размещение изображений и факсимильных файлов
-        # link = document.documentfile_set.filter(name='image').first()
-        # if link:
-        #     extra_context['document_images'] = [link.link]
-        # files = document.documentfile_set.exclude(name='image')
-        # if files.exists():
-        #     extra_context['document_files'] = [f.link for f in files.all()]
+        link = document.documentfile_set.filter(name='image').first()
+        if link:
+            extra_context['document_images'] = [link.link]
+        files = document.documentfile_set.exclude(name='image')
+        if files.exists():
+            extra_context['document_files'] = [f.link for f in files.all()]
 
         # Поиск изображений и факсимильных файлов для связанных с компанией документов
         for doc in list(company.order.all()[:3]) + list(company.register.all()[:3]):
             if doc == document:
-                f1 = 'document_images'
-                f2 = 'document_files'
-            else:
-                f1 = 'document_images_extra'
-                f2 = 'document_files_extra'
+                continue
             link = doc.documentfile_set.filter(name='image').first()
             if link:
-                extra_context[f1] = extra_context.get(f1, []) + [link.link]
+                extra_context['document_images_extra'] = extra_context.get('document_images_extra', []) + [link.link]
             files = doc.documentfile_set.exclude(name='image')
             if files.exists():
-                extra_context[f2] = extra_context.get(f2, []) + [f.link for f in files.all()]
+                extra_context['document_files_extra'] = extra_context.get('document_files_extra', []) + [f.link for f in files.all()]
 
         # Если был POST запрос, то нужно сохранить кастомные формы
         if request.method == 'POST':
