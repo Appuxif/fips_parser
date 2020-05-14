@@ -68,6 +68,7 @@
         </div>
     {% endif %}
     {% if document_images %}
+        <h4>Изображения документа</h4>
         <div class="form-row">
         {% for document_image in document_images %}
             <a href="{{ document_image }}" target="_blank"><img src="{{ document_image }}" alt="file" width="150px"></a>
@@ -75,6 +76,7 @@
         </div>
     {% endif %}
     {% if document_images_extra %}
+        <h4>Изображения связанных документов</h4>
         <div class="form-row">
         {% for document_image in document_images_extra %}
             <a href="{{ document_image }}" target="_blank"><img src="{{ document_image }}" alt="file" width="150px"></a>
@@ -82,6 +84,7 @@
         </div>
     {% endif %}
     {% if document_files %}
+        <h4>Файлы документа</h4>
         <div class="form-row">
         {% for file in document_files %}
             <a href="{{ file }}" target="_blank"><img src="{{ file }}" alt="file" width="150px"></a>
@@ -89,6 +92,7 @@
         </div>
     {% endif %}
     {% if document_files_extra %}
+        <h4>Файлы связанных документов</h4>
         <div class="form-row">
         {% for file in document_files_extra %}
             <a href="{{ file }}" target="_blank"><img src="{{ file }}" alt="file" width="150px"></a>
