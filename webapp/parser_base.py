@@ -381,11 +381,11 @@ class Parser:
                     proxy['in_use'] = 'TRUE'
                     proxy['status'] = ''
                     proxy['datetime_delayed'] = None  # Если будет ошибка, сюда подставится дата
-                    proxy['date_last_used'] = 'CURDATE()'
                     # print(today, proxy['date_last_used'])
                     # print(two_days_ago, proxy['date_last_used'])
                     if proxy['date_last_used'] < today:
                         proxy['documents_parsed'] = 0
+                    proxy['date_last_used'] = 'CURDATE()'
 
                     in_use = [f"'{proxy['id']}'"]
                     # proxies_in_use.extend(in_use)
