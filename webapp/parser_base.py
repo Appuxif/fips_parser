@@ -378,7 +378,7 @@ class Parser:
                         # in_use = [f"'{p['id']}'" for p in proxies]
 
                     proxy = dict(proxy)
-                    proxy['in_use'] = 'TRUE'
+                    proxy['in_use'] = 1
                     proxy['status'] = ''
                     proxy['datetime_delayed'] = None  # Если будет ошибка, сюда подставится дата
                     # print(today, proxy['date_last_used'])
@@ -451,7 +451,7 @@ class Parser:
 
         # В некотрых случая не нужно освобождать прокси
         if proxy.get('need_to_release_proxy', True):
-            proxy['in_use'] = 'FALSE'
+            proxy['in_use'] = 0
 
         proxy_to_db = {'id': f"'{proxy['id']}'", 'date_last_used': proxy['date_last_used'],
                        'documents_parsed': f"'{proxy['documents_parsed']}'",
@@ -602,7 +602,7 @@ class Parser:
 
                     if 'Слишком быстрый просмотр документов' in text:
                         self._print(document_obj['number'], text, url)
-                        proxy['in_use'] = 'TRUE'
+                        proxy['in_use'] = 1
                         # Прокси не нужно освобождать
                         proxy['need_to_release_proxy'] = False
                         return False
