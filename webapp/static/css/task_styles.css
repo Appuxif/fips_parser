@@ -26,3 +26,6 @@
 /*.custom_change_form input[type="checkbox"] {*/
 /*    display: block;*/
 /*}*/
+.form-row a img {
+    border: solid;
+}
