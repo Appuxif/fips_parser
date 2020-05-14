@@ -2,7 +2,7 @@ import itertools
 import os.path
 import re
 import traceback
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 
 import requests
 import json
@@ -344,12 +344,14 @@ class Parser:
 
                 if not self.proxies:
                     # self._lprint('Поиск прокси в БД')
+                    # now = datetime.now(tz=timezone.utc)
+                    # today = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
                     today = date.today()
-                    two_days_ago = today - timedelta(days=2)
+                    # two_days_ago = today - timedelta(days=2)
                     query = f"SELECT * FROM interface_proxies " \
                             f"WHERE is_banned = FALSE AND is_working = TRUE AND in_use = FALSE " \
                             f"AND (documents_parsed < {self.documents_parsed} AND date_last_used = '{today}' " \
-                            f"OR date_last_used < '{today}')" \
+                            f"OR date_last_used < '{today}') AND datetime_delayed < NOW()" \
                             f"LIMIT 1"
                     with self.get_workers().lock:
                         db = DB()
@@ -378,11 +380,12 @@ class Parser:
                     proxy = dict(proxy)
                     proxy['in_use'] = 'TRUE'
                     proxy['status'] = ''
+                    proxy['datetime_delayed'] = None  # Если будет ошибка, сюда подставится дата
                     # print(today, proxy['date_last_used'])
                     # print(two_days_ago, proxy['date_last_used'])
                     if proxy['date_last_used'] < today:
                         proxy['documents_parsed'] = 0
-                        # proxy['date_last_used'] = 'CURDATE()'
+                        proxy['date_last_used'] = 'CURDATE()'
 
                     in_use = [f"'{proxy['id']}'"]
                     # proxies_in_use.extend(in_use)
@@ -421,8 +424,9 @@ class Parser:
         while self.start_parse_document(proxy):
             if proxy:
                 proxy['documents_parsed'] += 1
-                if monotonic() - timer > 30:
-                    proxy_to_db = {'id': f"'{proxy['id']}'", 'date_last_used': 'CURDATE()',
+                # Сохранение данных о прокси раз в минуту
+                if monotonic() - timer > 60:
+                    proxy_to_db = {'id': f"'{proxy['id']}'", 'date_last_used': proxy['date_last_used'],
                                    'documents_parsed': f"'{proxy['documents_parsed']}'",
                                    'in_use': proxy['in_use'], 'is_working': proxy['is_working'],
                                    'is_banned': proxy['is_banned'],
@@ -430,7 +434,9 @@ class Parser:
                     DB().update_row('interface_proxies', proxy_to_db)
                     timer = monotonic()
 
+                # При достижении дневного лимита использования прокси цикл прерывается
                 if proxy['documents_parsed'] >= self.documents_parsed:
+                    proxy['errors_in_a_row'] = 0  # Счетчик ошибок подряд обнуляется
                     break
 
             try:
@@ -443,14 +449,22 @@ class Parser:
             while monotonic() - timer2 < t + 1:
                 sleep(1)
 
+        # В некотрых случая не нужно освобождать прокси
         if proxy.get('need_to_release_proxy', True):
             proxy['in_use'] = 'FALSE'
 
-        proxy_to_db = {'id': f"'{proxy['id']}'", 'date_last_used': 'CURDATE()',
+        proxy_to_db = {'id': f"'{proxy['id']}'", 'date_last_used': proxy['date_last_used'],
                        'documents_parsed': f"'{proxy['documents_parsed']}'",
                        'in_use': proxy['in_use'], 'is_working': proxy['is_working'],
                        'is_banned': proxy['is_banned'],
+                       'errors_in_a_row': f"'{proxy['errors_in_a_row']}'",  #
                        'status': f"'{proxy['status']}'" if proxy['status'] else 'NULL'}
+
+        # Если воникла ошибка и была установлена дата задержки использования прокси
+        # Изначально proxy['datetime_delayed'] = None
+        if proxy['datetime_delayed']:
+            proxy_to_db['datetime_delayed'] = proxy['datetime_delayed']
+
         DB().update_row('interface_proxies', proxy_to_db)
 
     # Берет из базы и парсит один непарсенный документ
@@ -513,9 +527,6 @@ class Parser:
                 self._print(history)
                 with self.get_workers().lock:
                     DB().add_row(self.dbparserhistory, history)
-                    # DB().executeone(f"INSERT INTO {self.dbparserhistory} "
-                    #                 f"(document_id, date_created, is_error, error_log_file, message) "
-                    #                 f"VALUES ('{document_obj['id']}', '{now}', TRUE, '{error_link}', '')")
 
         return result
 
@@ -566,13 +577,16 @@ class Parser:
                     except (requests.exceptions.ProxyError, requests.exceptions.ConnectTimeout) as err:
                         self._print(document_obj['number'], 'Ошибка прокси', str(err), type(err))
                         err = str(err).replace("'", '"')
-                        with self.get_workers().lock:
-                            history['message'] += f'Ошибка прокси {proxy["id"]}\n'
-                            proxy['status'] = 'Ошибка прокси ' + err[:200]
+                        # with self.get_workers().lock:
+                        # Если возникает ошибка, увеличиваем счетчик ошибок на 1
+                        history['message'] += f'Ошибка прокси {proxy["id"]}\n'
+                        proxy['status'] = 'Ошибка прокси ' + err[:200]
+                        proxy['errors_in_a_row'] += 1
+                        proxy['datetime_delayed'] = f"ADDDATE(NOW(), INTERVAL {proxy['errors_in_a_row']} HOUR)"
+                        # proxy['documents_parsed'] += 1000000
+                        # Если ошибок 5, то отмечаем прокси как нерабочий
+                        if proxy['errors_in_a_row'] >= 5:
                             proxy['is_working'] = 'FALSE'
-                            # DB().executeone(f"UPDATE interface_proxies SET is_working = FALSE, "
-                            #                 f"status = '{'Ошибка прокси ' + err[:200]}'"
-                            #                 f"WHERE id = '{proxy['id']}'")
                         return False
                     if r.status_code == 502:
                         self._lprint(document_obj['number'], 'ошибка сервера', r.status_code, r.reason, url)
@@ -589,16 +603,14 @@ class Parser:
                     if 'Слишком быстрый просмотр документов' in text:
                         self._print(document_obj['number'], text, url)
                         proxy['in_use'] = 'TRUE'
+                        # Прокси не нужно освобождать
                         proxy['need_to_release_proxy'] = False
                         return False
                     elif 'Превышен допустимый предел' in text:
                         self._print(document_obj['number'], text, url)
                         history['message'] += f'Превышен предел прокси {proxy["id"]}\n'
                         proxy['status'] = text
-                        proxy['documents_parsed'] = 999999
-                        # with self.get_workers().lock:
-                            # DB().executeone(f"UPDATE interface_proxies SET status = '{text}'"
-                            #                 f"WHERE id = '{proxy['id']}'")
+                        proxy['documents_parsed'] += 1000000
                         return False
 
                     elif 'Вы заблокированы' in text:
@@ -606,10 +618,6 @@ class Parser:
                         history['message'] += f'Блокировка прокси {proxy["id"]}\n'
                         proxy['status'] = text
                         proxy['is_banned'] = 'TRUE'
-                        # with self.get_workers().lock:
-                            # DB().executeone(f"UPDATE interface_proxies SET is_banned = TRUE, "
-                            #                 f"status = '{text}'"
-                            #                 f"WHERE id = '{proxy['id']}'")
                         return False
 
                     elif 'Документ с данным номером отсутствует' in text:

@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from django.db import models
 from orders.models_base import Document as OrderDocument
 from registers.models_base import Document as RegisterDocument
@@ -24,8 +26,9 @@ class Proxies(models.Model):
     status = models.CharField(max_length=255, null=True, blank=True)
     documents_parsed = models.IntegerField(default=0, null=True, blank=True)
     date_last_used = models.DateField(auto_now=True)
+    datetime_delayed = models.DateTimeField(null=True, blank=True, default=datetime(2000, 1, 1))
 
-    errors_in_a_row = models.SmallIntegerField('Количество ошибок подряд', null=True, blank=True, default=0)
+    errors_in_a_row = models.SmallIntegerField('Ошибки подряд', null=True, blank=True, default=0)
 
     def __str__(self):
         s = [str(self.scheme), '']
