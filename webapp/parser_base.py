@@ -1150,6 +1150,8 @@ def parse_applicant(document_parse, type):
                             splitted.remove(isp)
                         last_name = splitted[:1][0] if splitted[:1] else None
                         middle_name = splitted[1:][0] if splitted[1:] else None
+                    else:
+                        first_name = middle_name = last_name = ''
                     if len(first_name) == 1 or len(middle_name) == 1:
                         continue
                     applicant['person']['full_name'] = full_name
