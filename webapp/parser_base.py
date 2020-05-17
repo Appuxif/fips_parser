@@ -1106,7 +1106,8 @@ def parse_applicant(document_parse, type):
 
             # if re.match(r'.*(ул\.|г\.|обл\.|д\.|кв\.|\d).*', item):
             if re.match(
-                    r'.*(федерация|республика|корпус|пркт|пр-кт|проспект|улица|ул\.|город|г\.|область|обл\.|\d|[a-z]).*',
+                    r'.*(федерация|республика|корпус|пркт|пр-кт|проспект|улица'
+                    r'|ул\.|город|г\.|область|обл\.|\d|[a-z]|").*',
                     item.lower()):
                 # print('пропущено', item)
                 continue
@@ -1158,7 +1159,7 @@ def parse_applicant(document_parse, type):
                     applicant['person']['last_name'] = last_name
                     applicant['person']['first_name'] = first_name
                     applicant['person']['middle_name'] = middle_name
-                    if not applicant['company']['form']:
+                    if not applicant['company'].get('form', ''):
                         applicant['company']['form'] = 'ИП'
 
         applicant_string_splitted = re.sub('[\'(){}]', '', applicant_string).strip().split(', ')
