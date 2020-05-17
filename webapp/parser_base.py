@@ -1078,7 +1078,14 @@ def parse_applicant(document_parse, type):
                         # applicant_string = applicant_string.replace(item, '')
                         # Для определения имени некоторых иностранных компаний
                         if not applicant['company']['name']:
-                            applicant['company']['name'] = applicant_string_splitted[i - 1 if i > 0 else 1].strip()
+                            index = i - 1
+                            if i > 0:
+                                index = i - 1
+                            elif len(applicant_string_splitted) > 1:
+                                index = 1
+                            else:
+                                index = 0
+                            applicant['company']['name'] = applicant_string_splitted[index].strip()
                             # applicant_string = applicant_string.replace(applicant_string_splitted[1], '')
                         item = ''
                         applicant['company']['name'] = re.sub(r'(["«»\'{}])', '', applicant['company']['name'])
