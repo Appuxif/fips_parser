@@ -994,6 +994,8 @@ def parse_applicant(document_parse, type):
             # print('Код страны', sign_char)
             if sign_char.lower() in 'AZ,АM,BY,GE,KG,KZ,MD,RU,TJ,TM,UA,UZ'.lower():
                 is_sng = True
+        else:
+            is_sng = True
 
         parse_zip_code(applicant_string, applicant['person'])
 
@@ -1064,12 +1066,15 @@ def parse_applicant(document_parse, type):
             # Это повторный поиск, если не было произведено разбиение (чаще для адреса переписки)
             if applicant['company'].get('name') is None:
                 for form in forms:
-
-                    # if form in item:
                     if form in item:
-                        applicant['company']['full_name'] = item
+                        mtchd = re.match(r'(.*)' + form + r'(.[^()]*)', item)
+                        # mtchd = re.match(r'(.*)' + form + r'(.[^()]*)', item)
+                        if mtchd is None:
+                            continue
+                        applicant['company']['full_name'] = item[mtchd.end(1):mtchd.end(2)].strip()
                         applicant['company']['form'] = forms[form]
-                        applicant['company']['name'] = re.sub(r'(^|\s)' + form + r'($|\s)', '', item).strip()
+                        # applicant['company']['name'] = re.sub(r'(^|\s)' + form + r'($|\s)', '', item).strip()
+                        applicant['company']['name'] = mtchd.group(2).strip()
                         # applicant_string = applicant_string.replace(item, '')
                         # Для определения имени некоторых иностранных компаний
                         if not applicant['company']['name']:
@@ -1093,6 +1098,7 @@ def parse_applicant(document_parse, type):
             if applicant['person'].get('full_name'):
                 item_splitted = applicant['person']['full_name'].split()
             else:
+                item = re.sub('для ', '', item, re.I)
                 item_splitted = item.split()
 
             if len(item_splitted) <= 1 or len(item_splitted) >= 4:
@@ -1113,38 +1119,43 @@ def parse_applicant(document_parse, type):
                     if isp in cities or isp in countries:
                         continue
                     if isp in surnames:
-                        applicant_string = applicant_string.replace(item, '')
+                        # applicant_string = applicant_string.replace(item, '')
                         sur_found = True
                     elif isp[-1] == 'у' and isp[:-1] in surnames:
-                        applicant_string = applicant_string.replace(item, '')
+                        # applicant_string = applicant_string.replace(item, '')
                         item = re.sub(isp, isp[:-1], item)
                         isp = isp[:-1]
                         sur_found = True
                     elif isp[-2:] == 'ой' and isp[:-2] in surnames:
-                        applicant_string = applicant_string.replace(item, '')
-                        item = re.sub(isp, isp[:-2], item)
+                        # applicant_string = applicant_string.replace(item, '')
+                        item = re.sub(isp, isp[:-2] + 'а', item)
                         isp = isp[:-2] + 'а'
                         sur_found = True
                     elif isp in names:
                         first_found = True
                     else:
                         continue
-                    applicant['person']['full_name'] = re.sub('(ИП|Индивидуальный предприниматель)', '',
-                                                              item).strip().title()
+                    full_name = re.sub('(ИП|Индивидуальный предприниматель)', '', item).strip().title()
                     if sur_found:
-                        applicant['person']['last_name'] = isp
-                        splitted = applicant['person']['full_name'].replace('.', ' ').split()
+                        last_name = isp
+                        splitted = full_name.replace('.', ' ').split()
                         if isp in splitted:
                             splitted.remove(isp)
-                        applicant['person']['first_name'] = splitted[:1][0] if splitted[:1] else None
-                        applicant['person']['middle_name'] = splitted[1:][0] if splitted[1:] else None
+                        first_name = splitted[:1][0] if splitted[:1] else None
+                        middle_name = splitted[1:][0] if splitted[1:] else None
                     elif first_found:
-                        applicant['person']['first_name'] = isp
-                        splitted = applicant['person']['full_name'].replace('.', ' ').split()
+                        first_name = isp
+                        splitted = full_name.replace('.', ' ').split()
                         if isp in splitted:
                             splitted.remove(isp)
-                        applicant['person']['last_name'] = splitted[:1][0] if splitted[:1] else None
-                        applicant['person']['middle_name'] = splitted[1:][0] if splitted[1:] else None
+                        last_name = splitted[:1][0] if splitted[:1] else None
+                        middle_name = splitted[1:][0] if splitted[1:] else None
+                    if len(first_name) == 1 or len(middle_name) == 1:
+                        continue
+                    applicant['person']['full_name'] = full_name
+                    applicant['person']['last_name'] = last_name
+                    applicant['person']['first_name'] = first_name
+                    applicant['person']['middle_name'] = middle_name
 
         applicant_string_splitted = re.sub('[\'(){}]', '', applicant_string).strip().split(', ')
         applicant_string = ', '.join([s for s in applicant_string_splitted if s])
