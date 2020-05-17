@@ -7,6 +7,7 @@ from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import User
 from datetime import datetime, timezone
 from django.db.models import Q, F, Count
+from import_export.admin import ExportActionMixin
 import requests
 # Все контакты отображаются непосредственно в документе
 
@@ -83,39 +84,50 @@ class ContactPersonInline(admin.StackedInline):
     #     return fields
 
 
-# class OrderCompanyInline(admin.StackedInline):
-#     model = OrderCompanyRel
-#     extra = 0
-#     readonly_fields = ('company', 'document')
-#     max_num = 5
-#
-#     def has_add_permission(self, request, obj):
-#         return False
+class OrderCompanyInline(admin.StackedInline):
+    model = OrderCompanyRel
+    extra = 0
+    readonly_fields = ('company', 'document')
+    max_num = 5
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
-# class RegisterCompanyInline(admin.StackedInline):
-#     model = RegisterCompanyRel
-#     extra = 0
-#     readonly_fields = ('company', 'document')
-#     max_num = 5
-#
-#     def has_add_permission(self, request, obj):
-#         return False
+class RegisterCompanyInline(admin.StackedInline):
+    model = RegisterCompanyRel
+    extra = 0
+    readonly_fields = ('company', 'document')
+    max_num = 5
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 # Отображение компании в БД
 @admin.register(Company)
-class CompanyAdmin(admin.ModelAdmin):
-    # inlines = [ContactPersonInline, OrderCompanyInline, RegisterCompanyInline]
-    inlines = [ContactPersonInline]
+class CompanyAdmin(ExportActionMixin, admin.ModelAdmin):
+    inlines = [ContactPersonInline, OrderCompanyInline, RegisterCompanyInline]
+    # inlines = [ContactPersonInline]
     exclude = ('order', 'register')
     list_display = ('__str__', 'sign_char', 'form_correct', 'name_correct', 'address')
     readonly_fields = ('name', 'form', 'date_corrected')
     # Шаблон, на котором добавлено лого компании
     change_form_template = 'admin/custom_change_form_company.html'
     save_on_top = True
-    # def save_related(self, request, form, formsets, change):
-    # def save_model(self, request, obj, form, change):
+    search_fields = ('form_correct', 'name_correct')
 
     # Кастомное логирование при изменениях в заявках
     def construct_change_message(self, request, form, formsets, add=False):

@@ -121,6 +121,7 @@ class DocumentFile(models.Model):
         return self.link
 
 
+# Список полей для настройки столбцов таблицы.
 document_parse_dict = {
     'field__id': {'string': 'ID документа', 'ordering': True, 'chosen': False},
     'field__number': {'string': 'Номер Документа', 'ordering': True, 'chosen': False},
@@ -131,7 +132,7 @@ document_parse_dict = {
     'field__documentparse__id': {'string': 'ID', 'ordering': True, 'chosen': False},
     'field__documentparse__applicant': {'string': 'Заявитель', 'ordering': True, 'chosen': False},
     'field__documentparse__address': {'string': 'Адрес для переписки', 'ordering': True, 'chosen': False},
-    'field__documentparse__copyright_holder': {'string': 'Правообладатель', 'ordering': True, 'chosen': False},
+    # 'field__documentparse__copyright_holder': {'string': 'Правообладатель', 'ordering': True, 'chosen': False},
     'field__documentparse__sign_char': {'string': 'Знак, и его хар-ки', 'ordering': True, 'chosen': False},
     'field__documentparse__status': {'string': 'Статус', 'ordering': True, 'chosen': False},
     'field__documentparse__order_type': {'string': 'Тип заявки', 'ordering': True, 'chosen': False},
@@ -142,11 +143,11 @@ document_parse_dict = {
     'field__documentparse__order_register_number': {'string': 'Номер рег-ции', 'ordering': True, 'chosen': False},
     'field__documentparse__first_order_country_code': {'string': 'Код страны 1-й з.', 'ordering': True, 'chosen': False},
     'field__documentparse__volumetric': {'string': 'Объемный знак', 'ordering': True, 'chosen': False},
-    'field__documentparse__unprotected': {'string': 'Неохраняемые эл-ты', 'ordering': True, 'chosen': False},
+    # 'field__documentparse__unprotected': {'string': 'Неохраняемые эл-ты', 'ordering': True, 'chosen': False},
     'field__documentparse__date_refreshed': {'string': 'Дата обновл.', 'ordering': True, 'chosen': False},
     'field__documentparse__date_created': {'string': 'Дата поступ. заявки', 'ordering': True, 'chosen': False},
     'field__documentparse__date_publish': {'string': 'Дата публ. заявки', 'ordering': True, 'chosen': False},
-    'field__documentparse__date_exclusive': {'string': 'Дата истеч. срока', 'ordering': True, 'chosen': False},
+    # 'field__documentparse__date_exclusive': {'string': 'Дата истеч. срока', 'ordering': True, 'chosen': False},
     'field__documentparse__first_order_date': {'string': 'Дата 1-й заявки', 'ordering': True, 'chosen': False},
     'field__documentparse__date_gos_reg': {'string': 'Дата гос. рег-ции', 'ordering': True, 'chosen': False},
     'field__documentparse__date_changes': {'string': 'Дата внесения', 'ordering': True, 'chosen': False},

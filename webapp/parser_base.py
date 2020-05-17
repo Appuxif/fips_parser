@@ -88,6 +88,8 @@ def get_forms():
         l = l.split(' - ')
         r[l[0]] = l[1]
     return r
+
+
 # {'https': 'http://52.15.172.134:7778'}
 
 
@@ -119,6 +121,7 @@ class Parser:
     workers2 = None
     proxies = []
     proxy_ids = []
+    # Параетры, определяющие частоту парсинга документов
     requests_amount = 1
     requests_period = 3
     parser_source = 'new.fips.ru'
@@ -404,10 +407,10 @@ class Parser:
                     release_proxies(proxies_in_use)
 
     def get_rand_times(self):
-        d = self.requests_period/self.requests_amount
+        d = self.requests_period / self.requests_amount
         if d < 3:
             d = 3
-        s = [d]*self.requests_amount
+        s = [d] * self.requests_amount
         for i in range(0, int(len(s) / 2)):
             r = randint(0, int(s[i]) - 3)
             s[i] = s[i] - r
@@ -424,12 +427,15 @@ class Parser:
         while self.start_parse_document(proxy):
             if proxy:
                 proxy['documents_parsed'] += 1
+                if proxy['errors_in_a_row']:
+                    proxy['errors_in_a_row'] = 0
                 # Сохранение данных о прокси раз в минуту
                 if monotonic() - timer > 60:
                     proxy_to_db = {'id': f"'{proxy['id']}'", 'date_last_used': proxy['date_last_used'],
                                    'documents_parsed': f"'{proxy['documents_parsed']}'",
                                    'in_use': proxy['in_use'], 'is_working': proxy['is_working'],
                                    'is_banned': proxy['is_banned'],
+                                   'errors_in_a_row': f"'{proxy['errors_in_a_row']}'",  #
                                    'status': f"'{proxy['status']}'" if proxy['status'] else 'NULL'}
                     DB().update_row('interface_proxies', proxy_to_db)
                     timer = monotonic()
@@ -559,90 +565,90 @@ class Parser:
         with requests.Session() as session:
             session.headers.update({'User-Agent': get_random_useragent()})
 
-            # Либо парсим локальный файл # TODO: Для отладки
-            if os.path.exists(filename):
-                self._print(document_obj['number'], 'Парсим локальный файл')
-                with open(filename, 'rb') as f:
-                    page_content = f.read()
-            # Либо загружаем страницу и проверяем на ошибки
-            else:
-                counter = 0
-                while True:
-                    try:
-                        r = session.get(url, proxies=proxies, timeout=10)
-                    except requests.exceptions.ReadTimeout:
-                        self._print(document_obj['number'], 'Нет ответа от сервера!')
-                        sleep(5)
-                        return True
-                    except (requests.exceptions.ProxyError, requests.exceptions.ConnectTimeout) as err:
-                        self._print(document_obj['number'], 'Ошибка прокси', str(err), type(err))
-                        err = str(err).replace("'", '"')
-                        # with self.get_workers().lock:
-                        # Если возникает ошибка, увеличиваем счетчик ошибок на 1
-                        history['message'] += f'Ошибка прокси {proxy["id"]}\n'
-                        proxy['status'] = 'Ошибка прокси ' + err[:200]
-                        proxy['errors_in_a_row'] += 1
-                        proxy['datetime_delayed'] = f"ADDDATE(NOW(), INTERVAL {proxy['errors_in_a_row']} HOUR)"
-                        # proxy['documents_parsed'] += 1000000
-                        # Если ошибок 5, то отмечаем прокси как нерабочий
-                        if proxy['errors_in_a_row'] >= 5:
-                            proxy['is_working'] = 'FALSE'
-                        return False
-                    if r.status_code == 502:
-                        self._lprint(document_obj['number'], 'ошибка сервера', r.status_code, r.reason, url)
-                        sleep(5)
-                        return True
-                    elif r.status_code != 200:
-                        self._lprint(document_obj['number'], 'parse_orders', r.status_code, r.reason, url)
-                        return False
-                        # existence = True
-                        # break
-                    text = r.text
-                    page_content = r.content
+            # # Либо парсим локальный файл # TODO: Для отладки
+            # if os.path.exists(filename):
+            #     self._print(document_obj['number'], 'Парсим локальный файл')
+            #     with open(filename, 'rb') as f:
+            #         page_content = f.read()
+            # # Либо загружаем страницу и проверяем на ошибки
+            # else:
+            counter = 0
+            while True:
+                try:
+                    r = session.get(url, proxies=proxies, timeout=30)
+                except requests.exceptions.ReadTimeout:
+                    self._print(document_obj['number'], 'Нет ответа от сервера!')
+                    sleep(5)
+                    return True
+                except (requests.exceptions.ProxyError, requests.exceptions.ConnectTimeout) as err:
+                    self._print(document_obj['number'], 'Ошибка прокси', str(err), type(err))
+                    err = str(err).replace("'", '"')
+                    # with self.get_workers().lock:
+                    # Если возникает ошибка, увеличиваем счетчик ошибок на 1
+                    history['message'] += f'Ошибка прокси {proxy["id"]}\n'
+                    proxy['status'] = 'Ошибка прокси ' + err[:200]
+                    proxy['errors_in_a_row'] += 1
+                    proxy['datetime_delayed'] = f"ADDDATE(NOW(), INTERVAL {proxy['errors_in_a_row']} HOUR)"
+                    # proxy['documents_parsed'] += 1000000
+                    # Если ошибок 5, то отмечаем прокси как нерабочий
+                    if proxy['errors_in_a_row'] >= 5:
+                        proxy['is_working'] = 'FALSE'
+                    return False
+                if r.status_code == 502:
+                    self._lprint(document_obj['number'], 'ошибка сервера', r.status_code, r.reason, url)
+                    sleep(5)
+                    return True
+                elif r.status_code != 200:
+                    self._lprint(document_obj['number'], 'parse_orders', r.status_code, r.reason, url)
+                    return False
+                    # existence = True
+                    # break
+                text = r.text
+                page_content = r.content
 
-                    if 'Слишком быстрый просмотр документов' in text:
-                        self._print(document_obj['number'], text, url)
-                        proxy['in_use'] = 1
-                        # Прокси не нужно освобождать
-                        proxy['need_to_release_proxy'] = False
-                        return False
-                    elif 'Превышен допустимый предел' in text:
-                        self._print(document_obj['number'], text, url)
-                        history['message'] += f'Превышен предел прокси {proxy["id"]}\n'
-                        proxy['status'] = text
-                        proxy['documents_parsed'] += 1000000
-                        return False
+                if 'Слишком быстрый просмотр документов' in text:
+                    self._print(document_obj['number'], text, url)
+                    proxy['in_use'] = 1
+                    # Прокси не нужно освобождать
+                    proxy['need_to_release_proxy'] = False
+                    return False
+                elif 'Превышен допустимый предел' in text:
+                    self._print(document_obj['number'], text, url)
+                    history['message'] += f'Превышен предел прокси {proxy["id"]}\n'
+                    proxy['status'] = text
+                    proxy['documents_parsed'] += 1000000
+                    return False
 
-                    elif 'Вы заблокированы' in text:
-                        self._print(text, 'Поток закрыт')
-                        history['message'] += f'Блокировка прокси {proxy["id"]}\n'
-                        proxy['status'] = text
-                        # proxy['is_banned'] = 'TRUE'
-                        # Следующее использование прокси через 31 день
-                        proxy['datetime_delayed'] = f"ADDDATE(NOW(), 31)"
-                        return False
+                elif 'Вы заблокированы' in text:
+                    self._print(text, 'Поток закрыт')
+                    history['message'] += f'Блокировка прокси {proxy["id"]}\n'
+                    proxy['status'] = text
+                    # proxy['is_banned'] = 'TRUE'
+                    # Следующее использование прокси через 31 день
+                    proxy['datetime_delayed'] = f"ADDDATE(NOW(), 31)"
+                    return False
 
-                    elif 'Документ с данным номером отсутствует' in text:
-                        self._lprint(document_obj['number'], text, url)
-                        existence = False
-                        break
-                    else:
-                        # self._lprint(text)
-                        # TODO: Для отладки
-                        # Сохранение файла на диск, для дальнейшего парсинга в будущем
-                        # Если потребуется обновление, файл нужно будет удалить
-                        os.makedirs(filepath, exist_ok=True)
-                        with open(filename, 'wb') as f:
-                            f.write(page_content)
-                        break
+                elif 'Документ с данным номером отсутствует' in text:
+                    self._lprint(document_obj['number'], text, url)
+                    existence = False
+                    break
+                else:
+                    # self._lprint(text)
+                    # TODO: Для отладки
+                    # Сохранение файла на диск, для дальнейшего парсинга в будущем
+                    # Если потребуется обновление, файл нужно будет удалить
+                    # os.makedirs(filepath, exist_ok=True)
+                    # with open(filename, 'wb') as f:
+                    #     f.write(page_content)
+                    break
 
-                    counter += 1
-                    if counter > 3:
-                        history['message'] += f'counter exceeded\n'
-                        self._lprint(document_obj['number'], 'counter exceeded', url)
-                        return False
-                    self._print(document_obj['number'], 'sleep')
-                    sleep(3)
+                counter += 1
+                if counter > 3:
+                    history['message'] += f'counter exceeded\n'
+                    self._lprint(document_obj['number'], 'counter exceeded', url)
+                    return False
+                self._print(document_obj['number'], 'sleep')
+                sleep(3)
 
             if existence:
                 with self.get_workers().lock:
@@ -681,8 +687,9 @@ def get_date_from_string(string):
         if date_splitted[1] == 2 and date_splitted[0] >= 29:
             date_splitted[0] = 28
         try:
-            date_ =  date(date_splitted[2], date_splitted[1], date_splitted[0])
+            date_ = date(date_splitted[2], date_splitted[1], date_splitted[0])
         except ValueError as err:
+            # Некоторые даты в документах введены неверно. Например, 30.02.2019 или 31.04.2010 или 31.13.2001
             err_str = str(err)
             if 'month must be in' in err_str:
                 if date_splitted[1] > 12:
@@ -690,6 +697,7 @@ def get_date_from_string(string):
                 elif date_splitted[1] < 1:
                     date_splitted[1] = 1
             elif 'day is out of range for month' in err_str:
+                # Чтобы не проверять каждый год по отдельности, запостулируем, что в феврале всегда 28 дней.
                 if date_splitted[1] == 2 and date_splitted[0] > 28:
                     date_splitted[0] = 28
                 elif date_splitted[0] > 30:
@@ -731,6 +739,7 @@ def download_file(session, proxies, a, document, self_name):
     return direct_url, link
 
 
+# Номера, встречаемые в документах, и соответствующие им столбцы в БД (строчки)
 numbers_fields_values_dict = {
     '111': 'order_register_number',  # (111) Номер регистрации
     '210': 'order_number',  # (210) Номер заявки
@@ -746,6 +755,7 @@ numbers_fields_values_dict = {
     '750': 'address'  # (750) Адрес для переписки
 }
 
+# Номера, встречаемые в документах, и соответствующие им столбцы в БД (даты)
 numbers_fields_dates_dict = {
     '151': 'date_gos_reg',  # (151) Дата государственной регистрации
     '181': 'date_exclusive',  # (181) Дата истечения срока действия исключительного права
@@ -758,7 +768,8 @@ numbers_fields_dates_dict = {
 
 # Функция используется для парсинга основной инфомрации со страницы документа
 # Сохраняет информацию в словари, которые получает на входе
-def parse_main_info(page, document, document_info, document_parse, service_items, session, proxies, self_name, start_izvs=None):
+def parse_main_info(page, document, document_info, document_parse, service_items, session, proxies, self_name,
+                    start_izvs=None):
     documentfile_values = []
     serviceitem_values = []
     message = ''
@@ -838,11 +849,13 @@ def parse_facsimile(page, document, session, proxies, self_name):
     return message, interface_parsedorderfile_values
 
 
+# Ставит значение in_use в положение True для прокси с указанными ID в списке
 def use_proxies(ids_list):
     ids = ', '.join(ids_list)
     DB().executeone(f'UPDATE interface_proxies SET in_use = TRUE WHERE id IN ({ids})')
 
 
+# Ставит значение in_use в положение False для прокси с указанными ID в списке
 def release_proxies(ids_list=None):
     if ids_list:
         ids = ', '.join(ids_list)
@@ -853,6 +866,7 @@ def release_proxies(ids_list=None):
         print("Все прокси освобождены")
 
 
+# Загружает список прокси из файла в БД. Не нужная функция, так как в интерфейсе реализован более удобный метод
 def load_proxies_to_db_from_file(filename=None):
     filename = filename or 'proxy_http_ip.txt'
     if os.path.exists(filename):
@@ -884,6 +898,7 @@ def load_proxies_to_db_from_file(filename=None):
         print('Файл не найден')
 
 
+# Разбирает адрес на составляющие
 def parse_person_address(applicant_string, item, person):
     item_splitted = re.sub(r'(ГОРОД|город|г\.)', '', item, re.IGNORECASE).strip()
     item_splitted = item_splitted.split()
@@ -891,23 +906,27 @@ def parse_person_address(applicant_string, item, person):
     # Ищем каждое слово среди списка городов
 
     # Ищем город
-    if re.match(r'(^город\s|\sгород$|.*г\..*)', item, re.IGNORECASE):
-        person['city'] = re.sub(r'(город |г\.)', '', item, flags=re.IGNORECASE).strip()
+    if person.get('city') is None:
+        if re.match(r'(^город\s|\sгород$|.*г\..*)', item, re.IGNORECASE):
+            person['city'] = re.sub(r'(город |г\.)', '', item, flags=re.IGNORECASE).strip()
 
     # Ищем край или область
-    if re.match(r'.*(край|область|обл|республика).*', item, re.IGNORECASE):
-        person['state'] = item.strip()
+    if person.get('state') is None:
+        if re.match(r'.*(край|область|обл|республика).*', item, re.IGNORECASE):
+            person['state'] = item.strip()
 
     # Ищем район
-    if re.match(r'.*(район).*', item, re.IGNORECASE):
-        person['area'] = item.strip()
+    if person.get('area') is None:
+        if re.match(r'.*(район).*', item, re.IGNORECASE):
+            person['area'] = item.strip()
 
     for c in item_splitted:
         # print('city', c)
         c = c.capitalize()
 
         # Исключаем слова, которых не должно быть в Городе
-        if re.match(r'.*(поселок|площадь|проспект|пркт|пр-кт|улица|ул\.|край|область|обл\.|\d).*', item, re.IGNORECASE) or person.get('city'):
+        if re.match(r'.*(республика|поселок|площадь|проспект|пркт|пр-кт|улица|ул\.|край|область|обл\.|\d).*', item,
+                    re.IGNORECASE) or person.get('city'):
             # print('пропущено', item)
             continue
 
@@ -955,11 +974,12 @@ def parse_applicant(document_parse, type):
     applicant = {}
     # Получаем наименование компании из поля document_parse['applicant'] или document_parse['copyright_holder']
     # Нужно искать компанию, либо Имя-Фамилию контакта
-    applicant_string = document_parse.get(type)
+    applicant_string = document_parse.get(type)[1:-1]
 
     if applicant_string:
+        is_sng = False  # Документ принадлежит странам СНГ
         applicant = {'company': {}, 'person': {}}
-        applicant_string_splitted = applicant_string[1:-1].split(', ')
+        applicant_string_splitted = applicant_string.split(', ')
 
         # Находим код страны
         sign_char = re.match(r'.*(?P<sign>[A-Z]{2}).*', applicant_string_splitted[0]) or \
@@ -969,25 +989,89 @@ def parse_applicant(document_parse, type):
             applicant['company']['sign_char'] = sign_char
             applicant_string = applicant_string.replace(sign_char, '')
             # print('Код страны', sign_char)
+            if sign_char.lower() in 'AZ,АM,BY,GE,KG,KZ,MD,RU,TJ,TM,UA,UZ'.lower():
+                is_sng = True
 
         parse_zip_code(applicant_string, applicant['person'])
 
+        company_part = ''
+        if is_sng:
+            # spltd = re.split(r', \d{6}', applicant_string)
+            mtchd = re.match(r'(.*), \d{6}', applicant_string)
+            if mtchd and mtchd.group(1):
+                # company_part = spltd[0]
+                company_part = applicant_string[:mtchd.end(1)]
+                # applicant_string = spltd[1]
+                applicant_string = applicant_string[mtchd.end(1):]
+                applicant_string_splitted = applicant_string.split(', ')
+            # applicant['company']['address'] = spltd[1]
+        elif sign_char:
+            if sign_char not in applicant_string_splitted[0]:
+                company_part = applicant_string_splitted[0]
+                applicant_string_splitted[0] = ''
+                # address_part = spltd[1]
+            else:
+                company_part = applicant_string_splitted[1]
+                applicant_string_splitted[0] = ''
+                applicant_string_splitted[1] = ''
+        else:
+            company_part = ''
+
+        # print('applicant_string', applicant_string)
+        if company_part:
+            # print('company_part', company_part)
+            company_part_splitted = re.sub('[\'{}]', '', company_part).strip().split(', ')
+            company_part = ', '.join([s for s in company_part_splitted if s])
+            applicant['company']['full_name'] = company_part
+            applicant['company']['name'] = company_part
+            applicant['company']['form'] = ''
+            # print('company_part', company_part)
+            # print('applicant_string', applicant_string)
+            # applicant_string.replace(company_part, '')
+            # print('applicant_string', applicant_string)
+
+            for form in forms:
+                if form in company_part:
+                    applicant['company']['form'] = forms[form]
+                    if is_sng:
+                        company_name = re.sub(r'(^|\s)' + form + r'($|\s)', '', company_part).strip()
+                        company_name = re.sub(', ', '', company_name).strip()
+                        applicant['company']['name'] = company_name
+                    else:
+                        applicant['company']['name'] = company_part.strip()
+                    applicant['company']['name'] = re.sub(r'(["«»\'{}])', '', applicant['company']['name'])
+                    break
+            else:
+                if is_sng:
+                    applicant['person']['full_name'] = applicant['company']['full_name']
+                    applicant['company']['form'] = 'ИП'
+                    applicant_string_splitted = [applicant['person']['full_name']] + applicant_string_splitted
+                if applicant['company'].get('name') is None and applicant['company'].get('full_name') is not None:
+                    applicant['company']['form'] = ''
+                    applicant['company']['name'] = applicant['company']['full_name']
+            #         print('company_part', form, company_part)
+
         for i, item in enumerate(applicant_string_splitted):
+            if not item:
+                continue
             # print('item', item)
 
             # Ищем известную организационную форму
             # Если найдена форма - это название компании
+            # Это повторный поиск, если не было произведено разбиение (чаще для адреса переписки)
             if applicant['company'].get('name') is None:
                 for form in forms:
 
+                    # if form in item:
                     if form in item:
+                        applicant['company']['full_name'] = item
                         applicant['company']['form'] = forms[form]
                         applicant['company']['name'] = re.sub(r'(^|\s)' + form + r'($|\s)', '', item).strip()
-                        applicant_string = applicant_string.replace(item, '')
+                        # applicant_string = applicant_string.replace(item, '')
                         # Для определения имени некоторых иностранных компаний
                         if not applicant['company']['name']:
                             applicant['company']['name'] = applicant_string_splitted[i - 1 if i > 0 else 1].strip()
-                            applicant_string = applicant_string.replace(applicant_string_splitted[1], '')
+                            # applicant_string = applicant_string.replace(applicant_string_splitted[1], '')
                         item = ''
                         applicant['company']['name'] = re.sub(r'(["«»\'{}])', '', applicant['company']['name'])
                         break
@@ -995,18 +1079,30 @@ def parse_applicant(document_parse, type):
             # Парсим адрес из элементов
             parse_person_address(applicant_string, item, applicant['person'])
 
-            # Если найдена фамилия - то это ФИО контакта
-            item_splitted = item.split()
+            # Дальше поиск ФИО
+            if not is_sng:
+                continue
+
+            if (applicant['person'].get('first_name') and applicant['person'].get('last_name') and
+                    applicant['person'].get('middle_name')):
+                continue
+
+            if applicant['person'].get('full_name'):
+                item_splitted = applicant['person']['full_name'].split()
+            else:
+                item_splitted = item.split()
+
             if len(item_splitted) <= 1 or len(item_splitted) >= 4:
                 continue
-            sur_found = first_found = second_found = middle_found = False
 
             # if re.match(r'.*(ул\.|г\.|обл\.|д\.|кв\.|\d).*', item):
-            if re.match(r'.*(федерация|республика|корпус|пркт|пр-кт|проспект|улица|ул\.|город|г\.|область|обл\.|\d|[a-z]).*',
-                        item.lower()):
+            if re.match(
+                    r'.*(федерация|республика|корпус|пркт|пр-кт|проспект|улица|ул\.|город|г\.|область|обл\.|\d|[a-z]).*',
+                    item.lower()):
                 # print('пропущено', item)
                 continue
 
+            sur_found = first_found = second_found = middle_found = False
             # Парсинг ФИО
             for isp in item_splitted:
                 if not sur_found and not first_found:
@@ -1050,7 +1146,8 @@ def parse_applicant(document_parse, type):
         applicant_string_splitted = re.sub('[\'(){}]', '', applicant_string).strip().split(', ')
         applicant_string = ', '.join([s for s in applicant_string_splitted if s])
         # print(applicant_string)
-        applicant['company']['address'] = applicant_string
+        if applicant['company'].get('address') is None:
+            applicant['company']['address'] = applicant_string
         applicant['person']['office_address'] = applicant_string
         if applicant['person'].get('country') is None and applicant['company'].get('sign_char', 'RU') == 'RU':
             applicant['person']['country'] = 'Россия'
@@ -1268,7 +1365,7 @@ def parse_contacts_from_documentparse(self, document, document_parse, history):
     # print('company', company)
 
     # if not company.get('name') or 'Company for' in company.get('name', ''):
-        # history['message'] += 'Имя компании не найдено\n'
+    # history['message'] += 'Имя компании не найдено\n'
     person = get_or_create_person(self, document, document_person, company)
     # print('person', person)
 
@@ -1295,7 +1392,8 @@ if __name__ == '__main__':
     countries = get_countries()
     cities = get_cities()
     forms = get_forms()
-    document_parse = {'copyright_holder': "'Унус Сед Лео Лимитед, с/о ШРМ Трастис (БВИ) Лимитед, Тринити Чемберс, П.О. Бокс 4301 Род Таун, Тортола, Британские Виргинские острова VG1110 (VG)'"}
+    document_parse = {
+        'copyright_holder': "'Унус Сед Лео Лимитед, с/о ШРМ Трастис (БВИ) Лимитед, Тринити Чемберс, П.О. Бокс 4301 Род Таун, Тортола, Британские Виргинские острова VG1110 (VG)'"}
     copyright_holder = parse_applicant(document_parse, 'copyright_holder')
     print('copyright_holder', copyright_holder)
     # print('get_surnames()\n', get_surnames())

@@ -47,6 +47,7 @@ def company_logo_path(instance, filename):
 
 
 class Company(models.Model):
+    full_name = models.CharField('Полное наименование компании', max_length=1500, null=True, blank=True)
     form = models.CharField('Орг. форма', max_length=50, null=True, blank=True)  # ! # Организационная форма ООО
     form_correct = models.CharField('Орг. форма', max_length=50, null=True, blank=True)
     name = models.CharField('Наименование компании', max_length=255, blank=True)
