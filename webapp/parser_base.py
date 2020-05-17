@@ -1293,7 +1293,8 @@ def get_or_create_company(self, document, document_person, save_anyway=True, mak
     # return None
 
 
-def get_or_create_person(self, document, document_person, company):
+def get_or_create_person(self, document, document_person, company=None):
+    company = company or {}
     person = document_person.get('person', {})
     full_name = person.get('full_name', '')
     if full_name:
@@ -1319,6 +1320,8 @@ def get_or_create_person(self, document, document_person, company):
             if 'rep_reg_number' in person:
                 person['rep_reg_number'] = f"'{person['rep_reg_number']}'"
                 person['category'] = "'REPRESENTATIVE'"
+            elif company and company.get('form') == 'ИП':
+                person['category'] = "'DIRECTOR'"
             else:
                 person['category'] = "'DEFAULT'"
             person['company_id'] = f"'{company['id']}'" if company and company.get('id') else 'NULL'
@@ -1353,15 +1356,15 @@ def get_or_create_person(self, document, document_person, company):
 def parse_contacts_from_documentparse(self, document, document_parse, history):
     # Парсинг заявителя
     applicant = parse_applicant(document_parse, 'applicant')
-    # if applicant:
-    #     print('applicant', applicant, '\n')
 
     # Парсинг Правообладателя
     copyright_holder = parse_applicant(document_parse, 'copyright_holder')
-    # if copyright_holder:
-    #     print('copyright_holder', copyright_holder, '\n')
 
-    document_person = applicant or copyright_holder or {}
+    document_person = applicant or copyright_holder or None
+    # Если нет заявителя или правообладателя, но не надо создавать компанию
+    if document_person is None:
+        return
+
     # Парсинг патентного поверенного
     patent_atty = parse_patent_atty(document_parse)
     if document_parse.get('address'):
@@ -1370,36 +1373,29 @@ def parse_contacts_from_documentparse(self, document, document_parse, history):
         else:
             document_person['person']['rep_correspondence_address'] = document_parse['address'][1:-1]
 
-    # if patent_atty:
-    #     print('patent_atty', patent_atty, '\n')
-
     # Парсинг адреса для переписки
-    # correspondence_address = parse_correspondence_address(document_parse)
     correspondence_address = parse_applicant(document_parse, 'address')
-    # if correspondence_address:
-    #     print('correspondence_address', correspondence_address, '\n')
 
-    # Ищем компанию в БД
-    company = get_or_create_company(self, document, document_person, make_holder=True)
-    # print('company', company)
-
-    # if not company.get('name') or 'Company for' in company.get('name', ''):
-    # history['message'] += 'Имя компании не найдено\n'
+    # Ищем компанию-правообладателя в БД
+    company = get_or_create_company(self, document, document_person, False, make_holder=True)
     person = get_or_create_person(self, document, document_person, company)
-    # print('person', person)
 
     # Ищем компанию в БД для патентного поверенного
     pat_company = get_or_create_company(self, document, correspondence_address, False)
-    # print('pat_company', pat_company)
+
     # Если патентная компания не определена, то
-    # регистрируем патентного поверенного в команию заявителя или правообладателя
-    if pat_company:
-        pat_person_company = pat_company
-    else:
-        # history['message'] += 'Имя патентной компании не найдено\n'
-        pat_person_company = company
+    # регистрируем патентного поверенного без компании
+    # if pat_company:
+    #     pat_person_company = pat_company
+    # else:
+    #     # history['message'] += 'Имя патентной компании не найдено\n'
+    #     # pat_person_company = company
+    #     pat_person_company = None
+    pat_person_company = pat_company
+    # Если есть патентный поверенный, то сохраняем его в БД
     if patent_atty:
         pat_person = get_or_create_person(self, document, patent_atty, pat_person_company)
+    # Если патентного поверенного нет, то ищем иного исполнителя в адресе для коррекспонденции
     else:
         pat_person = get_or_create_person(self, document, correspondence_address, pat_person_company)
     # print('pat_person', pat_person)
