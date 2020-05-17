@@ -96,10 +96,10 @@
 {% endif %}
 </div>
 {% endblock %}
-
+{% load has_group %}
 {% block sidebar %}
 <div id="content-related">
-    {% if user.corrector %}
+    {% if request.user|has_group:'Корректор' or request.user|has_group:'Менеджер корректоров' or request.user|has_group:'Менеджер рассылок' %}
     {% else %}
     <div class="module">
         {% load last_documents %}

@@ -127,6 +127,10 @@ class Corrector(models.Model):
     task_last_added_date = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField('Корректор активен', default=True,
                                     help_text='Определяет, будет ли корректор участвовать в распределении')
+    score_0 = models.SmallIntegerField('Балл за выполнение задачи в тот же день', default=5)
+    score_1 = models.SmallIntegerField('Балл за выполнение задачи через день', default=4)
+    score_2 = models.SmallIntegerField('Балл за выполнение задачи через два дня', default=3)
+    score_3 = models.SmallIntegerField('Балл за выполнение задачи через три и больше дней', default=2)
 
     def __str__(self):
         return str(self.user.username)

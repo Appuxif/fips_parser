@@ -1001,14 +1001,16 @@ def parse_applicant(document_parse, type):
 
         company_part = ''
         if is_sng:
-            # spltd = re.split(r', \d{6}', applicant_string)
             mtchd = re.match(r'(.*), \d{6}', applicant_string)
             if mtchd and mtchd.group(1):
                 # company_part = spltd[0]
                 company_part = applicant_string[:mtchd.end(1)]
-                # applicant_string = spltd[1]
-                applicant_string = applicant_string[mtchd.end(1):]
-                applicant_string_splitted = applicant_string.split(', ')
+                if re.match(r'.*(\d{6}).*', company_part):
+                    company_part = ''
+                else:
+                    # applicant_string = spltd[1]
+                    applicant_string = applicant_string[mtchd.end(1):]
+                    applicant_string_splitted = applicant_string.split(', ')
             # applicant['company']['address'] = spltd[1]
         elif sign_char:
             if sign_char not in applicant_string_splitted[0]:
@@ -1022,7 +1024,6 @@ def parse_applicant(document_parse, type):
         else:
             company_part = ''
 
-        # print('applicant_string', applicant_string)
         if company_part:
             # print('company_part', company_part)
             company_part_splitted = re.sub('[\'{}]', '', company_part).strip().split(', ')
@@ -1169,7 +1170,7 @@ def parse_applicant(document_parse, type):
                     applicant['person']['last_name'] = last_name
                     applicant['person']['first_name'] = first_name
                     applicant['person']['middle_name'] = middle_name
-                    if not applicant['company'].get('form', ''):
+                    if applicant['company'].get('name', '') and not applicant['company'].get('form', ''):
                         applicant['company']['form'] = 'ИП'
 
         applicant_string_splitted = re.sub('[\'(){}]', '', applicant_string).strip().split(', ')
