@@ -977,7 +977,7 @@ def parse_applicant(document_parse, type):
     applicant = {}
     # Получаем наименование компании из поля document_parse['applicant'] или document_parse['copyright_holder']
     # Нужно искать компанию, либо Имя-Фамилию контакта
-    applicant_string = document_parse.get(type)[1:-1]
+    applicant_string = document_parse.get(type, '')[1:-1]
 
     if applicant_string:
         is_sng = False  # Документ принадлежит странам СНГ
