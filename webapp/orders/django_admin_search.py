@@ -48,17 +48,20 @@ class AdvancedSearchAdmin(ModelAdmin):
         self.extract_advanced_search_terms(request.GET)
         extra_context['asf'] = self.search_form_data
         extra_context['searching'] = [[fields_dict[s], self.advanced_search_fields[s]]
-                                      for s in self.advanced_search_fields]
+                                      for s in self.advanced_search_fields if s in fields_dict]
         return super().changelist_view(request, extra_context=extra_context)
 
     def extract_advanced_search_terms(self, request):
         request._mutable = True  # pylint: disable=W0212
 
         if self.search_form_data is not None:
+            all_none = all([request.get(key) is None for key in self.search_form_data.fields.keys()])
             for key in self.search_form_data.fields.keys():
                 temp = request.pop(key, None)
                 if temp:
                     self.advanced_search_fields[key] = temp
+                elif self.search_breakable and all_none:
+                    self.advanced_search_fields[key] = [temp]
 
         request._mutable = False  # pylint: disable=W0212
 

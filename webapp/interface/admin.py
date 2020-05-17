@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from datetime import datetime, timezone
 from django.db.models import Q, F, Count
 from import_export.admin import ExportActionMixin
+# from django_admin_search.admin import AdvancedSearchAdmin
 import requests
 # Все контакты отображаются непосредственно в документе
 
@@ -15,7 +16,8 @@ import requests
 from .models import ContactPerson, Company, RegisterCompanyRel, OrderCompanyRel, \
     ParserSetting, Proxies, EmailApiKey, EmailApiKeyLog
 from interface.change_message_utils import construct_change_message
-from .forms import AddProxyForm
+from .forms import AddProxyForm, LogEntrySearchForm
+from orders.django_admin_search import AdvancedSearchAdmin
 
 # from orders.admin import CompanyInline as OrderCompanyInline
 # from registers.admin import CompanyInline as RegisterCompanyInline
@@ -41,11 +43,14 @@ from .forms import AddProxyForm
 #     readonly_fields = ('document', )
 
 @admin.register(LogEntry)
-class LogEntryAdmin(admin.ModelAdmin):
+# class LogEntryAdmin(admin.ModelAdmin):
+class LogEntryAdmin(AdvancedSearchAdmin):
+    search_breakable = True
+    search_form = LogEntrySearchForm
     list_display = ('__str__', 'user', 'content_type', 'action_flag', 'object_repr', 'action_time')
     exclude = ('change_message', )
     readonly_fields = ('__str__', 'user', 'action_time', 'content_type', 'object_id', 'object_repr', 'action_flag')
-    search_fields = ('user__username', 'content_type__app_label', 'object_repr')
+    # search_fields = ('user__username', 'content_type__app_label', 'object_repr')
 
 
 # Для отображения контактов в даминке компании в БД
