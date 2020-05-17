@@ -170,7 +170,8 @@ class CorrectorAdmin(admin.ModelAdmin):
     # inlines = (CorrectorTaskInline, )  # TODO: Может стоит убрать
     save_on_top = True
     fields = ('user', 'sign_chars', 'company_startswith', 'tasks_day_amount', 'tasks_max',
-              'score', 'tasks_done_amount', 'tasks_not_done_amount', 'is_active')
+              'score', 'tasks_done_amount', 'tasks_not_done_amount', 'is_active',
+              'score_0', 'score_1', 'score_2', 'score_3')
     readonly_fields = ('tasks_done_amount', 'tasks_not_done_amount')
     list_display = ('__str__', 'tasks_day_amount', 'tasks_max', 'tasks_done_amount',
                     'tasks_not_done_amount', 'is_active')
@@ -557,7 +558,15 @@ def corrector_add_score(request, obj):
             corrector = user.corrector
             today = datetime.now(tz=timezone.utc)
             delta = today - obj.datetime_created
-            add_score = 5 - delta.days if delta.days < 3 else 2
+            if delta.days == 0:
+                add_score = corrector.score_0
+            elif delta.days == 1:
+                add_score = corrector.score_1
+            elif delta.days == 2:
+                add_score = corrector.score_2
+            else:
+                add_score = corrector.score_3
+            # add_score = 5 - delta.days if delta.days < 3 else 2
             corrector.score += add_score
             corrector.save()
             messages.add_message(request, messages.INFO, f'Начислено баллов {add_score}')
