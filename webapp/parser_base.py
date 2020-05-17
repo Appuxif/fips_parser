@@ -1045,12 +1045,15 @@ def parse_applicant(document_parse, type):
                     else:
                         applicant['company']['name'] = company_part.strip()
                     applicant['company']['name'] = re.sub(r'(["«»\'{}])', '', applicant['company']['name'])
+
+                    if forms[form] == 'ИП':
+                        applicant_string_splitted = applicant_string_splitted + [applicant['company']['name']]
                     break
             else:
                 if is_sng:
                     # applicant['person']['full_name'] = applicant['company']['full_name']
                     # applicant['company']['form'] = 'ИП'
-                    applicant_string_splitted = [applicant['company']['full_name']] + applicant_string_splitted
+                    applicant_string_splitted = applicant_string_splitted + [applicant['company']['name']]
                 if applicant['company'].get('name') is None and applicant['company'].get('full_name') is not None:
                     applicant['company']['form'] = ''
                     applicant['company']['name'] = applicant['company']['full_name']
@@ -1113,7 +1116,7 @@ def parse_applicant(document_parse, type):
 
             # if re.match(r'.*(ул\.|г\.|обл\.|д\.|кв\.|\d).*', item):
             if re.match(
-                    r'.*(федерация|республика|корпус|пркт|пр-кт|проспект|улица'
+                    r'.*(\.|район|край|федерация|республика|корпус|пр.|пркт|пр-кт|пр-д|проспект|улица'
                     r'|ул\.|город|г\.|область|обл\.|\d|[a-z]|").*',
                     item.lower()):
                 # print('пропущено', item)
@@ -1124,8 +1127,8 @@ def parse_applicant(document_parse, type):
             for isp in item_splitted:
                 if not sur_found and not first_found:
                     isp = isp.capitalize()
-                    if isp in cities or isp in countries:
-                        continue
+                    # if isp in cities or isp in countries:
+                    #     continue
                     if isp in surnames:
                         # applicant_string = applicant_string.replace(item, '')
                         sur_found = True
