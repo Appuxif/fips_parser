@@ -23,6 +23,7 @@ class AdvancedSearchAdmin(ModelAdmin):
     change_list_template = 'admin/custom_change_list.html'
     advanced_search_fields = {}
     search_form_data = None
+    search_breakable = False
 
     def get_queryset(self, request):
         """
