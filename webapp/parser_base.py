@@ -1015,7 +1015,7 @@ def parse_applicant(document_parse, type):
                 company_part = applicant_string_splitted[0]
                 applicant_string_splitted[0] = ''
                 # address_part = spltd[1]
-            else:
+            elif len(applicant_string_splitted) > 1:
                 company_part = applicant_string_splitted[1]
                 applicant_string_splitted[0] = ''
                 applicant_string_splitted[1] = ''
