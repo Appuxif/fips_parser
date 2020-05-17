@@ -1256,7 +1256,7 @@ def get_or_create_company(self, document, document_person, save_anyway=True, mak
     # Если компании нет, то создаем новую запись
     if company_ is None:
         # Предварительно подготовить поля для внесения в БД
-        company['full_name'] = f"'{company['full_name']}'"
+        company['full_name'] = f"'{company['full_name']}'" if company.get('full_name') else 'NULL'
         company['name'] = f"'{name}'"
         company['name_correct'] = company['name']
         company['form'] = f"'{company['form']}'" if company.get('form') else 'NULL'
