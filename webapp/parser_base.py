@@ -1335,7 +1335,7 @@ def get_or_create_person(self, document, document_person, company=None):
                 if 'rep_reg_number' in person:
                     person['rep_reg_number'] = f"'{person['rep_reg_number']}'"
                     person['category'] = "'REPRESENTATIVE'"
-                elif company and company.get('form', '') == 'ИП':
+                elif company and company.get('form', '') == "'ИП'":
                     person['category'] = "'DIRECTOR'"
                 else:
                     person['category'] = "'DEFAULT'"
