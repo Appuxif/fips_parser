@@ -426,7 +426,7 @@ class Parser:
         rand_times = iter(rand_times)
         while self.start_parse_document(proxy):
             if proxy:
-                proxy['documents_parsed'] += 1
+                # proxy['documents_parsed'] += 1
                 if proxy['errors_in_a_row']:
                     proxy['errors_in_a_row'] = 0
                 # Сохранение данных о прокси раз в минуту
@@ -566,89 +566,92 @@ class Parser:
             session.headers.update({'User-Agent': get_random_useragent()})
 
             # # Либо парсим локальный файл # TODO: Для отладки
-            # if os.path.exists(filename):
-            #     self._print(document_obj['number'], 'Парсим локальный файл')
-            #     with open(filename, 'rb') as f:
-            #         page_content = f.read()
-            # # Либо загружаем страницу и проверяем на ошибки
-            # else:
-            counter = 0
-            while True:
-                try:
-                    r = session.get(url, proxies=proxies, timeout=30)
-                except requests.exceptions.ReadTimeout:
-                    self._print(document_obj['number'], 'Нет ответа от сервера!')
-                    sleep(5)
-                    return True
-                except (requests.exceptions.ProxyError, requests.exceptions.ConnectTimeout) as err:
-                    self._print(document_obj['number'], 'Ошибка прокси', str(err), type(err))
-                    err = str(err).replace("'", '"')
-                    # with self.get_workers().lock:
-                    # Если возникает ошибка, увеличиваем счетчик ошибок на 1
-                    history['message'] += f'Ошибка прокси {proxy["id"]}\n'
-                    proxy['status'] = 'Ошибка прокси ' + err[:200]
-                    proxy['errors_in_a_row'] += 1
-                    proxy['datetime_delayed'] = f"ADDDATE(NOW(), INTERVAL {proxy['errors_in_a_row']} HOUR)"
-                    # proxy['documents_parsed'] += 1000000
-                    # Если ошибок 5, то отмечаем прокси как нерабочий
-                    if proxy['errors_in_a_row'] >= 5:
-                        proxy['is_working'] = 'FALSE'
-                    return False
-                if r.status_code == 502:
-                    self._lprint(document_obj['number'], 'ошибка сервера', r.status_code, r.reason, url)
-                    sleep(5)
-                    return True
-                elif r.status_code != 200:
-                    self._lprint(document_obj['number'], 'parse_orders', r.status_code, r.reason, url)
-                    return False
-                    # existence = True
-                    # break
-                text = r.text
-                page_content = r.content
+            if os.path.exists(filename):
+                self._print(document_obj['number'], 'Парсим локальный файл')
+                with open(filename, 'rb') as f:
+                    page_content = f.read()
+            # Либо загружаем страницу и проверяем на ошибки
+            else:
+                counter = 0
+                while True:
+                    try:
+                        r = session.get(url, proxies=proxies, timeout=30)
+                        # Если парсинг был удачным, то прибавляем единицу в статистику прокси
+                        if proxy:
+                            proxy['documents_parsed'] += 1
+                    except requests.exceptions.ReadTimeout:
+                        self._print(document_obj['number'], 'Нет ответа от сервера!')
+                        sleep(5)
+                        return True
+                    except (requests.exceptions.ProxyError, requests.exceptions.ConnectTimeout) as err:
+                        self._print(document_obj['number'], 'Ошибка прокси', str(err), type(err))
+                        err = str(err).replace("'", '"')
+                        # with self.get_workers().lock:
+                        # Если возникает ошибка, увеличиваем счетчик ошибок на 1
+                        history['message'] += f'Ошибка прокси {proxy["id"]}\n'
+                        proxy['status'] = 'Ошибка прокси ' + err[:200]
+                        proxy['errors_in_a_row'] += 1
+                        proxy['datetime_delayed'] = f"ADDDATE(NOW(), INTERVAL {proxy['errors_in_a_row']} HOUR)"
+                        # proxy['documents_parsed'] += 1000000
+                        # Если ошибок 5, то отмечаем прокси как нерабочий
+                        if proxy['errors_in_a_row'] >= 5:
+                            proxy['is_working'] = 'FALSE'
+                        return False
+                    if r.status_code == 502:
+                        self._lprint(document_obj['number'], 'ошибка сервера', r.status_code, r.reason, url)
+                        sleep(5)
+                        return True
+                    elif r.status_code != 200:
+                        self._lprint(document_obj['number'], 'parse_orders', r.status_code, r.reason, url)
+                        return False
+                        # existence = True
+                        # break
+                    text = r.text
+                    page_content = r.content
 
-                if 'Слишком быстрый просмотр документов' in text:
-                    self._print(document_obj['number'], text, url)
-                    proxy['in_use'] = 1
-                    # Прокси не нужно освобождать
-                    proxy['need_to_release_proxy'] = False
-                    return False
-                elif 'Превышен допустимый предел' in text:
-                    self._print(document_obj['number'], text, url)
-                    history['message'] += f'Превышен предел прокси {proxy["id"]}\n'
-                    proxy['status'] = text
-                    proxy['documents_parsed'] += 1000000
-                    return False
+                    if 'Слишком быстрый просмотр документов' in text:
+                        self._print(document_obj['number'], text, url)
+                        proxy['in_use'] = 1
+                        # Прокси не нужно освобождать
+                        proxy['need_to_release_proxy'] = False
+                        return False
+                    elif 'Превышен допустимый предел' in text:
+                        self._print(document_obj['number'], text, url)
+                        history['message'] += f'Превышен предел прокси {proxy["id"]}\n'
+                        proxy['status'] = text
+                        proxy['documents_parsed'] += 1000000
+                        return False
 
-                elif 'Вы заблокированы' in text:
-                    self._print(text, 'Поток закрыт')
-                    history['message'] += f'Блокировка прокси {proxy["id"]}\n'
-                    proxy['status'] = text
-                    # proxy['is_banned'] = 'TRUE'
-                    # Следующее использование прокси через 31 день
-                    proxy['datetime_delayed'] = f"ADDDATE(NOW(), 31)"
-                    return False
+                    elif 'Вы заблокированы' in text:
+                        self._print(text, 'Поток закрыт')
+                        history['message'] += f'Блокировка прокси {proxy["id"]}\n'
+                        proxy['status'] = text
+                        # proxy['is_banned'] = 'TRUE'
+                        # Следующее использование прокси через 31 день
+                        proxy['datetime_delayed'] = f"ADDDATE(NOW(), 31)"
+                        return False
 
-                elif 'Документ с данным номером отсутствует' in text:
-                    self._lprint(document_obj['number'], text, url)
-                    existence = False
-                    break
-                else:
-                    # self._lprint(text)
-                    # TODO: Для отладки
-                    # Сохранение файла на диск, для дальнейшего парсинга в будущем
-                    # Если потребуется обновление, файл нужно будет удалить
-                    # os.makedirs(filepath, exist_ok=True)
-                    # with open(filename, 'wb') as f:
-                    #     f.write(page_content)
-                    break
+                    elif 'Документ с данным номером отсутствует' in text:
+                        self._lprint(document_obj['number'], text, url)
+                        existence = False
+                        break
+                    else:
+                        # self._lprint(text)
+                        # TODO: Для отладки
+                        # Сохранение файла на диск, для дальнейшего парсинга в будущем
+                        # Если потребуется обновление, файл нужно будет удалить
+                        os.makedirs(filepath, exist_ok=True)
+                        with open(filename, 'wb') as f:
+                            f.write(page_content)
+                        break
 
-                counter += 1
-                if counter > 3:
-                    history['message'] += f'counter exceeded\n'
-                    self._lprint(document_obj['number'], 'counter exceeded', url)
-                    return False
-                self._print(document_obj['number'], 'sleep')
-                sleep(3)
+                    counter += 1
+                    if counter > 3:
+                        history['message'] += f'counter exceeded\n'
+                        self._lprint(document_obj['number'], 'counter exceeded', url)
+                        return False
+                    self._print(document_obj['number'], 'sleep')
+                    sleep(3)
 
             if existence:
                 with self.get_workers().lock:
@@ -1216,13 +1219,14 @@ def get_or_create_company(self, document, document_person, save_anyway=True, mak
         return {}
     form = company.get('form', '')
     sign_char = company.get('sign_char')
-    # if name:
+
     # Поиск компании по имени в БД
     q = f"SELECT id FROM interface_company WHERE name = '{name}'"
     if form:
         q += f" AND form = '{form}'"
     if sign_char:
         q += f" AND sign_char = '{sign_char}'"
+    q += ' LIMIT 1'
     with self.get_workers().lock:
         company_ = DB().fetchone(q)
 
@@ -1234,11 +1238,14 @@ def get_or_create_company(self, document, document_person, save_anyway=True, mak
             q += f" AND form = '{form}'"
         if sign_char:
             q += f" AND sign_char = '{sign_char}'"
+        q += ' LIMIT 1'
         with self.get_workers().lock:
             company_ = DB().fetchone(q)
+
     # Если компании нет, то создаем новую запись
     if company_ is None:
         # Предварительно подготовить поля для внесения в БД
+        company['full_name'] = f"'{company['full_name']}'"
         company['name'] = f"'{name}'"
         company['name_correct'] = company['name']
         company['form'] = f"'{company['form']}'" if company.get('form') else 'NULL'
@@ -1287,6 +1294,7 @@ def get_or_create_person(self, document, document_person, company):
                 f"WHERE full_name = '{full_name}' AND company_id = '{company['id']}'"
         else:
             return None
+        q += ' LIMIT 1'
         with self.get_workers().lock:
             person_ = DB().fetchone(q)
 

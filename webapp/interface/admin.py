@@ -326,3 +326,20 @@ def verify_email(request, obj, ):
                                       email_is_valid=False,
                                       result='Нет доступных API ключей для верификации почты')
     return obj.email_verified
+
+
+# counter_orders = 0
+# counter_registers = 0
+# orders_amount = 0
+# registers_amount = 0
+# for i, c_ in enumerate(c1.iterator()):
+#     counter_orders += c_.order.update(date_parsed=None, document_parsed=False, document_exists=True, order_done=False)
+#     counter_registers += c_.register.update(date_parsed=None, document_parsed=False, document_exists=True, order_done=False)
+#     if i % 1000 == 0:
+#         print(i)
+#         orders_amount += counter_orders
+#         registers_amount += counter_registers
+#         print('counter_orders', counter_orders, orders_amount)
+#         print('counter_registers', counter_registers, registers_amount)
+#         counter_orders = 0
+#         counter_registers = 0

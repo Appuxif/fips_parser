@@ -27,7 +27,7 @@ class Proxies(models.Model):
     documents_parsed = models.IntegerField('Спарсено документов', default=0, null=True, blank=True)
     date_last_used = models.DateField('Дата последнего использования', auto_now=True)
     datetime_delayed = models.DateTimeField('Дата-время задержки использования', null=True, blank=True,
-                                            default=datetime(2000, 1, 1))
+                                            default=datetime(2000, 1, 1, tzinfo=timezone.utc))
 
     errors_in_a_row = models.SmallIntegerField('Ошибки подряд', null=True, blank=True, default=0)
 
