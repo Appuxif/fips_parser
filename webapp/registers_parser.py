@@ -97,9 +97,6 @@ class RegistersParser(Parser):
         izvs_serviceitem_values = []
         documentizvitem_values = []
 
-        # Получаем контакты из спарсенной информации
-        parse_contacts_from_documentparse(self, document, document_parse, history)
-
         # Подготовка запросов в БД, если были собраны извещения
         # if izvs_parsed_list:
         #     print(izv_unique_list)
@@ -109,9 +106,8 @@ class RegistersParser(Parser):
             if izv.get('izv_type') is None or izv.get('date_publish') is None:
                 continue
 
-            # TODO: Проработать парсинг контактов из извещения
             # Получаем контакты из спарсенной информации с извещения
-            parse_contacts_from_izv(self, document, izv, history)
+            # parse_contacts_from_izv(self, document, izv, history)
 
             # Если есть дата обновления, то её нужно установить к основному парсингу документа
             if 'date_renewal' in izv and izv['date_renewal'] != 'NULL':
@@ -120,6 +116,10 @@ class RegistersParser(Parser):
             # Если в извещении есть правообладатель - то это последний и актуальный правообладатель, его нужно заменить
             if 'copyright_holder' in izv and izv['copyright_holder'] != 'NULL':
                 document_parse['copyright_holder'] = izv['copyright_holder']
+
+            # Если есть Изменение адреса для переписки
+            if 'address' in izv and izv['address'] != 'NULL' and izv['izv_type'] == 'Изменение адреса для переписки':
+                document_parse['address'] = izv['address']
 
             parsed_unique = izv['izv_type'][1:-1] + '-' + izv['date_publish'].replace("'", '')
             # print(parsed_unique)
@@ -147,6 +147,9 @@ class RegistersParser(Parser):
                 f"(document_id, document_izv_id, full_text, `key`, value, date) " +
                 'VALUES ' + ', '.join(documentizvitem_values)
             )
+
+        # Получаем контакты из спарсенной информации
+        parse_contacts_from_documentparse(self, document, document_parse, history)
 
         # Парсим факсимильные изображения
         message, values = parse_facsimile(page, document, session, proxies, self.name)
