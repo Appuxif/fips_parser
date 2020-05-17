@@ -1117,7 +1117,7 @@ def parse_applicant(document_parse, type):
             # if re.match(r'.*(ул\.|г\.|обл\.|д\.|кв\.|\d).*', item):
             if re.match(
                     r'.*(\.|район|край|федерация|республика|корпус|пр.|пркт|пр-кт|пр-д|проспект|улица'
-                    r'|ул\.|город|г\.|область|обл\.|\d|[a-z]|").*',
+                    r'|ул\.|город |г\.|область|обл\.|\d|[a-z]|").*',
                     item.lower()):
                 # print('пропущено', item)
                 continue
@@ -1335,7 +1335,7 @@ def get_or_create_person(self, document, document_person, company=None):
                 if 'rep_reg_number' in person:
                     person['rep_reg_number'] = f"'{person['rep_reg_number']}'"
                     person['category'] = "'REPRESENTATIVE'"
-                elif company and company.get('form') == 'ИП':
+                elif company and company.get('form', '') == 'ИП':
                     person['category'] = "'DIRECTOR'"
                 else:
                     person['category'] = "'DEFAULT'"
