@@ -1253,34 +1253,34 @@ def get_or_create_company(self, document, document_person, save_anyway=True, mak
     with self.get_workers().lock:
         company_ = DB().fetchone(q)
 
-    # Попытка найти компанию по адресу
-    if company_ is None:
-        address = company.get('address')
-        q = f"SELECT id FROM interface_company WHERE address = '{address}'"
-        if form:
-            q += f" AND form = '{form}'"
-        if sign_char:
-            q += f" AND sign_char = '{sign_char}'"
-        q += ' LIMIT 1'
-        with self.get_workers().lock:
+        # Попытка найти компанию по адресу
+        if company_ is None:
+            address = company.get('address')
+            q = f"SELECT id FROM interface_company WHERE address = '{address}'"
+            if form:
+                q += f" AND form = '{form}'"
+            if sign_char:
+                q += f" AND sign_char = '{sign_char}'"
+            q += ' LIMIT 1'
+        # with self.get_workers().lock:
             company_ = DB().fetchone(q)
 
-    # Если компании нет, то создаем новую запись
-    if company_ is None:
-        # Предварительно подготовить поля для внесения в БД
-        company['full_name'] = f"'{company['full_name']}'" if company.get('full_name') else 'NULL'
-        company['name'] = f"'{name}'"
-        company['name_correct'] = company['name']
-        company['form'] = f"'{company['form']}'" if company.get('form') else 'NULL'
-        company['form_correct'] = company['form']
-        company['address'] = f"'{company['address']}'" if company.get('address') else 'NULL'
-        company['sign_char'] = f"'{company['sign_char']}'" if company.get('sign_char') else 'NULL'
-        company['date_corrected'] = 'NULL'
-        with self.get_workers().lock:
+        # Если компании нет, то создаем новую запись
+        if company_ is None:
+            # Предварительно подготовить поля для внесения в БД
+            company['full_name'] = f"'{company['full_name']}'" if company.get('full_name') else 'NULL'
+            company['name'] = f"'{name}'"
+            company['name_correct'] = company['name']
+            company['form'] = f"'{company['form']}'" if company.get('form') else 'NULL'
+            company['form_correct'] = company['form']
+            company['address'] = f"'{company['address']}'" if company.get('address') else 'NULL'
+            company['sign_char'] = f"'{company['sign_char']}'" if company.get('sign_char') else 'NULL'
+            company['date_corrected'] = 'NULL'
+            # with self.get_workers().lock:
             company['id'] = DB().add_row(f"interface_company", company)
-    # Если компания нашлась, то просто передаем ID
-    else:
-        company['id'] = company_['id']
+        # Если компания нашлась, то просто передаем ID
+        else:
+            company['id'] = company_['id']
 
     # Проверяем дополнительную таблицу связей между компанией и документами
     rel_obj = {'company_id': f"'{company['id']}'", 'document_id': f"'{document['id']}'",
@@ -1290,16 +1290,16 @@ def get_or_create_company(self, document, document_person, save_anyway=True, mak
     with self.get_workers().lock:
         rel_ = DB().fetchone(f"SELECT id FROM {rel_table} "
                              f"WHERE company_id = '{company['id']}' AND document_id = '{document['id']}'")
-    if rel_ is None:
-        with self.get_workers().lock:
+        if rel_ is None:
+        # with self.get_workers().lock:
             # Если надо переопределить правообладателя
             if make_holder:
                 DB().executeone(f"UPDATE {rel_table} SET company_is_holder = FALSE "
                                 f"WHERE document_id = '{document['id']}'")
                 rel_obj['company_is_holder'] = 'TRUE'
             rel_obj['id'] = DB().add_row(rel_table, rel_obj)
-    else:
-        rel_obj['id'] = rel_['id']
+        else:
+            rel_obj['id'] = rel_['id']
 
     return company
     # return None
@@ -1322,30 +1322,30 @@ def get_or_create_person(self, document, document_person, company=None):
         with self.get_workers().lock:
             person_ = DB().fetchone(q)
 
-        # Если контакта нет, то создаем новую запись
-        if person_ is None:
-            # Предварительно подготовить поля для внесения в БД
-            for f in person_fields:
-                if f in person:
-                    person[f] = f"'{person[f]}'"
-            person['gender'] = "'0'"
-            if 'rep_reg_number' in person:
-                person['rep_reg_number'] = f"'{person['rep_reg_number']}'"
-                person['category'] = "'REPRESENTATIVE'"
-            elif company and company.get('form') == 'ИП':
-                person['category'] = "'DIRECTOR'"
-            else:
-                person['category'] = "'DEFAULT'"
-            person['company_id'] = f"'{company['id']}'" if company and company.get('id') else 'NULL'
-            person['email_verified'] = 'FALSE'
-            person['email_correct'] = 'TRUE'
-            person['date_corrected'] = 'NULL'
+            # Если контакта нет, то создаем новую запись
+            if person_ is None:
+                # Предварительно подготовить поля для внесения в БД
+                for f in person_fields:
+                    if f in person:
+                        person[f] = f"'{person[f]}'"
+                person['gender'] = "'0'"
+                if 'rep_reg_number' in person:
+                    person['rep_reg_number'] = f"'{person['rep_reg_number']}'"
+                    person['category'] = "'REPRESENTATIVE'"
+                elif company and company.get('form') == 'ИП':
+                    person['category'] = "'DIRECTOR'"
+                else:
+                    person['category'] = "'DEFAULT'"
+                person['company_id'] = f"'{company['id']}'" if company and company.get('id') else 'NULL'
+                person['email_verified'] = 'FALSE'
+                person['email_correct'] = 'TRUE'
+                person['date_corrected'] = 'NULL'
 
-            with self.get_workers().lock:
+            # with self.get_workers().lock:
                 person['id'] = DB().add_row(f"interface_contactperson", person)
-        # Если контакт нашелся, то просто передаем ID
-        else:
-            person['id'] = person_['id']
+            # Если контакт нашелся, то просто передаем ID
+            else:
+                person['id'] = person_['id']
 
         # Проверяем дополнительную таблицу связей между контактами и документами
         rel_obj = {'contactperson_id': f"'{person['id']}'", 'document_id': f"'{document['id']}'"}
@@ -1354,11 +1354,11 @@ def get_or_create_person(self, document, document_person, company=None):
         with self.get_workers().lock:
             rel_ = DB().fetchone(f"SELECT id FROM {rel_table} "
                                  f"WHERE contactperson_id = '{person['id']}' AND document_id = '{document['id']}'")
-        if rel_ is None:
-            with self.get_workers().lock:
+            if rel_ is None:
+                # with self.get_workers().lock:
                 rel_obj['id'] = DB().add_row(rel_table, rel_obj)
-        else:
-            rel_obj['id'] = rel_['id']
+            else:
+                rel_obj['id'] = rel_['id']
 
         return person
     return None
