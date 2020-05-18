@@ -566,7 +566,7 @@ class Parser:
             session.headers.update({'User-Agent': get_random_useragent()})
 
             # # Либо парсим локальный файл # TODO: Для отладки
-            if os.path.exists(filename):
+            if False and os.path.exists(filename):
                 self._print(document_obj['number'], 'Парсим локальный файл')
                 with open(filename, 'rb') as f:
                     page_content = f.read()
