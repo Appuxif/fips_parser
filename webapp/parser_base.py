@@ -1000,6 +1000,7 @@ def parse_applicant(document_parse, type):
         parse_zip_code(applicant_string, applicant['person'])
 
         company_part = ''
+        company_form_part = ''
         if is_sng:
             mtchd = re.match(r'(.*), \d{6}', applicant_string)
             if mtchd and mtchd.group(1):
@@ -1016,9 +1017,13 @@ def parse_applicant(document_parse, type):
             if sign_char not in applicant_string_splitted[0]:
                 company_part = applicant_string_splitted[0]
                 applicant_string_splitted[0] = ''
+                if len(applicant_string_splitted) > 1:
+                    company_form_part = applicant_string_splitted[1]
                 # address_part = spltd[1]
             elif len(applicant_string_splitted) > 1:
                 company_part = applicant_string_splitted[1]
+                if len(applicant_string_splitted) > 2:
+                    company_form_part = applicant_string_splitted[2]
                 applicant_string_splitted[0] = ''
                 applicant_string_splitted[1] = ''
         else:
@@ -1050,13 +1055,17 @@ def parse_applicant(document_parse, type):
                     if forms[form] == 'ИП':
                         applicant_string_splitted = applicant_string_splitted + [applicant['company']['name']]
                     break
+                # Если форма не найдена, пытаемся искать её в другой переменной
+                if not applicant['company'].get('form', '') and form in company_form_part:
+                    applicant['company']['form'] = forms[form]
             else:
                 if is_sng:
                     # applicant['person']['full_name'] = applicant['company']['full_name']
                     # applicant['company']['form'] = 'ИП'
                     applicant_string_splitted = applicant_string_splitted + [applicant['company']['name']]
                 if applicant['company'].get('name') is None and applicant['company'].get('full_name') is not None:
-                    applicant['company']['form'] = ''
+                    if not applicant['company'].get('form', ''):
+                        applicant['company']['form'] = ''
                     applicant['company']['name'] = applicant['company']['full_name']
             #         print('company_part', form, company_part)
 

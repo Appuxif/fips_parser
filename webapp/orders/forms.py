@@ -161,6 +161,13 @@ class DocumentSearchForm(Form):
         }
     ))
 
+    status = CharField(required=False, widget=TextInput(
+        attrs={
+            'filter_field': 'documentparse__status',
+            'filter_method': '__icontains',
+        }
+    ))
+
     applicant = CharField(required=False, widget=TextInput(
         attrs={
             'filter_field': 'documentparse__applicant',
@@ -240,22 +247,22 @@ class DocumentSearchForm(Form):
         }
     ))
 
-    date_exclusive_lte = DateField(required=False, widget=TextInput(
-        attrs={
-            'filter_field': 'documentparse__date_exclusive',
-            'filter_method': '__lte',
-            'data-mask': "0000-00-00",
-            'placeholder': 'YYYY-MM-DD'
-        }
-    ))
-    date_exclusive_gte = DateField(required=False, widget=TextInput(
-        attrs={
-            'filter_field': 'documentparse__date_exclusive',
-            'filter_method': '__gte',
-            'data-mask': "0000-00-00",
-            'placeholder': 'YYYY-MM-DD'
-        }
-    ))
+    # date_exclusive_lte = DateField(required=False, widget=TextInput(
+    #     attrs={
+    #         'filter_field': 'documentparse__date_exclusive',
+    #         'filter_method': '__lte',
+    #         'data-mask': "0000-00-00",
+    #         'placeholder': 'YYYY-MM-DD'
+    #     }
+    # ))
+    # date_exclusive_gte = DateField(required=False, widget=TextInput(
+    #     attrs={
+    #         'filter_field': 'documentparse__date_exclusive',
+    #         'filter_method': '__gte',
+    #         'data-mask': "0000-00-00",
+    #         'placeholder': 'YYYY-MM-DD'
+    #     }
+    # ))
 
     date_gos_reg_lte = DateField(required=False, widget=TextInput(
         attrs={
@@ -386,6 +393,7 @@ fields_dict = {
     'date_changes_gte': "Дата внесения записи. >= ",
     'date_changes_lte': "Дата внесения записи. <=",
 
+    'status': 'Статус',
     'applicant': "Заявитель",
     'address': "Адрес для переписки",
     'copyright_holder': "Правообладатель",

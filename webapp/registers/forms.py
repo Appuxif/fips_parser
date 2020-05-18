@@ -278,12 +278,19 @@ class DocumentSearchForm(Form):
         }
     ))
 
-    applicant = CharField(required=False, widget=TextInput(
+    status = CharField(required=False, widget=TextInput(
         attrs={
-            'filter_field': 'documentparse__applicant',
+            'filter_field': 'documentparse__status',
             'filter_method': '__icontains',
         }
     ))
+
+    # applicant = CharField(required=False, widget=TextInput(
+    #     attrs={
+    #         'filter_field': 'documentparse__applicant',
+    #         'filter_method': '__icontains',
+    #     }
+    # ))
 
     address = CharField(required=False, widget=TextInput(
         attrs={
@@ -299,12 +306,12 @@ class DocumentSearchForm(Form):
         }
     ))
 
-    patent_atty = CharField(required=False, widget=TextInput(
-        attrs={
-            'filter_field': 'documentparse__patent_atty',
-            'filter_method': '__icontains',
-        }
-    ))
+    # patent_atty = CharField(required=False, widget=TextInput(
+    #     attrs={
+    #         'filter_field': 'documentparse__patent_atty',
+    #         'filter_method': '__icontains',
+    #     }
+    # ))
 
     date_refreshed_lte = DateField(required=False, widget=TextInput(
         attrs={
@@ -340,22 +347,22 @@ class DocumentSearchForm(Form):
         }
     ))
 
-    date_publish_lte = DateField(required=False, widget=TextInput(
-        attrs={
-            'filter_field': 'documentparse__date_publish',
-            'filter_method': '__lte',
-            'data-mask': "0000-00-00",
-            'placeholder': 'YYYY-MM-DD'
-        }
-    ))
-    date_publish_gte = DateField(required=False, widget=TextInput(
-        attrs={
-            'filter_field': 'documentparse__date_publish',
-            'filter_method': '__gte',
-            'data-mask': "0000-00-00",
-            'placeholder': 'YYYY-MM-DD'
-        }
-    ))
+    # date_publish_lte = DateField(required=False, widget=TextInput(
+    #     attrs={
+    #         'filter_field': 'documentparse__date_publish',
+    #         'filter_method': '__lte',
+    #         'data-mask': "0000-00-00",
+    #         'placeholder': 'YYYY-MM-DD'
+    #     }
+    # ))
+    # date_publish_gte = DateField(required=False, widget=TextInput(
+    #     attrs={
+    #         'filter_field': 'documentparse__date_publish',
+    #         'filter_method': '__gte',
+    #         'data-mask': "0000-00-00",
+    #         'placeholder': 'YYYY-MM-DD'
+    #     }
+    # ))
 
     date_exclusive_lte = DateField(required=False, widget=TextInput(
         attrs={
@@ -619,6 +626,7 @@ fields_dict = {
     'date_changes_gte': "Дата внесения записи. >= ",
     'date_changes_lte': "Дата внесения записи. <=",
 
+    'status': 'Статус',
     'applicant': "Заявитель",
     'address': "Адрес для переписки",
     'copyright_holder': "Правообладатель",

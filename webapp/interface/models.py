@@ -73,7 +73,16 @@ class Company(models.Model):
     date_corrected = models.DateField('Дата последней корректировки', auto_now=True, null=True, blank=True)
 
     def __str__(self):
-        return str(self.form_correct or self.form or '') + ' ' + str(self.name_correct or self.name or '')
+        returned = ''
+        form = str(self.form_correct or self.form or '')
+        name = str(self.name_correct or self.name or '')
+        if form.lower() not in name.lower():
+            returned += form + ' '
+        if self.sign_char.lower() in 'AZ,АM,BY,GE,KG,KZ,MD,RU,TJ,TM,UA,UZ'.lower():
+            returned += name
+        else:
+            returned = name + returned
+        return returned
 
     def get_absolute_url(self):
         return f'/admin/interface/company/{self.id}/change/'
