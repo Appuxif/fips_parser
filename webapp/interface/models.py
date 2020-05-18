@@ -76,9 +76,10 @@ class Company(models.Model):
         returned = ''
         form = str(self.form_correct or self.form or '')
         name = str(self.name_correct or self.name or '')
+        sign_char = str(self.sign_char or '')
         if form.lower() not in name.lower():
             returned += form + ' '
-        if self.sign_char.lower() in 'AZ,АM,BY,GE,KG,KZ,MD,RU,TJ,TM,UA,UZ'.lower():
+        if sign_char.lower() in 'AZ,АM,BY,GE,KG,KZ,MD,RU,TJ,TM,UA,UZ'.lower():
             returned += name
         else:
             returned = name + returned
