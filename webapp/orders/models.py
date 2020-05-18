@@ -54,3 +54,7 @@ class ParserHistory(models.Model):
             return str(self.error_log_file)
         return f'/admin/orders/parserhistory/{self.id}/change/'
 
+    class Meta:
+        verbose_name = 'Parser Log'
+        verbose_name_plural = 'Parser Logs'
+

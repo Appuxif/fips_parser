@@ -635,7 +635,7 @@ fields_dict = {
     'service_items_values': "Классы МКТУ. Текст",
 
     'documentizv_izv_type': "Тип извещения",
-    'documentizv_address': "Извещения. Адресс для переписки",
+    'documentizv_address': "Извещения. Адрес для переписки",
     'documentizv_last_copyright_holder': "Извещения. Прежний правообладатель",
     'documentizv_last_copyright_holder_name': "Извещения. Прежнее наименование",
     'documentizv_copyright_holder': "Извещения. Правообладатель",

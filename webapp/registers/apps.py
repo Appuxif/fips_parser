@@ -5,3 +5,4 @@ class RegistersConfig(AppConfig):
     name = 'registers'
     verbose_name = ' Регистрации'
 
+

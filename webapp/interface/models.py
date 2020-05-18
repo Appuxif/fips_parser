@@ -40,6 +40,8 @@ class Proxies(models.Model):
 
     class Meta:
         unique_together = ['host', 'port']
+        verbose_name = 'Proxy'
+        verbose_name_plural = 'Proxies'
 
 
 def company_logo_path(instance, filename):
