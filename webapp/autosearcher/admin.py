@@ -396,12 +396,12 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
             return ('corrector', 'document_registry', 'document_id', 'note', 'task_done')
         return super(CorrectorTaskAdmin, self).get_fields(request, obj)
 
-    def save_model(self, request, obj, form, change):
-        print(change)
-        if change:
-            corrector_add_score(request, obj)
-            make_task_done(form, obj)
-        super(CorrectorTaskAdmin, self).save_model(request, obj, form, change)
+    # def save_model(self, request, obj, form, change):
+    #     print(change)
+    #     if change:
+    #         corrector_add_score(request, obj)
+    #         make_task_done(form, obj)
+    #     super(CorrectorTaskAdmin, self).save_model(request, obj, form, change)
         # TODO: Добавить проверку менеждера
         # Проверка выполнения задачи при сохранени объекта
         # if obj.task_done and obj.corrector == corrector:

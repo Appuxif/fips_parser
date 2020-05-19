@@ -1040,7 +1040,7 @@ def parse_applicant(document_parse, type):
             # print('applicant_string', applicant_string)
             # applicant_string.replace(company_part, '')
             # print('applicant_string', applicant_string)
-
+            # company_found = False
             for form in forms:
                 if form in company_part:
                     applicant['company']['form'] = forms[form]
