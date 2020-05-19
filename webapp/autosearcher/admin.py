@@ -191,6 +191,7 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
     fields = ('document_number', 'datetime_created', 'date_task_done', 'task_cannot_be_done', 'note')
     # readonly_fields = ('note', 'datetime_created', 'date_task_done', 'document_number')
     readonly_fields = ('datetime_created', 'date_task_done', 'document_number')
+
     # save_on_top = True
     view_on_site = False
     change_form_template = 'admin/custom_change_form_autosearchtask.html'
@@ -299,8 +300,15 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                     if person and form_is_valid:
                         person = form.save()
                         if person.email and not person.email_verified:
-                            email_verified = verify_email(request, person) or email_verified
-                            person.save()
+                            if not person.full_name:
+                                messages.add_message(request, messages.ERROR, f'Не указано полное имя')
+                            elif not person.first_name:
+                                messages.add_message(request, messages.ERROR, f'Не указано имя')
+                            elif not person.last_name:
+                                messages.add_message(request, messages.ERROR, f'Не указана фамилия')
+                            else:
+                                email_verified = verify_email(request, person) or email_verified
+                                person.save()
                         # Логируем изменения
                         change_message = construct_change_message(form, [], False)
                         self.log_change(request, form.instance, change_message)
@@ -328,10 +336,17 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
                     # При создании нового контакта
                     if form_is_valid and form.cleaned_data.get('full_name'):
                         person = form.save()
-                        document.contactperson_set.add(person)
                         if person.email and not person.email_verified:
-                            email_verified = verify_email(request, person) or email_verified
-                            person.save()
+                            if not person.full_name:
+                                messages.add_message(request, messages.ERROR, f'Не указано полное имя')
+                            elif not person.first_name:
+                                messages.add_message(request, messages.ERROR, f'Не указано имя')
+                            elif not person.last_name:
+                                messages.add_message(request, messages.ERROR, f'Не указана фамилия')
+                            else:
+                                document.contactperson_set.add(person)
+                                email_verified = verify_email(request, person) or email_verified
+                                person.save()
                         # Логируем изменения
                         change_message = []
                         change_message.append({
