@@ -508,7 +508,7 @@ class Parser:
             # Логирование ошибки в файл
             now = datetime.now()
             now_str = now.strftime('%Y-%m-%d_%H-%M-%S')
-            filename = self.name + '_' + str(document_obj['number']) + '_' + now_str + '.txt'
+            filename = self.name + '_' + str(document_obj['number'].replace('/', '-')) + '_' + now_str + '.txt'
             filepath = os.path.join('.', 'media', 'logs')
             if not os.path.exists(filepath):
                 os.makedirs(filepath)
