@@ -24,8 +24,8 @@ class LastDocumentsNode(template.Node):
         # context['last_documents_list'] = sorted(last_documents_list, key=lambda x: x.id)
         orders_count = self.orders.count()
         registers_count = self.registers.count()
-        context['last_orders'] = self.orders[:5]
-        context['last_registers'] = self.registers[:5]
+        # context['last_orders'] = self.orders[:5]
+        # context['last_registers'] = self.registers[:5]
         context['orders_percent'] = str(self.orders_parsed) + ' из ' + str(self.orders_count)
         context['registers_percent'] = str(self.registers_parsed) + ' из ' + str(self.registers_count)
         return ''
