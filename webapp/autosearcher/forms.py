@@ -23,8 +23,11 @@ class ContactPersonTaskForm(forms.ModelForm):
 
     class Meta:
         model = ContactPerson
-        fields = ('category', 'company', 'full_name', 'last_name', 'first_name',
-                  'middle_name', 'home_phone', 'mobile_phone', 'email',
+        # fields = ('category', 'company', 'full_name', 'last_name', 'first_name',
+        #           'middle_name', 'home_phone', 'mobile_phone', 'email',
+        #           'email_verified', 'email_correct', 'id', 'new_id', 'delete')
+        fields = ('category', 'company', 'full_name',
+                  'home_phone', 'mobile_phone', 'email',
                   'email_verified', 'email_correct', 'id', 'new_id', 'delete')
 
     def clean(self):

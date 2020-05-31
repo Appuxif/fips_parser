@@ -162,8 +162,8 @@ class ContactPerson(models.Model):
 
     personal_web = models.CharField('Персональный сайт', max_length=150, null=True, blank=True)  ##
     office_address = models.CharField('Адрес офиса', max_length=1000, null=True, blank=True)  # ! #  ##
-    home_phone = models.CharField('Домашний телефон', max_length=25, null=True, blank=True)  ##
-    office_phone = models.CharField('Оффисный телефон', max_length=25, null=True, blank=True)  ##
+    home_phone = models.CharField('Рабочий телефон', max_length=25, null=True, blank=True)  ##
+    office_phone = models.CharField('Офисный телефон', max_length=25, null=True, blank=True)  ##
     mobile_phone = models.CharField('Мобильный телефон', max_length=25, null=True, blank=True)  ##
     messenger_id = models.CharField('ID в мессенджере', max_length=25, null=True, blank=True)  ##
     messenger_type = models.CharField('Мессенджер', max_length=25, null=True, blank=True)  ##

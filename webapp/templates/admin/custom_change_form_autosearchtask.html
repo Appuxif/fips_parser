@@ -106,6 +106,7 @@
 {# Форма компании-правообладателя #}
 <form enctype="multipart/form-data" action="" method="post" id="company_form" novalidate>
     {% csrf_token %}
+    <input type="hidden" name="company_form" value="1">
     <h3>Компания-правообладатель</h3>
     <div><a href="/admin/interface/company/{{company.id}}/change/" target="_blank">Перейти на страницу компании</a></div>
 {#    <p class="deletelink-box"><a href="/admin/interface/company/{{company.id}}/delete/" class="deletelink" target="_blank">Удалить компанию</a></p>#}
@@ -147,6 +148,7 @@
 {# Формы контактов #}
 <form enctype="multipart/form-data" action="" method="post" id="persons_form" novalidate>
     {% csrf_token %}
+    <input type="hidden" name="persons_form" value="1">
     {{ contact_formset.management_form }}
     <h3>Контакты документа</h3>
     {% for form in contact_formset %}

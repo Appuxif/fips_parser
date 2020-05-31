@@ -85,8 +85,8 @@ class RegistersParser(Parser):
             parse_main_info(page, document, document_info, document_parse, service_items, session, proxies, self.name, start_izvs)
 
         if message:
-            if 'ошибка' in message.lower():
-                history['message'] += message + '\n'
+            # if 'ошибка' in message.lower():
+            #     history['message'] += message + '\n'
             self._lprint(document['number'], message)
         if document_info.get('unresolved'):
             self._print(document['number'], 'unresolved', document_info['unresolved'])
@@ -155,7 +155,7 @@ class RegistersParser(Parser):
         message, values = parse_facsimile(page, document, session, proxies, self.name)
         documentfile_item.extend(values)
         if message:
-            history['message'] += message + '\n'
+            # history['message'] += message + '\n'
             self._lprint(document['number'], message)
 
         if documentfile_item:

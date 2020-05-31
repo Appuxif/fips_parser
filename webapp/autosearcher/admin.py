@@ -256,123 +256,8 @@ class CorrectorTaskAdmin(admin.ModelAdmin):
 
         # Если был POST запрос, то нужно сохранить кастомные формы
         if request.method == 'POST':
-            # print(request.POST)
-            if request.POST.get('_continue', '') == 'Сохранить Компанию':
-                company_form = CompanyForm(request.POST, request.FILES, instance=company)
-                if company_form.is_valid():
-                    company = company_form.save()
-                    # Логируем изменения
-                    change_message = construct_change_message(company_form, [], False)
-                    logs = self.log_change(request, company, change_message)
+            process_post(self, request, document, company, task)
 
-            if request.POST.get('_continue', '') == 'Сохранить Контакты':
-                contact_formset = ContactFormset(request.POST, request.FILES)
-                # print(contact_formset.is_valid())
-                email_verified = False
-                for i, form in enumerate(contact_formset.forms):
-                    # print(form.has_changed())
-                    # print(form.cleaned_data)
-                    if not form.has_changed():
-                        continue
-
-                    form_is_valid = form.is_valid()
-                    person = form.cleaned_data.get(f'id')
-                    delete = form.cleaned_data['delete']
-                    # print(person)
-                    # При откреплении контакта от документа
-                    if delete and person:
-                        document.contactperson_set.remove(person)
-                        # Логируем изменения
-                        change_message = []
-                        # change_message = construct_change_message(form, [], False)
-                        change_message.append({
-                            'changed': {
-                                'name': 'Связь Контакт - Документ',
-                                'object': str(person),
-                                'fields': ['unpinned Contact ' + str(person.id)]
-                            }
-                        })
-                        logs = self.log_change(request, document, change_message)
-                        # print('logs', logs)
-                        continue
-
-                    # Если контакт был отредактирован
-                    if person and form_is_valid:
-                        person = form.save()
-                        if person.email and not person.email_verified:
-                            if not person.full_name:
-                                messages.add_message(request, messages.ERROR, f'Не указано полное имя')
-                            elif not person.first_name:
-                                messages.add_message(request, messages.ERROR, f'Не указано имя')
-                            elif not person.last_name:
-                                messages.add_message(request, messages.ERROR, f'Не указана фамилия')
-                            else:
-                                email_verified = verify_email(request, person) or email_verified
-                                person.save()
-                        # Логируем изменения
-                        change_message = construct_change_message(form, [], False)
-                        self.log_change(request, form.instance, change_message)
-                        continue
-
-                    # При прикреплении уже существующего контакта к документу
-                    new_id = form.cleaned_data['new_id']
-                    if new_id:
-                        person = ContactPerson.objects.get(id=new_id)
-                        document.contactperson_set.add(person)
-                        # Логируем изменения
-                        change_message = []
-                        # change_message = construct_change_message(form, [], False)
-                        change_message.append({
-                            'changed': {
-                                'name': 'Связь Контакт - Документ',
-                                'object': str(person),
-                                'fields': ['pinned Contact ' + str(person.id)]
-                            }
-                        })
-                        logs = self.log_change(request, document, change_message)
-                        # print('logs', logs)
-                        continue
-
-                    # При создании нового контакта
-                    if form_is_valid and form.cleaned_data.get('full_name'):
-                        person = form.save()
-                        if person.email and not person.email_verified:
-                            if not person.full_name:
-                                messages.add_message(request, messages.ERROR, f'Не указано полное имя')
-                            elif not person.first_name:
-                                messages.add_message(request, messages.ERROR, f'Не указано имя')
-                            elif not person.last_name:
-                                messages.add_message(request, messages.ERROR, f'Не указана фамилия')
-                            else:
-                                document.contactperson_set.add(person)
-                                email_verified = verify_email(request, person) or email_verified
-                                person.save()
-                        # Логируем изменения
-                        change_message = []
-                        change_message.append({
-                            'changed': {
-                                'name': 'Связь Контакт - Документ',
-                                'object': str(person),
-                                'fields': ['pinned Contact ' + str(person.id)]
-                            }
-                        })
-                        logs = self.log_change(request, document, change_message)
-                        # print('logs 1', logs)
-                        change_message = construct_change_message(form, [], False)
-                        logs = self.log_addition(request, person, change_message)
-                        # print('logs 2', logs)
-
-                # Если почта была верифицирована, то задача считается завершенной, начисляем балл за задачу
-                if email_verified:
-                    class FakeForm:
-                        cleaned_data = {}
-                        pass
-                    f = FakeForm()
-                    f.cleaned_data['task_done'] = True
-                    task.task_done = True
-                    corrector_add_score(request, task)
-                    make_task_done(f, task)
-                    task.save()
         elif request.method == 'GET':
             pass
 
@@ -588,3 +473,146 @@ def corrector_add_score(request, obj):
             # user.save()
     except User.corrector.RelatedObjectDoesNotExist:
         pass
+
+
+# Обработка POST запроса для задачи корректора
+def process_post(self, request, document, company, task):
+    print(request.POST)
+    # if request.POST.get('_continue', '') == 'Сохранить Компанию':
+    if request.POST.get('_continue') and 'company_form' in request.POST:
+        company_form = CompanyForm(request.POST, request.FILES, instance=company)
+        if company_form.is_valid():
+            company = company_form.save()
+            # Логируем изменения
+            change_message = construct_change_message(company_form, [], False)
+            logs = self.log_change(request, company, change_message)
+
+    # if request.POST.get('_continue', '') == 'Сохранить Контакты':
+    if request.POST.get('_continue') and 'persons_form' in request.POST:
+        contact_formset = ContactFormset(request.POST, request.FILES)
+        # print(contact_formset.is_valid())
+        email_verified = False
+        for i, form in enumerate(contact_formset.forms):
+            # print(form.has_changed())
+            # print(form.cleaned_data)
+            if not form.has_changed():
+                continue
+
+            form_is_valid = form.is_valid()
+            person = form.cleaned_data.get(f'id')
+            delete = form.cleaned_data['delete']
+            # print(person)
+            # При откреплении контакта от документа
+            if delete and person:
+                document.contactperson_set.remove(person)
+                # Логируем изменения
+                # change_message = construct_change_message(form, [], False)
+                change_message = [{
+                    'changed': {
+                        'name': 'Связь Контакт - Документ',
+                        'object': str(person),
+                        'fields': ['unpinned Contact ' + str(person.id)]
+                    }
+                }]
+                logs = self.log_change(request, document, change_message)
+                # print('logs', logs)
+                continue
+
+            # Если контакт был отредактирован
+            if person and form_is_valid:
+                person = form.save()
+                if person.email and not person.email_verified:
+                    split_person_full_name(request, person)
+                    email_verified = verify_email(request, person) or email_verified
+                    person.save()
+                # Логируем изменения
+                change_message = construct_change_message(form, [], False)
+                self.log_change(request, form.instance, change_message)
+                continue
+
+            # При прикреплении уже существующего контакта к документу
+            new_id = form.cleaned_data['new_id']
+            if new_id:
+                person = ContactPerson.objects.get(id=new_id)
+                document.contactperson_set.add(person)
+                # Логируем изменения
+                # change_message = construct_change_message(form, [], False)
+                change_message = [{
+                    'changed': {
+                        'name': 'Связь Контакт - Документ',
+                        'object': str(person),
+                        'fields': ['pinned Contact ' + str(person.id)]
+                    }
+                }]
+                logs = self.log_change(request, document, change_message)
+                # print('logs', logs)
+                continue
+
+            # При создании нового контакта
+            if form_is_valid and form.cleaned_data.get('full_name'):
+                person = form.save()
+                if person.email and not person.email_verified:
+                    split_person_full_name(request, person)
+                    document.contactperson_set.add(person)
+                    email_verified = verify_email(request, person) or email_verified
+                    person.save()
+
+                # Логируем изменения
+                change_message = [{
+                    'changed': {
+                        'name': 'Связь Контакт - Документ',
+                        'object': str(person),
+                        'fields': ['pinned Contact ' + str(person.id)]
+                    }
+                }]
+                logs = self.log_change(request, document, change_message)
+                # print('logs 1', logs)
+                change_message = construct_change_message(form, [], False)
+                logs = self.log_addition(request, person, change_message)
+                # print('logs 2', logs)
+
+        # Если почта была верифицирована, то задача считается завершенной, начисляем балл за задачу
+        if email_verified:
+            finish_task(request, company, task)
+
+
+# Разбивает полное имя контакта на составляющие
+def split_person_full_name(request, person):
+    if not person.full_name:
+        messages.add_message(request, messages.WARNING, f'Не указано полное имя')
+    else:
+        name_splitted = person.full_name.split()
+        person.last_name = name_splitted[0] if len(name_splitted) > 0 else None
+        person.first_name = name_splitted[1] if len(name_splitted) > 1 else None
+        person.middle_name = name_splitted[2] if len(name_splitted) > 2 else None
+
+
+# Завершает задачу
+def finish_task(request, company, task):
+    class FakeForm:
+        cleaned_data = {}
+
+    f = FakeForm()
+    f.cleaned_data['task_done'] = True
+    task.task_done = True
+    corrector_add_score(request, task)
+    make_task_done(f, task)
+    task.save()
+
+    # Отмечаем задачи с этой же компанией и контактом завершенными
+    done_other_tasks(request, company)
+
+
+# Находит другие задачи для этой же компании и отмечает их завершенными
+def done_other_tasks(request, company):
+    order_ids = [v[0] for v in company.order.values_list('id')]
+    if order_ids:
+        order_tasks = CorrectorTask.objects.filter(document_registry=0, document_id__in=order_ids)
+        order_updates = order_tasks.update(task_done=True, note='Auto')
+        messages.add_message(request, messages.INFO, 'Завершено задач с заявками ' + str(order_updates))
+
+    register_ids = [v[0] for v in company.register.values_list('id')]
+    if register_ids:
+        register_tasks = CorrectorTask.objects.filter(document_registry=1, document_id__in=register_ids)
+        register_updates = register_tasks.update(task_done=True, note='Auto')
+        messages.add_message(request, messages.INFO, 'Завершено задач с регистрациями ' + str(register_updates))

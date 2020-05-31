@@ -13,10 +13,10 @@ class LastDocumentsNode(template.Node):
         q |= Q(document_exists=False)
         self.orders_count = OrdersDocument.objects.count()
         self.registers_count = RegistersDocument.objects.count()
-        # self.orders = OrdersDocument.objects.filter(document_parsed=True).order_by('-date_parsed')
+        # self.orders = OrdersDocument.objects.filter(q).order_by('-date_parsed')
         self.orders = OrdersDocument.objects.filter(q)
         self.orders_parsed = self.orders.count()
-        # self.registers = RegistersDocument.objects.filter(document_parsed=True).order_by('-date_parsed')
+        # self.registers = RegistersDocument.objects.filter(q).order_by('-date_parsed')
         self.registers = RegistersDocument.objects.filter(q)
         self.registers_parsed = self.registers.count()
 
