@@ -1,4 +1,5 @@
 from django import template
+from django.db.models import Q
 
 from orders.models_base import Document as OrdersDocument
 from registers.models_base import Document as RegistersDocument
@@ -8,13 +9,15 @@ register = template.Library()
 
 class LastDocumentsNode(template.Node):
     def __init__(self):
+        q = Q(document_parsed=True)
+        q |= Q(document_exists=False)
         self.orders_count = OrdersDocument.objects.count()
         self.registers_count = RegistersDocument.objects.count()
         # self.orders = OrdersDocument.objects.filter(document_parsed=True).order_by('-date_parsed')
-        self.orders = OrdersDocument.objects.filter(document_parsed=True)
+        self.orders = OrdersDocument.objects.filter(q)
         self.orders_parsed = self.orders.count()
         # self.registers = RegistersDocument.objects.filter(document_parsed=True).order_by('-date_parsed')
-        self.registers = RegistersDocument.objects.filter(document_parsed=True)
+        self.registers = RegistersDocument.objects.filter(q)
         self.registers_parsed = self.registers.count()
 
     def __repr__(self):
