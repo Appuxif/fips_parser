@@ -82,7 +82,7 @@ class Company(models.Model):
         if sign_char and sign_char.lower() in 'AZ,АM,BY,GE,KG,KZ,MD,RU,TJ,TM,UA,UZ'.lower():
             returned += name
         else:
-            returned = name + returned
+            returned = name + ' ' + returned
         return returned
 
     def get_absolute_url(self):
